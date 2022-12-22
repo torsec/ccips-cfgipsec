@@ -1,0 +1,17 @@
+/buuild
+.vscode
+.DS_Store
+*.o
+*.tmp
+*.log
+*.m4
+compile
+*.status
+*.back
+depcomp
+Makefile
+missing
+*.pid
+TODO
+automate.*
+tmp
