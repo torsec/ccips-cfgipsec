@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
+set(CMAKE_BUILD_TYPE Debug)
+set(TARGET ${TARGET} "enarx")
+option(USE_SYSREPO OFF)
+option(WASI_TARGET OFF)
+message(STATUS "Selected target is ${TARGET}")
 
-set(TARGET ${TARGET} "untrusted")
-
-message(STATUS, "Selected target is ${TARGET}")
-
-if (${TARGET} STREQUAL "enarx")
+if (WASI_TARGET)
     set(CMAKE_C_COMPILER "/home/debian/wasi-sdk-14.0/bin/clang")
     set(CMAKE_CXX_COMPILER "/home/debian/wasi-sdk-14.0/bin/clang")
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -29,7 +30,7 @@ if(NOT UNIX)
     message(FATAL_ERROR "Only *nix like systems are supported.")
 endif()
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build-scripts/CMakeModules/")
 
 
 
@@ -54,7 +55,11 @@ add_library(log "${SRC_DIRECTORY}/log/log.c")
 add_library(sad_entry "${SRC_DIRECTORY}/sad_entry/sad_entry.c")
 add_library(spd_entry "${SRC_DIRECTORY}/spd_entry/spd_entry.c")
 add_library(utils "${SRC_DIRECTORY}/utils/utils.c")
+add_library(messages "${SRC_DIRECTORY}/messages/messages.c")
+# Add parson
 add_library(parson "${PROJECT_SOURCE_DIR}/parson/parson.c")
+set_target_properties(parson PROPERTIES PUBLIC_HEADER "parson.h")
+include_directories("${PROJECT_SOURCE_DIR}/parson")
 
 
 # Only include this library for non trusted parts
@@ -77,7 +82,7 @@ include_directories("${SRC_DIRECTORY}/log")
 include_directories("${SRC_DIRECTORY}/utils")
 include_directories("${SRC_DIRECTORY}/sad_entry")
 include_directories("${SRC_DIRECTORY}/spd_entry")
-
+include_directories("${SRC_DIRECTORY}/messages")
 
 link_directories("${SRC_DIRECTORY}")
 link_directories("${SRC_DIRECTORY}")
@@ -85,7 +90,7 @@ link_directories("${SRC_DIRECTORY}/log")
 link_directories("${SRC_DIRECTORY}/utils")
 link_directories("${SRC_DIRECTORY}/sad_entry")
 link_directories("${SRC_DIRECTORY}/spd_entry")
-
+link_directories("${SRC_DIRECTORY}/messages")
 # Only include this library for non trusted parts
 if (${TARGET} STREQUAL "untrusted")
     message(STATUS "Including directorories for untrusted target")
@@ -98,47 +103,23 @@ endif()
 # add the executable
 if (${TARGET} STREQUAL "untrusted")
     add_executable(${PROJECT_NAME} 
-    "${PROJECT_SOURCE_DIR}/test_not_trusted.c"
+    "${PROJECT_SOURCE_DIR}/cmd/i2nsf_ra/main.c"
     "${SRC_DIRECTORY}/constants.h"
     "${SRC_DIRECTORY}/host.h"
     )
 else()
     add_executable(${PROJECT_NAME} 
-        "${PROJECT_SOURCE_DIR}/test_trusted.c"
+        "${PROJECT_SOURCE_DIR}/cmd/i2nsf_enarx/main.c"
         "${SRC_DIRECTORY}/constants.h"
     )
 endif()
 
-#link sysrepo if needed
-if (${TARGET} STREQUAL "untrusted") 
-
-    find_package(Threads REQUIRED)  
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    set(CMAKE_THREAD_LIBS_INIT "-lpthread")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -q")
-    set(CMAKE_THREAD_PREFER_PTHREAD ON) 
-    target_link_libraries(${PROJECT_NAME} PUBLIC pthread)
-    
-
-    message(STATUS "Looking for libyang")
-    find_package(LibYANG REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBYANG_LIBRARIES})
-    include_directories(${LIBYANG_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_INCLUDES ${LIBYANG_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_LIBRARIES ${LIBYANG_LIBRARIES})
-
-
-    message(STATUS "Looking for Sysrepo")
-    find_package(Sysrepo REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${SYSREPO_LIBRARIES})
-    include_directories(${SYSREPO_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_INCLUDES ${SYSREPO_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_LIBRARIES ${SYSREPO_LIBRARIES})
-endif()
+# Inlude sysrepo
+include("${CMAKE_SOURCE_DIR}/build-scripts/ImportSysrepo.cmake")
 
 
  # Only include this for the unstrusted binary
-if (${TARGET} STREQUAL "untrusted")   
+if (USE_SYSREPO)   
     message(STATUS "Linking librararies for untrusted target")
     target_link_libraries(${PROJECT_NAME} PUBLIC 
         sysrepo_utils
@@ -147,6 +128,7 @@ if (${TARGET} STREQUAL "untrusted")
         sad_entry
         spd_entry
         utils
+        messages
         parson
     )
 else()
@@ -155,6 +137,7 @@ else()
         sad_entry
         spd_entry
         utils
+        messages
         parson
     )
 endif()
@@ -163,7 +146,8 @@ endif()
 target_include_directories(${PROJECT_NAME} PUBLIC log "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/log")
 target_include_directories(${PROJECT_NAME} PUBLIC utils "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/utils" )
 target_include_directories(${PROJECT_NAME} PUBLIC sad_entry "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/sad_entry")
-target_include_directories(${PROJECT_NAME} PUBLIC spd_entry "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/spd_entry")                   
+target_include_directories(${PROJECT_NAME} PUBLIC spd_entry "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/spd_entry")               
+target_include_directories(${PROJECT_NAME} PUBLIC spd_entry "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/messages")      
 target_include_directories(${PROJECT_NAME} PUBLIC parson "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/parson")
 
 

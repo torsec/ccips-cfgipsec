@@ -4,7 +4,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "sad_entry.h"
-#include "../parson/parson.h"
+#include <stdlib.h>
+#include <string.h>
+#include <parson.h>
 
 typedef struct sad_entry_node{
 	char *name;
@@ -24,6 +26,7 @@ typedef struct sad_entry_node{
 	unsigned short protocol_parameters;
 	unsigned int integrity_alg;
 	unsigned int encryption_alg;
+	unsigned int encryption_key_length;
 	char *encryption_key;
 	char *integrity_key;
 	char *encryption_iv;
@@ -48,8 +51,8 @@ typedef struct sad_entry_node{
 
 
 sad_entry_node* create_sad_node();
-char *serialize_sad_node(sad_entry_node *sad_node);
-sad_entry_node *deserialize_sad_node(char *serialized);
+JSON_Value *serialize_sad_node(sad_entry_node *sad_node);
+sad_entry_node *deserialize_sad_node(JSON_Object *schema);
 
 
 #endif

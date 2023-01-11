@@ -42,7 +42,8 @@
 							<!-- In the RFC it is setup two algorithms, why? -->
 							<encryption>
 								<id>1</id>
-								<algorithm-type>12</algorithm-type>
+								<algorithm-type>3</algorithm-type>
+								<!-- TODO this is not implemented in the current schema. -->
 								<key-length>128</key-length>
 							</encryption>
 						</esp-algorithms>

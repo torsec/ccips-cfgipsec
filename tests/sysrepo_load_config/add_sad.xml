@@ -28,14 +28,15 @@
                     <esp-sa>
                         <!-- TODO check how the algorithms are parsed -->
                         <encryption>
-                            <encryption-algorithm>12</encryption-algorithm>
-                            <key>01:23:45:67:89:AB:CE:DF</key>
-                            <iv>01:23:45:67:89:AB:CE:DF</iv>
+                            <encryption-algorithm>3</encryption-algorithm>
+                            <!-- <key>01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef</key> -->
+                            <key>01:23:45:67:89:AB:CE:DF:01:23:45:67:89:AB:CE:DF</key>
+                            <iv>01:23:45:67:89:AB:CE:DF:01:23:45:67:89:AB:CE:DF</iv>
                         </encryption>
                         <integrity>
                             <!-- //AUTH_HMAC_SHA1_96 -->
                             <integrity-algorithm>2</integrity-algorithm>
-                            <key>01:23:45:67:89:AB:CE:DF</key>
+                            <key>01:23:45:67:89:AB:CE:DF:01:23:45:67:89:AB:CE:DF</key>
                         </integrity>
                     </esp-sa>
                     <sa-lifetime-hard>

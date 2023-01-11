@@ -18,7 +18,6 @@
  */
 
 #include "utils.h"
-#include "log.h"
 
 
 char * get_ip(char * ip_mask) {
@@ -78,6 +77,9 @@ int getEncryptAlg(char* alg) {
 		return SADB_EALG_DESCBC ;
 	else if (!strcmp(alg, "3des"))
 		return SADB_EALG_3DESCBC;
+	else if (!strcmp(alg,"aes-cbc")) {
+		return SADB_X_EALG_AESCBC;
+	}
 	/*else if (!strcmp(alg, "blowfish-128") || !strcmp(alg, "blowfish-192") ||
 		     !strcmp(alg, "blowfish-256") || !strcmp(alg, "blowfish-448") )
 		return SADB_X_EALG_BLF;
@@ -102,15 +104,16 @@ const char * get_encrypt_str(int alg) {
     case SADB_EALG_DESCBC:      return "des";
     case SADB_EALG_3DESCBC:     return "3des";
     case SADB_EALG_NULL:        return "null";
+	case SADB_X_EALG_AESCBC:    return "aes-cbc";
 #ifdef SADB_X_EALG_CAST128CBC
     case SADB_X_EALG_CAST128CBC:    return "cast";
 #endif
 #ifdef SADB_X_EALG_BLOWFISHCBC
     case SADB_X_EALG_BLOWFISHCBC:   return "blowfish";
 #endif
-#ifdef SADB_X_EALG_AES
-    case SADB_X_EALG_AES:           return "aes-cbc";
-#endif
+// #ifdef SADB_X_EALG_AESCBC
+    
+// #endif
     default:                    sprintf(buf, "[Unknown encryption algorithm %d]", alg);
                                 return buf;
     }
@@ -191,14 +194,12 @@ get_encrypt_alg(int alg) {
 	case SADB_EALG_DESCBC:		return "DES-CBC";
 	case SADB_EALG_3DESCBC:		return "3DES-CBC";
 	case SADB_EALG_NULL:		return "Null";
+	case SADB_X_EALG_AESCBC:    return "aes-cbc";
 #ifdef SADB_X_EALG_CAST128CBC
 	case SADB_X_EALG_CAST128CBC:	return "CAST128-CBC";
 #endif
 #ifdef SADB_X_EALG_BLOWFISHCBC
 	case SADB_X_EALG_BLOWFISHCBC:	return "Blowfish-CBC";
-#endif
-#ifdef SADB_X_EALG_AES
-	case SADB_X_EALG_AES:			return "AES";
 #endif
 	default:					sprintf(buf, "[Unknown encryption algorithm %d]", alg);
 								return buf;

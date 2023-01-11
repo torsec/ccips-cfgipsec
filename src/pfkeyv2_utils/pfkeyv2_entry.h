@@ -50,7 +50,7 @@ int pf_exec_register(sr_session_ctx_t *session,int satype);
 int pf_delsad(sad_entry_node *sad_node);
 int pf_addpolicy(spd_entry_node *spd_node);
 int pf_delpolicy(spd_entry_node *spd_node);
-int pf_getsad(sad_entry_node *sad_node);
+// int pf_getsad(sad_entry_node *sad_node);
 
 
 

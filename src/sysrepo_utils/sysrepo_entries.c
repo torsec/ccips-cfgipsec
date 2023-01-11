@@ -520,6 +520,7 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
 
     sad_entry_node *node = get_sad_node(sad_name);
     if (node != NULL) {
+		pf_getsad(node);
         rc = pf_delsad(node);
         if (SR_ERR_OK != rc){
             ERR("Remove SAD in pfkeyv2_delsad: %s",sr_strerror(rc));
@@ -833,8 +834,10 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
     }
 
     add_sad_node(sad_node);
-
     rc = pf_addsad(sad_node);
+
+	pf_getsad(sad_node);
+
     if (SR_ERR_OK != rc) {
         ERR("ADD SAD in getSAD_entry: %s", sr_strerror(rc));
         return rc;     

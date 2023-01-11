@@ -34,6 +34,9 @@
 
 #define EALG_DESCBC_KEY_BITS	  64
 #define EALG_3DESCBC_KEY_BITS	  192
+#define EAL_BLOWFISH_KEY_BITS     192
+#define EAL_AES_KEY_BITS          256
+
 
 #define AALG_MD5HMAC_KEY_BITS    160
 #define AALG_SHA1HMAC_KEY_BITS   160
@@ -133,20 +136,20 @@
 /* Encryption algorithms */
 #define SADB_EALG_NONE			0
 #define SADB_EALG_DESCBC		2
-#define SADB_EALG_3DESCBC		3
-#define SADB_X_EALG_CASTCBC		6
-#define SADB_X_EALG_BLOWFISHCBC		7
-#define SADB_EALG_NULL			11
-#define SADB_X_EALG_AESCBC		12
-#define SADB_X_EALG_AESCTR		13
-#define SADB_X_EALG_AES_CCM_ICV8	14
-#define SADB_X_EALG_AES_CCM_ICV12	15
-#define SADB_X_EALG_AES_CCM_ICV16	16
-#define SADB_X_EALG_AES_GCM_ICV8	18
-#define SADB_X_EALG_AES_GCM_ICV12	19
-#define SADB_X_EALG_AES_GCM_ICV16	20
-#define SADB_X_EALG_CAMELLIACBC		22
-#define SADB_X_EALG_NULL_AES_GMAC	23
+#define SADB_EALG_3DESCBC		3 // Hasta 192 
+#define SADB_X_EALG_CASTCBC		6 // key length 128bits
+#define SADB_X_EALG_BLOWFISHCBC		7 // key length 32bits-448
+#define SADB_EALG_NULL			11 
+#define SADB_X_EALG_AESCBC		12 // key length 128/192/256 
+#define SADB_X_EALG_AESCTR		13 // key length 128/192/256 
+#define SADB_X_EALG_AES_CCM_ICV8	14 //key length 128/192/256 
+#define SADB_X_EALG_AES_CCM_ICV12	15 //key length 128/192/256 
+#define SADB_X_EALG_AES_CCM_ICV16	16 //key length 128/192/256 
+#define SADB_X_EALG_AES_GCM_ICV8	18 //key length 128/192/256 
+#define SADB_X_EALG_AES_GCM_ICV12	19 //key length 128/192/256 
+#define SADB_X_EALG_AES_GCM_ICV16	20 //key length 128/192/256 
+#define SADB_X_EALG_CAMELLIACBC		22 //key length 128/192/256 
+#define SADB_X_EALG_NULL_AES_GMAC	23 // key length 128/192/256 
 #define SADB_EALG_MAX                   253 /* last EALG */
 /* private allocations should use 249-255 (RFC2407) */
 #define SADB_X_EALG_SERPENTCBC  252     /* draft-ietf-ipsec-ciph-aes-cbc-00 */
