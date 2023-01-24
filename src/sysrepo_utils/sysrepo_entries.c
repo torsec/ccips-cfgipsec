@@ -834,10 +834,13 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
     }
 
     add_sad_node(sad_node);
+	// TODO create message and wait to receive the confirmation the sad_entrie decrypted.
+	
+	
+
+
+
     rc = pf_addsad(sad_node);
-
-	pf_getsad(sad_node);
-
     if (SR_ERR_OK != rc) {
         ERR("ADD SAD in getSAD_entry: %s", sr_strerror(rc));
         return rc;     

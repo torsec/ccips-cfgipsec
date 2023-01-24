@@ -43,7 +43,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session, const char *module_name, cons
 int sad_state_cb(sr_session_ctx_t *session, const char *module_name, const char *xpath, const char *request_xpath, uint32_t request_id, struct lyd_node **parent, void *private_data);
 int pad_entry_change_cb(sr_session_ctx_t *session, const char *module_name, const char *xpath, sr_event_t event, uint32_t request_id, void *private_data);
 int ike_conn_entry_change_cb(sr_session_ctx_t *session, const char *module_name, const char *xpath, sr_event_t event, uint32_t request_id, void *private_data);	
-
+int sadb_register(sr_session_ctx_t *session);
 
 #endif
 

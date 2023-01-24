@@ -24,7 +24,6 @@
 #include "log.h"
 #include "spd_entry.h"
 #include "sad_entry.h"
-#include "host.h"
 #include "pfkeyv2_utils.h"
 #include "sysrepo_utils.h"
 #include "sysrepo_entries.h"
@@ -33,6 +32,8 @@
 #include <sys/types.h>
 #include <linux/xfrm.h>
 #include <pthread.h>
+#include <linux/pfkeyv2.h>
+
 
 #define PFKEY_EXTLEN(msg) \
     PFKEY_UNUNIT64(((const struct sadb_ext *)(const void *)(msg))->sadb_ext_len)
@@ -47,12 +48,31 @@ typedef struct{
 
 int pf_addsad(sad_entry_node *sad_node);
 int pf_exec_register(sr_session_ctx_t *session,int satype);
+int pf_getsad(sad_entry_node *sad_node);
 int pf_delsad(sad_entry_node *sad_node);
 int pf_addpolicy(spd_entry_node *spd_node);
 int pf_delpolicy(spd_entry_node *spd_node);
+int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node);
 // int pf_getsad(sad_entry_node *sad_node);
 
+// https://fossies.org/dox/tinc-1.0.36/net_8h_source.html
+typedef struct sockaddr_unknown {
+     uint16_t family;
+     uint16_t pad1;
+     uint32_t pad2;
+     char *address;
+     char *port;
+};
 
+typedef union sockaddr_t {
+     struct sockaddr sa;
+     struct sockaddr_in in;
+     struct sockaddr_in6 in6;
+     struct sockaddr_unknown unknown;
+ #ifdef HAVE_STRUCT_SOCKADDR_STORAGE
+     struct sockaddr_storage storage;
+ #endif
+} sockaddr_t;
 
 
 typedef struct pfkey_msg_t pfkey_msg_t;

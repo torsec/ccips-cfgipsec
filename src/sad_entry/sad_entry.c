@@ -1,8 +1,10 @@
-
 #include "sad_entry.h"
 #define MAX_PATH  200
 #define MAX_IP 40
 #define MAX_KEY 1024
+#define MAX_ID_LENGTH  MAX_PATH  +  MAX_IP * 4
+
+
 sad_entry_node* create_sad_node(){
     sad_entry_node *sad_node = (sad_entry_node*) malloc(sizeof(sad_entry_node));
 	sad_node->name = (char *) malloc(sizeof(char) * MAX_PATH);
@@ -139,10 +141,43 @@ struct sad_entry_node *deserialize_sad_node(JSON_Object *schema) {
 	sad_node->lft_idle_hard = json_object_get_number(schema, "lft_idle_hard");
 	sad_node->lft_idle_soft = json_object_get_number(schema, "lft_idle_soft");
 	sad_node->lft_idle_current = json_object_get_number(schema, "lft_idle_current");
-    json_value_free(schema);
     return sad_node;
 }   
 
+// TODO see what values should be compared for the moment only the keys are compared, more values will be added in the future
+int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
+	
+	// verify enc key
+    if (sizeof(i->encryption_key) != sizeof(j->encryption_key) && 
+        strncmp(i->encryption_key,j->encryption_key,(size_t)  sizeof(j->encryption_key)) != 0) {
+            return 1;
+    }
+	// verify int key
+    if (sizeof(i->integrity_key) != sizeof(j->integrity_key) && 
+        strncmp(i->integrity_key,j->integrity_key,(size_t)  sizeof(j->integrity_key)) != 0) {
+            return 1;
+    }
+	// verify iv key
+    if (sizeof(i->encryption_iv) != sizeof(j->encryption_iv) && 
+        strncmp(i->encryption_iv,j->encryption_iv,(size_t) sizeof(j->encryption_iv)) != 0) {
+            return 1;
+    }
+	return 0;
+}
 
 
-
+char* get_sad_hash(sad_entry_node *sad_node, char *output) {
+	// char *input = (char *) malloc(sizeof(char) * MAX_ID_LENGTH);
+	// strcpy(input,sad_node->name);
+	// strcat(input,sad_node->local_subnet);
+	// strcat(input,sad_node->remote_subnet);
+	// strcat(input,sad_node->tunnel_local);
+	// strcat(input,sad_node->tunnel_remote);
+	// MD5(input, strlen(input), output);
+	//     for (int i = 0; i < 16; i++) {
+    //     printf("%02x", output[i]);
+    // }
+	// free(input);
+	strcpy(output,"hashtestof16by");
+	return output;
+}

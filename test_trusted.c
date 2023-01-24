@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include "parson.h"
-#include "constants.h"
+// #include "constants.h"
 // #include "base/serializers/sad_serializer.h"
 // #include "base/serializers/spd_serializer.h"
 
@@ -176,25 +176,6 @@ main(int argc, char **argv) {
     deserialize_sad_node(result);
     INFO(result);
 
-    // pf_getsad(sad_node);
-
-    // int rc = pf_delsad(sad_node);
-    // if (0 != rc) {
-    //     ERR("DEL SAD in getSAD_entry: %d", rc);
-    //     return rc;     
-    // }
-    // // printf("Name: %s, spi %s]\n");
-
-
-    // // // Esto setea un listener para escuchar los cambios
-    // // pf_exec_register(SADB_SATYPE_ESP);
-
-    // //     // ------------- ESTO seguro que hay una manera mejor de hacerlo --------------//
-    // signal(SIGINT, sigint_handler);
-    // signal(SIGPIPE, SIG_IGN);
-    // while (!exit_application) {
-    //     sleep(1000);  /* or do some more useful work... */
-    // }
 
 
 

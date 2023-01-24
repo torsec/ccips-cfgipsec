@@ -34,11 +34,13 @@
 #include <string.h>
 #include <errno.h>
 #include <stdint.h>
+#include <crypt.h>
 
 // #include "pfkeyv2_utils.h"
 #include "log.h"
 #include "constants.h"
-
+#include "sad_entry.h"
+#include "map.h"
 
 char * get_ip(char * ip_mask);
 int get_mask(char * ip_mask);
@@ -60,9 +62,13 @@ const char * get_encrypt_alg(int alg);
 int getAuthAlg(char* alg);
 int getEncryptAlg(char* alg);
 
-unsigned char* hexstr_to_char(const char* hexstr);
+unsigned char* hexstr_to_char(char* hexstr);
 int checkIKE_connection();
 
+sad_entry_node *m_get_sad_entry(map m, char *hash);
+int m_set_sad_entry(map m, char *hash, sad_entry_node *map_node);
+int m_delete_sad_entry(map m, char *hash);
+void free_map_entry(void* key, size_t ksize, uintptr_t value, void* usr);
 
 
 

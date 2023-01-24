@@ -53,6 +53,7 @@ typedef struct sad_entry_node{
 sad_entry_node* create_sad_node();
 JSON_Value *serialize_sad_node(sad_entry_node *sad_node);
 sad_entry_node *deserialize_sad_node(JSON_Object *schema);
-
+char* get_sad_hash(sad_entry_node *sad_node, char *output);
+int compare_sad_entries(sad_entry_node *i, sad_entry_node *j);
 
 #endif

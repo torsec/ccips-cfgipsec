@@ -5,15 +5,17 @@ option(USE_SYSREPO OFF)
 option(WASI_TARGET OFF)
 message(STATUS "Selected target is ${TARGET}")
 
+
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall -Wextra")
 if (WASI_TARGET)
-    set(CMAKE_C_COMPILER "/home/debian/wasi-sdk-14.0/bin/clang")
-    set(CMAKE_CXX_COMPILER "/home/debian/wasi-sdk-14.0/bin/clang")
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+    SET(CMAKE_SKIP_BUILD_RPATH TRUE)
+    set(CMAKE_C_COMPILER "/home/debian/wasi-sdk/build/wasi-sdk-17.0/bin/clang")
+    set(CMAKE_CXX_COMPILER "/home/debian/wasi-sdk/build/wasi-sdk-17.0/bin/clang")
+
+    # set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 # -Wall -Wextra)
 endif()
-
-
-
+# set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall -Wextra")
 # set the project name and version
 set (PROJECT_NAME "I2NSF")
 project(${PROJECT_NAME} VERSION 1.0)
@@ -24,6 +26,7 @@ project(${PROJECT_NAME} VERSION 1.0)
 include(GNUInstallDirs)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
+
 
 # check the supported platform
 if(NOT UNIX)
@@ -45,35 +48,9 @@ endif()
 
 
 
-
-
-
+set(SRC_DIRECTORY "${PROJECT_SOURCE_DIR}/src")
 
 # Add files to the directory
-set(SRC_DIRECTORY "${PROJECT_SOURCE_DIR}/src")
-add_library(log "${SRC_DIRECTORY}/log/log.c")
-add_library(sad_entry "${SRC_DIRECTORY}/sad_entry/sad_entry.c")
-add_library(spd_entry "${SRC_DIRECTORY}/spd_entry/spd_entry.c")
-add_library(utils "${SRC_DIRECTORY}/utils/utils.c")
-add_library(messages "${SRC_DIRECTORY}/messages/messages.c")
-# Add parson
-add_library(parson "${PROJECT_SOURCE_DIR}/parson/parson.c")
-set_target_properties(parson PROPERTIES PUBLIC_HEADER "parson.h")
-include_directories("${PROJECT_SOURCE_DIR}/parson")
-
-
-# Only include this library for non trusted parts
-if (${TARGET} STREQUAL "untrusted")
-    message(STATUS "Add libraries for untrusted")
-    add_library(pfkeyv2_utils 
-    "${SRC_DIRECTORY}/pfkeyv2_utils/pfkeyv2_utils.c"
-    "${SRC_DIRECTORY}/pfkeyv2_utils/pfkeyv2_entry.c"
-    )
-    add_library(sysrepo_utils 
-    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_utils.c"
-    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_entries.c"
-    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_print.c")
-endif()
 
 # Include directories
 include_directories("${SRC_DIRECTORY}")
@@ -91,21 +68,56 @@ link_directories("${SRC_DIRECTORY}/utils")
 link_directories("${SRC_DIRECTORY}/sad_entry")
 link_directories("${SRC_DIRECTORY}/spd_entry")
 link_directories("${SRC_DIRECTORY}/messages")
+
+
+
 # Only include this library for non trusted parts
 if (${TARGET} STREQUAL "untrusted")
-    message(STATUS "Including directorories for untrusted target")
+    message(STATUS "Including directories for untrusted target")
     include_directories("${SRC_DIRECTORY}/pfkeyv2_utils")
     link_directories("${SRC_DIRECTORY}/pfkeyv2_utils")
     include_directories("${SRC_DIRECTORY}/sysrepo_utils")
     link_directories("${SRC_DIRECTORY}/sysrepo_utils")
 endif()
 
+
+add_library(sad_entry "${SRC_DIRECTORY}/sad_entry/sad_entry.c")
+add_library(spd_entry "${SRC_DIRECTORY}/spd_entry/spd_entry.c")
+add_library(utils "${SRC_DIRECTORY}/utils/utils.c" "${SRC_DIRECTORY}/utils/map.c")
+add_library(messages "${SRC_DIRECTORY}/messages/messages.c" "${SRC_DIRECTORY}/messages/trust_handler.c")
+# Add parson
+add_library(parson "${PROJECT_SOURCE_DIR}/parson/parson.c")
+set_target_properties(parson PROPERTIES PUBLIC_HEADER "parson.h")
+include_directories("${PROJECT_SOURCE_DIR}/parson")
+# Add hashmap
+add_library(hashmap "${PROJECT_SOURCE_DIR}/c-hashmap/map.c")
+set_target_properties(hashmap PROPERTIES PUBLIC_HEADER "map.h")
+include_directories("${PROJECT_SOURCE_DIR}/c-hashmap")
+
+
+# Only include this library for non trusted parts
+if (${TARGET} STREQUAL "untrusted")
+    message(STATUS "Add libraries for untrusted")
+    add_library(pfkeyv2_utils 
+    "${SRC_DIRECTORY}/pfkeyv2_utils/pfkeyv2_utils.c"
+    "${SRC_DIRECTORY}/pfkeyv2_utils/pfkeyv2_entry.c"
+    )
+    add_library(sysrepo_utils 
+    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_utils.c"
+    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_entries.c"
+    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_print.c")
+endif()
+
+
+add_library(log "${SRC_DIRECTORY}/log/log.c")
+
+
+
 # add the executable
 if (${TARGET} STREQUAL "untrusted")
     add_executable(${PROJECT_NAME} 
     "${PROJECT_SOURCE_DIR}/cmd/i2nsf_ra/main.c"
     "${SRC_DIRECTORY}/constants.h"
-    "${SRC_DIRECTORY}/host.h"
     )
 else()
     add_executable(${PROJECT_NAME} 
@@ -114,30 +126,33 @@ else()
     )
 endif()
 
-# Inlude sysrepo
-include("${CMAKE_SOURCE_DIR}/build-scripts/ImportSysrepo.cmake")
+
 
 
  # Only include this for the unstrusted binary
 if (USE_SYSREPO)   
+    # Inlude sysrepo
+    include("${CMAKE_SOURCE_DIR}/build-scripts/ImportSysrepo.cmake")
     message(STATUS "Linking librararies for untrusted target")
     target_link_libraries(${PROJECT_NAME} PUBLIC 
         sysrepo_utils
         pfkeyv2_utils
-        log
         sad_entry
         spd_entry
-        utils
         messages
-        parson
+        utils
+        hashmap
+        log
+        parson     
     )
 else()
     target_link_libraries(${PROJECT_NAME} PUBLIC 
-        log
         sad_entry
         spd_entry
-        utils
         messages
+        utils
+        hashmap
+        log
         parson
     )
 endif()
@@ -149,7 +164,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC sad_entry "${PROJECT_BINARY_DI
 target_include_directories(${PROJECT_NAME} PUBLIC spd_entry "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/spd_entry")               
 target_include_directories(${PROJECT_NAME} PUBLIC spd_entry "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/messages")      
 target_include_directories(${PROJECT_NAME} PUBLIC parson "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/parson")
-
+target_include_directories(${PROJECT_NAME} PUBLIC hashmap "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/c-hashmap")
 
 # Only include this for the unstrusted binary
 if (${TARGET} STREQUAL "untrusted")

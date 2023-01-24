@@ -54,7 +54,7 @@ void print_sadb_msg(struct sadb_msg *msg, int msglen) {
 		default:	DBG(" [unknown extension %d]", ext->sadb_ext_type);
 		}
 		msglen -= ext->sadb_ext_len << 3;
-		ext = (char *)ext + (ext->sadb_ext_len << 3);
+		ext = (struct sadb_ext*) ((char *)ext + (ext->sadb_ext_len << 3));
 	}
 }
 

@@ -1,0 +1,1 @@
+sudo docker run -v `pwd`/enarx.toml:/enarx.toml -v `pwd`/build/i2nsf_enarx.wasm:/i2nsf_enarx.wasm enarx/enarx:0.6.3 enarx run --wasmcfgfile /enarx.toml /i2nsf_enarx.wasm 

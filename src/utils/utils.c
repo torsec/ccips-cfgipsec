@@ -18,7 +18,7 @@
  */
 
 #include "utils.h"
-
+#include <inttypes.h>
 
 char * get_ip(char * ip_mask) {
 
@@ -272,7 +272,7 @@ int Socket(int family, int type, int protocol) {
     int n;
 
     if ( (n = socket(family, type, protocol)) < 0)
-        ERR("socket error");
+        log_error("socket error");
     return(n);
 }
 /* end Socket */
@@ -281,7 +281,7 @@ void
 Write(int fd, void *ptr, size_t nbytes) {
 
     if (write(fd, ptr, nbytes) != nbytes)
-        ERR("write error");
+       log_error("write error");
 }
 
 ssize_t
@@ -290,7 +290,7 @@ Read(int fd, void *ptr, size_t nbytes) {
         ssize_t n;
 
         if ( (n = read(fd, ptr, nbytes)) == -1)
-                ERR("read error");
+                log_error("read error");
         return(n);
 }
 
@@ -325,9 +325,10 @@ void remove_all_chars(char* str, char c) {
 }
 
 
-unsigned char* hexstr_to_char(const char* hexstr)
+
+unsigned char* hexstr_to_char(char* hexstr)
 {
-	remove_all_chars(hexstr, ':');
+	remove_all_chars(hexstr,':');
 	size_t len = strlen(hexstr);
     if (len % 2 != 0)
         return NULL;
@@ -376,10 +377,52 @@ int found_name(char *path) {
 			return 1;
 	}
 	return 0;
-	
 }
 
 
 
 
+sad_entry_node *m_get_sad_entry(map m, char *hash) {
+	uint64_t result;
+    // Check first that the value does not exists
+    if (map_contains(m,hash)) {
+		return (sad_entry_node*) map_get(m,hash);
+	}
+	return NULL;
+}
 
+
+int m_set_sad_entry(map m, char *hash, sad_entry_node *map_node) {
+	uint64_t result;
+    // Check first that the value does not exists
+    if (!map_contains(m,hash)) {
+		map_set(m,hash,map_node);
+	
+		return 0;
+    } else {
+		// If the value already exists return error
+		return 1;
+    }
+    
+}
+
+
+int m_delete_sad_entry(map m, char *hash) {
+	uint64_t result;
+    // Check first that the value does not exists
+    if (!map_contains(m,hash)) {
+		// Value does not exists
+		return 1;
+    } else {
+		// If the value already exists return error
+		
+		free((sad_entry_node*) map_remove(m,hash));
+		return 0;
+    }
+    
+}
+
+void free_map_entry(void* key, size_t ksize, uintptr_t value, void* usr)
+{
+	free((sad_entry_node*)value);
+}

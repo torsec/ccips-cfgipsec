@@ -18,7 +18,6 @@
  */
 
 #include "pfkeyv2_entry.h"
-#include "utils.h"
 #define MAX_IP 40
 //int pf_register_apply(const sr_val_t *input, const size_t input_cnt, int pid);
 char * pf_get_alg_enum_name(struct sadb_alg * alg, struct sadb_supported *sup);
@@ -140,7 +139,7 @@ static void* pf_sadb_esp_register_run(void* register_thread_info){
 		        }
     
 		        msglen -= ext->sadb_ext_len << 3;
-		        ext = (char *)ext + (ext->sadb_ext_len << 3);
+		        ext = (struct sadb_ext*) ((char *)ext + (ext->sadb_ext_len << 3));
 			}
             // TODO Handle this without relying in sysrepo
   		    // send_acquire_notification(session,policy_index);
@@ -176,7 +175,7 @@ static void* pf_sadb_esp_register_run(void* register_thread_info){
                         break;
                 }
                 msglen -= ext->sadb_ext_len << 3;
-                ext = (char *)ext + (ext->sadb_ext_len << 3);
+                ext = (struct sadb_ext*) ((char *)ext + (ext->sadb_ext_len << 3));
             }
 			
             if (hard) {
@@ -370,7 +369,7 @@ int pf_addpolicy(spd_entry_node *spd_node) {
     msg->sadb_msg_len = len/8;
 
     DBG("print_sadb_msg pfkeyv2_addpolicy");
-    print_sadb_msg(buf, len);
+    print_sadb_msg(msg, len);
     Write(s, buf, len);
     close(s);
     
@@ -449,7 +448,7 @@ int pf_addpolicy(spd_entry_node *spd_node) {
                     break;
             }
             msglen -= ext->sadb_ext_len << 3;
-            ext = (char *)ext + (ext->sadb_ext_len << 3);
+            ext = (struct sadb_ext*) ((char *)ext + (ext->sadb_ext_len << 3));
         }
 
         if ((strcmp(get_ip(spd_node->local_subnet),tmp_local_subnet) == 0) &&
@@ -509,7 +508,7 @@ int pf_delpolicy(spd_entry_node *spd_node) {
     msg->sadb_msg_len = len/8;
 
     DBG("print_sadb_msg pfkeyv2_delpolicy");
-    print_sadb_msg(buf, len);
+    print_sadb_msg(msg, len);
 
     Write(s, buf, len);
     close(s);
@@ -651,7 +650,7 @@ int pf_addsad(sad_entry_node *sad_node) {
 
     msg->sadb_msg_len = len / 8;
     INFO("print_sadb_msg pfkeyv2_addsad:");
-    print_sadb_msg(buf, len);
+    print_sadb_msg(msg, len);
     Write(s, buf, len);
     close(s);
 
@@ -704,7 +703,7 @@ int pf_delsad(sad_entry_node *sad_node) {
 
     msg->sadb_msg_len = len / 8;
     DBG("print_sadb_msg pfkeyv2_delsad:");
-    print_sadb_msg(buf, len);
+    print_sadb_msg(msg, len);
 
     Write(s, buf, len);
     close(s);
@@ -756,7 +755,7 @@ int pf_getsad(sad_entry_node *sad_node) {
     len += dst_len; p += dst_len;
 
     msg->sadb_msg_len = len / 8;
-    print_sadb_msg(buf, len);
+    print_sadb_msg(msg, len);
    
     Write(s, buf, len);
     close(s);
@@ -847,7 +846,7 @@ int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node)
                 //default: DBG("ext type: %i", ext->sadb_ext_type);
             }
             msglen -= ext->sadb_ext_len << 3;
-            ext = (char *)ext + (ext->sadb_ext_len << 3);
+            ext = (struct sadb_ext*) ((char *)ext + (ext->sadb_ext_len << 3));
         }
 
         if (i == 1) return SR_ERR_OK;

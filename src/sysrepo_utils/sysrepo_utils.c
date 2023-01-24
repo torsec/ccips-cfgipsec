@@ -149,7 +149,7 @@ int spd_entry_change_cb(sr_session_ctx_t *session, const char *module_name, cons
 		}
 	    DBG(" ========== END OF CHANGES =======================================");
 	}
-	if ((event == SR_EV_DONE) && (get_verbose_level==CI_VERB_DEBUG)) {
+	if ((event == SR_EV_DONE) && (get_verbose_level()==CI_VERB_DEBUG)) {
 	        DBG("\n\n ========== CONFIG HAS CHANGED, CURRENT RUNNING CONFIG: ==========\n\n");
 	        print_current_config(session, module_name);
 	}
@@ -244,7 +244,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session, const char *module_name, cons
 		}
 	    DBG(" ========== END OF CHANGES =======================================");
 	}
-	if ((event == SR_EV_DONE) && (get_verbose_level==CI_VERB_DEBUG)) {
+	if ((event == SR_EV_DONE) && (get_verbose_level()==CI_VERB_DEBUG)) {
 	        printf("\n\n ========== CONFIG HAS CHANGED, CURRENT RUNNING CONFIG: ==========\n\n");
 	        print_current_config(session, module_name);
 	}
