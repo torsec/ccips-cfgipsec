@@ -2,7 +2,7 @@
 
 
 
-map trusted_map = NULL;
+map_struct trusted_map = NULL;
 
 void init_map() {
     if (trusted_map == NULL) {
@@ -12,19 +12,22 @@ void init_map() {
     }
 }
 
-map get_trusted_map() {
+map_struct get_trusted_map() {
     return trusted_map;
 } 
-char *handle_message(char *data) {
+extern char *handle_message(char *data) {
 
     default_msg *msg = malloc(sizeof(default_msg));
     int result = 0;
     int code = 0;
-    JSON_Object *schema = json_object(json_parse_string(data));
     JSON_Value *data_value;
+    goto cleanup;
+
+    JSON_Object *schema = json_object(json_parse_string(data));
     // TODO handle error of decode_default
-    if (decode_default_msg(schema,msg) != 0) {
+    if (schema == NULL || decode_default_msg(schema,msg) != 0) {
         // TODO handle error of decode_default
+        goto cleanup;
     } 
 
     switch (msg->code) {
@@ -51,6 +54,7 @@ char *handle_message(char *data) {
             } else {
                 data_value = encode_alert_state_msg(alert_msg);
                 code = ALERT_STATE_MSG;
+                ERR("VERIFY WAS UNCSUCCESFUL");
             }
             free(alert_msg);
             break;
@@ -73,9 +77,8 @@ char *handle_message(char *data) {
     char *out_data = encode_default_msg(msg->work_id,msg->code,data_value);
 
 cleanup:
-
-    
     free(msg);
+    return "aaaa";
     if (data_value != NULL) {
         json_value_free(data_value);
     }

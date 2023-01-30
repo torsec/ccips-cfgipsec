@@ -148,17 +148,17 @@ struct sad_entry_node *deserialize_sad_node(JSON_Object *schema) {
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 	
 	// verify enc key
-    if (sizeof(i->encryption_key) != sizeof(j->encryption_key) && 
-        strncmp(i->encryption_key,j->encryption_key,(size_t)  sizeof(j->encryption_key)) != 0) {
+    if (sizeof(i->encryption_key) != sizeof(j->encryption_key) || 
+        strncmp(i->encryption_key,j->encryption_key,(size_t) sizeof(j->encryption_key)) != 0) {
             return 1;
     }
 	// verify int key
-    if (sizeof(i->integrity_key) != sizeof(j->integrity_key) && 
+    if (sizeof(i->integrity_key) != sizeof(j->integrity_key) || 
         strncmp(i->integrity_key,j->integrity_key,(size_t)  sizeof(j->integrity_key)) != 0) {
             return 1;
     }
 	// verify iv key
-    if (sizeof(i->encryption_iv) != sizeof(j->encryption_iv) && 
+    if (sizeof(i->encryption_iv) != sizeof(j->encryption_iv) || 
         strncmp(i->encryption_iv,j->encryption_iv,(size_t) sizeof(j->encryption_iv)) != 0) {
             return 1;
     }

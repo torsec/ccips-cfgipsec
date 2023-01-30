@@ -382,7 +382,7 @@ int found_name(char *path) {
 
 
 
-sad_entry_node *m_get_sad_entry(map m, char *hash) {
+sad_entry_node *m_get_sad_entry(map_struct m, char *hash) {
 	uint64_t result;
     // Check first that the value does not exists
     if (map_contains(m,hash)) {
@@ -392,7 +392,7 @@ sad_entry_node *m_get_sad_entry(map m, char *hash) {
 }
 
 
-int m_set_sad_entry(map m, char *hash, sad_entry_node *map_node) {
+int m_set_sad_entry(map_struct m, char *hash, sad_entry_node *map_node) {
 	uint64_t result;
     // Check first that the value does not exists
     if (!map_contains(m,hash)) {
@@ -407,7 +407,7 @@ int m_set_sad_entry(map m, char *hash, sad_entry_node *map_node) {
 }
 
 
-int m_delete_sad_entry(map m, char *hash) {
+int m_delete_sad_entry(map_struct m, char *hash) {
 	uint64_t result;
     // Check first that the value does not exists
     if (!map_contains(m,hash)) {

@@ -17,7 +17,7 @@ struct map {
 
 // Internal helper functions. Implemented at the bottom of this file.
 static unsigned int hash(const char *key);
-static void extend_if_necessary(map m);
+static void extend_if_necessary(map_struct m);
 
 /**
  * Create a new, empty map.
@@ -25,11 +25,11 @@ static void extend_if_necessary(map m);
  * The returned map has dynamically allocated memory associated with it, and
  * this memory must be reclaimed after use with `map_destroy`.
  */
-map map_create() {
+map_struct map_create() {
 
   // Allocate space for the map's primary data structure. More space will be 
   // allocated in the future when values are added to the map.
-  map m = malloc(sizeof (map));
+  map_struct m = malloc(sizeof (map_struct));
   assert(m != NULL);
   m->elems = calloc(1, sizeof (struct cell *));
   assert(m->elems != NULL);
@@ -48,7 +48,7 @@ map map_create() {
  * values stored in the map. That memory must be freed by the client as
  * appropriate.
  */
-void map_destroy(map m) {
+void map_destroy(map_struct m) {
 
   // Loop over each cell in the map and free it.
   for (int i = 0; i < m->capacity; i += 1) {
@@ -67,7 +67,7 @@ void map_destroy(map m) {
 /**
  * Get the size of a map.
  */
-int map_size(const map m) {
+int map_size(const map_struct m) {
   return m->size;
 }
 
@@ -76,7 +76,7 @@ int map_size(const map m) {
  * 
  * Keys are case-sensitive.
  */
-bool map_contains(const map m, const char *key) {
+bool map_contains(const map_struct m, const char *key) {
   int b = hash(key) % m->capacity;
 
   // Search linearly for a matching key through the appropriate linked list.
@@ -92,7 +92,7 @@ bool map_contains(const map m, const char *key) {
  * This will add a new key if it does not exist. If the key already exists, the
  * new value will replace the old one.
  */
-void map_set(map m, const char *key, void *value) {
+void map_set(map_struct m, const char *key, void *value) {
   int b = hash(key) % m->capacity;
 
   // First, look for an existing entry with the given key in the map. If it
@@ -122,7 +122,7 @@ void map_set(map m, const char *key, void *value) {
  * 
  * Crashes if the map does not contain the given key.
  */
-void *map_get(const map m, const char *key) {
+void *map_get(const map_struct m, const char *key) {
   int b = hash(key) % m->capacity;
 
   // Search linearly for a matching key through the appropriate linked list.
@@ -141,7 +141,7 @@ void *map_get(const map m, const char *key) {
  * 
  * Crashes if the map does not already contain the key.
  */
-void *map_remove(map m, const char *key) {
+void *map_remove(map_struct m, const char *key) {
   int b = hash(key) % m->capacity;
 
   // Here, use a double pointer to make removal easier.
@@ -170,7 +170,7 @@ void *map_remove(map m, const char *key) {
  * Get the "first" key (arbitrarily ordered) in a map. If the map is empty,
  * returns NULL.
  */
-const char *map_first(map m) {
+const char *map_first(map_struct m) {
 
   // Find and return the first cell in the first non-empty bucket.
   for (int i = 0; i < m->capacity; i += 1) {
@@ -189,7 +189,7 @@ const char *map_first(map m) {
  * provided `key` must have been returned from a previous call to `map_first`
  * or `map_next`. Passing other strings produces undefined behavior.
  */
-const char *map_next(map m, const char *key) {
+const char *map_next(map_struct m, const char *key) {
 
   // First, get a reference to the current cell and check its successor.
   struct cell *curr = (void *) (key - sizeof (struct cell));
@@ -226,7 +226,7 @@ static unsigned int hash(const char *key) {
  * Grow the capacity of the hash map by a factor of two, only when the map's 
  * load becomes greater than one.
  */
-static void extend_if_necessary(map m) {
+static void extend_if_necessary(map_struct m) {
   if (m->size == m->capacity) {
 
     // Save old values first, since all map entries will need to be copied over.

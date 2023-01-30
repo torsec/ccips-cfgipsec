@@ -1,20 +1,32 @@
 cmake_minimum_required(VERSION 3.10)
+set(CMAKE_BUILD_TYPE Debug)
+set(TARGET ${TARGET} "enarx")
+option(USE_SYSREPO OFF)
+option(WASI_TARGET ON)
+message(STATUS "Selected target is ${TARGET}")
 
-set(TARGET ${TARGET} "untrusted")
 
-message(STATUS, "Selected target is ${TARGET}")
 
-if (${TARGET} STREQUAL "enarx")
-    set(CMAKE_C_COMPILER "/opt/wasi-sdk/bin/clang")
-    set(CMAKE_CXX_COMPILER "/opt/wasi-sdk//bin/clang")
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+if (WASI_TARGET)
+    set(CMAKE_SKIP_BUILD_RPATH TRUE)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)  
+    set(WASI_SDK_PATH  "/home/debian/wasi-sdk/build/wasi-sdk-17.0")
+    # set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall -Wextra --target=wasm32-wasi -Oz --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot")
+    # set(CMAKE_C_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall -Wextra --target=wasm32-wasi -Oz --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot")
+    set(CMAKE_C_FLAGS "-g -Wall -Wextra -shared")
+    set(CMAKE_C_COMPILER "/usr/bin/clang")
+    set(CMAKE_CXX_COMPILER "/usr/bin/clang")
+    # set(WASI_LIBC_PATH "/home/debian/wasi-libc/build/")
+    # Link the wasi-libc library
+    # set(WASI_LIBC "-L${WASI_LIBC_PATH}/lib -lwasi-libc -l libc-wasm -l wasm32-wasi")
+else()
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall -Wextra")
+    # set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 # -Wall -Wextra)
 endif()
-
-
-
+# set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall -Wextra")
 # set the project name and version
-set (PROJECT_NAME "I2NSF")
+set (PROJECT_NAME "i2nsf")
 project(${PROJECT_NAME} VERSION 1.0)
 
 
@@ -23,6 +35,7 @@ project(${PROJECT_NAME} VERSION 1.0)
 include(GNUInstallDirs)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
+
 
 # check the supported platform
 if(NOT UNIX)
@@ -44,31 +57,9 @@ endif()
 
 
 
-
-
-
+set(SRC_DIRECTORY "${PROJECT_SOURCE_DIR}/src")
 
 # Add files to the directory
-set(SRC_DIRECTORY "${PROJECT_SOURCE_DIR}/src")
-add_library(log "${SRC_DIRECTORY}/log/log.c")
-add_library(sad_entry "${SRC_DIRECTORY}/sad_entry/sad_entry.c")
-add_library(spd_entry "${SRC_DIRECTORY}/spd_entry/spd_entry.c")
-add_library(utils "${SRC_DIRECTORY}/utils/utils.c")
-add_library(parson "${PROJECT_SOURCE_DIR}/parson/parson.c")
-
-
-# Only include this library for non trusted parts
-if (${TARGET} STREQUAL "untrusted")
-    message(STATUS "Add libraries for untrusted")
-    add_library(pfkeyv2_utils 
-    "${SRC_DIRECTORY}/pfkeyv2_utils/pfkeyv2_utils.c"
-    "${SRC_DIRECTORY}/pfkeyv2_utils/pfkeyv2_entry.c"
-    )
-    add_library(sysrepo_utils 
-    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_utils.c"
-    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_entries.c"
-    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_print.c")
-endif()
 
 # Include directories
 include_directories("${SRC_DIRECTORY}")
@@ -77,7 +68,7 @@ include_directories("${SRC_DIRECTORY}/log")
 include_directories("${SRC_DIRECTORY}/utils")
 include_directories("${SRC_DIRECTORY}/sad_entry")
 include_directories("${SRC_DIRECTORY}/spd_entry")
-
+include_directories("${SRC_DIRECTORY}/messages")
 
 link_directories("${SRC_DIRECTORY}")
 link_directories("${SRC_DIRECTORY}")
@@ -85,87 +76,104 @@ link_directories("${SRC_DIRECTORY}/log")
 link_directories("${SRC_DIRECTORY}/utils")
 link_directories("${SRC_DIRECTORY}/sad_entry")
 link_directories("${SRC_DIRECTORY}/spd_entry")
+link_directories("${SRC_DIRECTORY}/messages")
+
+
 
 # Only include this library for non trusted parts
 if (${TARGET} STREQUAL "untrusted")
-    message(STATUS "Including directorories for untrusted target")
+    message(STATUS "Including directories for untrusted target")
     include_directories("${SRC_DIRECTORY}/pfkeyv2_utils")
     link_directories("${SRC_DIRECTORY}/pfkeyv2_utils")
     include_directories("${SRC_DIRECTORY}/sysrepo_utils")
     link_directories("${SRC_DIRECTORY}/sysrepo_utils")
 endif()
 
+
+add_library(sad_entry SHARED "${SRC_DIRECTORY}/sad_entry/sad_entry.c")
+add_library(spd_entry SHARED "${SRC_DIRECTORY}/spd_entry/spd_entry.c")
+add_library(utils SHARED "${SRC_DIRECTORY}/utils/utils.c" "${SRC_DIRECTORY}/utils/map.c")
+add_library(messages SHARED "${SRC_DIRECTORY}/messages/messages.c" "${SRC_DIRECTORY}/messages/trust_handler.c")
+# Add parson
+add_library(parson SHARED "${PROJECT_SOURCE_DIR}/parson/parson.c")
+set_target_properties(parson PROPERTIES PUBLIC_HEADER "parson.h")
+include_directories("${PROJECT_SOURCE_DIR}/parson")
+# Add hashmap
+add_library(hashmap "${PROJECT_SOURCE_DIR}/c-hashmap/map.c")
+set_target_properties(hashmap PROPERTIES PUBLIC_HEADER "map.h")
+include_directories("${PROJECT_SOURCE_DIR}/c-hashmap")
+
+
+# Only include this library for non trusted parts
+if (${TARGET} STREQUAL "untrusted")
+    message(STATUS "Add libraries for untrusted")
+    add_library(pfkeyv2_utils SHARED
+    "${SRC_DIRECTORY}/pfkeyv2_utils/pfkeyv2_utils.c"
+    "${SRC_DIRECTORY}/pfkeyv2_utils/pfkeyv2_entry.c"
+    )
+    add_library(sysrepo_utils SHARED
+    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_utils.c"
+    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_entries.c"
+    "${SRC_DIRECTORY}/sysrepo_utils/sysrepo_print.c")
+endif()
+
+
+add_library(log SHARED "${SRC_DIRECTORY}/log/log.c")
+
+
+
 # add the executable
 if (${TARGET} STREQUAL "untrusted")
     add_executable(${PROJECT_NAME} 
-    "${PROJECT_SOURCE_DIR}/test_not_trusted.c"
+    "${PROJECT_SOURCE_DIR}/cmd/i2nsf_ra/main.c"
     "${SRC_DIRECTORY}/constants.h"
-    "${SRC_DIRECTORY}/host.h"
     )
 else()
     add_executable(${PROJECT_NAME} 
-        "${PROJECT_SOURCE_DIR}/test_trusted.c"
+        "${PROJECT_SOURCE_DIR}/cmd/i2nsf_enarx/main.c"
         "${SRC_DIRECTORY}/constants.h"
     )
 endif()
 
-#link sysrepo if needed
-if (${TARGET} STREQUAL "untrusted") 
 
-    find_package(Threads REQUIRED)  
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    set(CMAKE_THREAD_LIBS_INIT "-lpthread")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -q")
-    set(CMAKE_THREAD_PREFER_PTHREAD ON) 
-    target_link_libraries(${PROJECT_NAME} PUBLIC pthread)
-    
-
-    message(STATUS "Looking for libyang")
-    find_package(LibYANG REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBYANG_LIBRARIES})
-    include_directories(${LIBYANG_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_INCLUDES ${LIBYANG_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_LIBRARIES ${LIBYANG_LIBRARIES})
-
-
-    message(STATUS "Looking for Sysrepo")
-    find_package(Sysrepo REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${SYSREPO_LIBRARIES})
-    include_directories(${SYSREPO_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_INCLUDES ${SYSREPO_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_LIBRARIES ${SYSREPO_LIBRARIES})
-endif()
 
 
  # Only include this for the unstrusted binary
-if (${TARGET} STREQUAL "untrusted")   
+if (USE_SYSREPO)   
+    # Inlude sysrepo
+    include("${CMAKE_SOURCE_DIR}/build-scripts/ImportSysrepo.cmake")
     message(STATUS "Linking librararies for untrusted target")
     target_link_libraries(${PROJECT_NAME} PUBLIC 
         sysrepo_utils
         pfkeyv2_utils
-        log
         sad_entry
         spd_entry
+        messages
         utils
-        parson
+        hashmap
+        log
+        parson     
     )
 else()
-    target_link_libraries(${PROJECT_NAME} PUBLIC 
-        log
-        sad_entry
-        spd_entry
-        utils
-        parson
-    )
+    # target_link_libraries(${PROJECT_NAME} PUBLIC
+    #     messages 
+    #     sad_entry
+    #     spd_entry
+    #     utils
+    #     hashmap
+    #     log
+    #     parson
+    # )
 endif()
 
 # Add Base to I2NSF target_include_directories()
-target_include_directories(${PROJECT_NAME} PUBLIC log "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/log")
-target_include_directories(${PROJECT_NAME} PUBLIC utils "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/utils" )
-target_include_directories(${PROJECT_NAME} PUBLIC sad_entry "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/sad_entry")
-target_include_directories(${PROJECT_NAME} PUBLIC spd_entry "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/spd_entry")                   
-target_include_directories(${PROJECT_NAME} PUBLIC parson "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/parson")
-
+# target_include_directories(${PROJECT_NAME} PUBLIC log "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/log")
+# target_include_directories(${PROJECT_NAME} PUBLIC utils "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/utils" )
+# target_include_directories(${PROJECT_NAME} PUBLIC sad_entry "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/sad_entry")
+# target_include_directories(${PROJECT_NAME} PUBLIC spd_entry "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/spd_entry")               
+# target_include_directories(${PROJECT_NAME} PUBLIC spd_entry "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/messages")      
+# target_include_directories(${PROJECT_NAME} PUBLIC parson "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/parson")
+# target_include_directories(${PROJECT_NAME} PUBLIC hashmap "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/c-hashmap")
 
 # Only include this for the unstrusted binary
 if (${TARGET} STREQUAL "untrusted")
@@ -174,10 +182,14 @@ if (${TARGET} STREQUAL "untrusted")
     target_include_directories(${PROJECT_NAME} PUBLIC sysrepo_utils "${PROJECT_BINARY_DIR}" "${SRC_DIRECTORY}/sysrepo_utils")
 endif()
 
+# if (WASI_TARGET)
+#     target_link_libraries(${PROJECT_NAME} PUBLIC ${WASI_LIBC})
+# endif()
+
 if (${TARGET} STREQUAL "untrusted")
     set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "i2nsf_untrusted")
 elseif(${TARGET} STREQUAL "enarx")
-    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "i2nsf_enarx")
+    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "i2nsf")
 elseif(${TARGET} STREQUAL "keystone")
     set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "i2nsf_keystone")
 else()
@@ -190,8 +202,11 @@ endif()
 # We need to install yang modules
 # We need to enable sudo "sysrepoctl -e ikeless-notification -a -c  ietf-i2nsf-ikeless -v3"
 
-
 # add the binary tree to the search path for include files
-target_include_directories(I2NSF PUBLIC
+target_include_directories(${PROJECT_NAME} PUBLIC
                             "${PROJECT_BINARY_DIR}"
                         )
+
+if (${TARGET} STREQUAL "enarx")
+    install(TARGETS ${PROJECT_NAME} DESTINATION ${PROJECT_SOURCE_DIR}/  )
+endif()

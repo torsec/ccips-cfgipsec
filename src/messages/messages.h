@@ -43,7 +43,7 @@ typedef struct delete_config_msg {
 // alert_state_msg
 typedef struct alert_state_msg {
     char entry_id[16];
-    char *message;
+    char message[32];
 } alert_state_msg;
 
 // op_result_mgs;

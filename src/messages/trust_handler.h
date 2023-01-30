@@ -14,7 +14,7 @@ int handle_new_conf_message (JSON_Object *data, sad_entry_msg *out);
 int handle_request_verify_message(JSON_Object *data, alert_state_msg *out);
 int handle_request_remove(JSON_Object *data, op_result_msg *out);
 int handle_meesage(char *data, char *out);
-char *handle_message(char *data);
+extern char *handle_message(char *data);
 
 
 #endif
