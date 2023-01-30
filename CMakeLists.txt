@@ -14,12 +14,12 @@ if (WASI_TARGET)
     # # set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall -Wextra --target=wasm32-wasi -Oz --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot")
     # # set(CMAKE_C_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall -Wextra --target=wasm32-wasi -Oz --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot")
     # set(CMAKE_C_FLAGS "-g -Wall -Wextra")
-    # set(CMAKE_C_COMPILER "/usr/bin/clang")
+    set(CMAKE_C_COMPILER "/home/debian/wasi-sdk/build/wasi-sdk-17.0/bin/clang")
     # set(CMAKE_CXX_COMPILER "/usr/bin/clang")
     # set(WASI_LIBC_PATH "/home/debian/wasi-libc/build/")
     # Link the wasi-libc library
     # set(WASI_LIBC "-L${WASI_LIBC_PATH}/lib -lwasi-libc -l libc-wasm -l wasm32-wasi")
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -fPIC")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -fPIC -target wasm32-wasi")
 else()
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall -Wextra")
     # set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -64,20 +64,6 @@ set(SRC_DIRECTORY "${PROJECT_SOURCE_DIR}/src")
 
 # Include directories
 include_directories("${SRC_DIRECTORY}")
-include_directories("${SRC_DIRECTORY}")
-include_directories("${SRC_DIRECTORY}/log")
-include_directories("${SRC_DIRECTORY}/utils")
-include_directories("${SRC_DIRECTORY}/sad_entry")
-include_directories("${SRC_DIRECTORY}/spd_entry")
-include_directories("${SRC_DIRECTORY}/messages")
-
-link_directories("${SRC_DIRECTORY}")
-link_directories("${SRC_DIRECTORY}")
-link_directories("${SRC_DIRECTORY}/log")
-link_directories("${SRC_DIRECTORY}/utils")
-link_directories("${SRC_DIRECTORY}/sad_entry")
-link_directories("${SRC_DIRECTORY}/spd_entry")
-link_directories("${SRC_DIRECTORY}/messages")
 
 
 
@@ -112,20 +98,20 @@ if (${SYSREPO})
 else()
 
     add_library(i2nsf STATIC 
-        "${SRC_DIRECTORY}/sad_entry/sad_entry.c"
-        "${SRC_DIRECTORY}/sad_entry/sad_entry.h"
-        "${SRC_DIRECTORY}/spd_entry/spd_entry.c"
-        "${SRC_DIRECTORY}/spd_entry/spd_entry.h"
-        "${SRC_DIRECTORY}/utils/utils.c" 
-        "${SRC_DIRECTORY}/utils/utils.h" 
-        "${SRC_DIRECTORY}/utils/map.c"
-        "${SRC_DIRECTORY}/utils/map.h"
-        "${SRC_DIRECTORY}/messages/messages.c"
-        "${SRC_DIRECTORY}/messages/messages.h"
-        "${SRC_DIRECTORY}/messages/trust_handler.c"
-        "${SRC_DIRECTORY}/messages/trust_handler.h"
-        "${SRC_DIRECTORY}/log/log.c"
-        "${SRC_DIRECTORY}/log/log.h"
+        "${SRC_DIRECTORY}/sad_entry.c"
+        "${SRC_DIRECTORY}/sad_entry.h"
+        "${SRC_DIRECTORY}/spd_entry.c"
+        "${SRC_DIRECTORY}/spd_entry.h"
+        "${SRC_DIRECTORY}/utils.c" 
+        "${SRC_DIRECTORY}/utils.h" 
+        "${SRC_DIRECTORY}/map.c"
+        "${SRC_DIRECTORY}/map.h"
+        "${SRC_DIRECTORY}/messages.c"
+        "${SRC_DIRECTORY}/messages.h"
+        "${SRC_DIRECTORY}/trust_handler.c"
+        "${SRC_DIRECTORY}/trust_handler.h"
+        "${SRC_DIRECTORY}/log.c"
+        "${SRC_DIRECTORY}/log.h"
         "${PROJECT_SOURCE_DIR}/cmd/i2nsf_enarx/main.c"
     )
     set_target_properties(i2nsf PROPERTIES LINK_FLAGS "-nostdlib")
@@ -133,8 +119,9 @@ endif()
 
 # Add parson
 add_library(parson STATIC "${PROJECT_SOURCE_DIR}/parson/parson.c")
-set_target_properties(parson PROPERTIES PRIVATE_HEADER "parson.h")
+# set_target_properties(parson PROPERTIES PRIVATE_HEADER "parson.h")
 include_directories("${PROJECT_SOURCE_DIR}/parson")
+include_directories("${SRC_DIRECTORY}")
 # # Add hashmap
 # add_library(hashmap "${PROJECT_SOURCE_DIR}/c-hashmap/map.c")
 # set_target_properties(hashmap PROPERTIES PRIVATE_HEADER "map.h")
@@ -149,7 +136,7 @@ if (${TARGET} STREQUAL "untrusted")
     )
 else()
     add_executable(${PROJECT_NAME} 
-        "${PROJECT_SOURCE_DIR}/cmd/i2nsf_enarx/main.c"
+        "wrapper.c"
         "${SRC_DIRECTORY}/constants.h"
     )
 endif()
@@ -214,20 +201,25 @@ target_include_directories(${PROJECT_NAME} PRIVATE
                             "${PROJECT_BINARY_DIR}"
                         )
 
+
+
+
 if (${TARGET} STREQUAL "enarx")
     install(TARGETS i2nsf
             EXPORT i2nsf-config
             ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/libs
             LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/libs)
+    install(TARGETS parson
+            ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/libs
+            LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/libs)
     install(FILES 
-    "${SRC_DIRECTORY}/messages/trust_handler.h"
-    "${SRC_DIRECTORY}/sad_entry/sad_entry.h"
-    "${SRC_DIRECTORY}/spd_entry/spd_entry.h"
-    "${SRC_DIRECTORY}/utils/utils.h" 
-    "${SRC_DIRECTORY}/utils/map.h"
-    "${SRC_DIRECTORY}/messages/messages.h"
-    "${SRC_DIRECTORY}/messages/trust_handler.h"
-    "${SRC_DIRECTORY}/log/log.h"
+    "${SRC_DIRECTORY}/trust_handler.h"
+    "${SRC_DIRECTORY}/sad_entry.h"
+    "${SRC_DIRECTORY}/spd_entry.h"
+    "${SRC_DIRECTORY}/utils.h" 
+    "${SRC_DIRECTORY}/map.h"
+    "${SRC_DIRECTORY}/messages.h"
+    "${SRC_DIRECTORY}/log.h"
     "${PROJECT_SOURCE_DIR}/parson/parson.h"
     "${SRC_DIRECTORY}/constants.h"
     DESTINATION ${PROJECT_SOURCE_DIR}/libs)

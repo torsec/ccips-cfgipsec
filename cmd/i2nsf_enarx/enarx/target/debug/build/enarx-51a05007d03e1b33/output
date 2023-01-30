@@ -1,2 +1,3 @@
 cargo:rustc-link-search=native=/home/debian/ipsec_tests/ipsec_interactor/libs
 cargo:rustc-link-lib=static=i2nsf
+cargo:rustc-link-lib=static=parson

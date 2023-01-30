@@ -47,13 +47,14 @@ fn main()
     //     println!("cargo:rustc-link-lib=parson");
     // }
 
-    println!("cargo:rustc-link-search=native=/home/debian/ipsec_tests/ipsec_interactor/libs");
-    println!("cargo:rustc-link-lib=static=i2nsf");
+
+
+
     let llvm_config_path = "/usr/bin/llvm-config";
     env::set_var("LLVM_CONFIG_PATH", llvm_config_path);
-    // println!("cargo:rustc-link-search=native=/home/debian/ipsec_tests/ipsec_interactor/libs");
-    // println!("cargo:rustc-link-lib=static=i2nsf");
-
+    println!("cargo:rustc-link-search=native=/home/debian/ipsec_tests/ipsec_interactor/libs");
+    println!("cargo:rustc-link-lib=static=i2nsf");
+    println!("cargo:rustc-link-lib=static=parson");    
     let bindings = bindgen::Builder::default()
         .header("/home/debian/ipsec_tests/ipsec_interactor/libs/trust_handler.h")
         .generate()
@@ -65,4 +66,22 @@ fn main()
         .expect("Couldn't write bindings!");
 
 
+    
+
 }
+
+
+// use std::env;
+// use std::path::PathBuf;
+
+// fn main() {
+//     let target = env::var("TARGET").unwrap();
+//     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+//     let lib_dir = PathBuf::from("/home/debian/ipsec_tests/ipsec_interactor/libs");
+
+//     // if target.contains("wasi") {
+//         println!("cargo:rustc-link-search={}", lib_dir.display());
+//         println!("cargo:rustc-link-lib=static=i2nsf");
+//         println!("cargo:rustc-link-lib=static=parson");
+//     // }
+// }
