@@ -1,4 +1,8 @@
 /build
+/libs
+/target
+cmd/i2nsf_enarx/enarx/target/
+cmd/i2nsf_enarx/enarx/libs
 .vscode
 .DS_Store
 *.o
