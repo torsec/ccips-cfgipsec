@@ -146,20 +146,16 @@ struct sad_entry_node *deserialize_sad_node(JSON_Object *schema) {
 
 // TODO see what values should be compared for the moment only the keys are compared, more values will be added in the future
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
-	
 	// verify enc key
-    if (sizeof(i->encryption_key) != sizeof(j->encryption_key) || 
-        strncmp(i->encryption_key,j->encryption_key,(size_t) sizeof(j->encryption_key)) != 0) {
+    if (strncmp(i->encryption_key,j->encryption_key,MAX_KEY) != 0) {
             return 1;
     }
 	// verify int key
-    if (sizeof(i->integrity_key) != sizeof(j->integrity_key) || 
-        strncmp(i->integrity_key,j->integrity_key,(size_t)  sizeof(j->integrity_key)) != 0) {
+    if (strncmp(i->integrity_key,j->integrity_key,MAX_KEY) != 0) {
             return 1;
     }
 	// verify iv key
-    if (sizeof(i->encryption_iv) != sizeof(j->encryption_iv) || 
-        strncmp(i->encryption_iv,j->encryption_iv,(size_t) sizeof(j->encryption_iv)) != 0) {
+    if (strncmp(i->encryption_iv,j->encryption_iv,MAX_KEY) != 0) {
             return 1;
     }
 	return 0;
