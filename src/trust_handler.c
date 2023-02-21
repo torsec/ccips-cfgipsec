@@ -41,7 +41,7 @@ extern char *handle_message(char *data) {
                 code = OP_RESULT_MSG;
             } else {
                 data_value = encode_sad_entry_msg(entry_msg);
-                code = INSERT_entry_MSG;
+                code = INSERT_ENTRY_MSG;
                 INFO("NEW CONFIG MANAGED SUCCESFUL");
             }
             break;
@@ -53,10 +53,13 @@ extern char *handle_message(char *data) {
                 data_value = generate_op_message("SAD_ENTRY is valid",0);
                 code = OP_RESULT_MSG;
                 INFO("VERIFY MANAGED SUCCESFUL");
-            } else {
+            } else if (result  == 2){
                 data_value = encode_alert_state_msg(alert_msg);
                 code = ALERT_STATE_MSG;
                 ERR("VERIFY WAS UNCSUCCESFUL");
+            } else {
+                data_value = generate_op_message("Verify error",result);
+                code = OP_RESULT_MSG;
             }
             free(alert_msg);
             break;
@@ -76,16 +79,16 @@ extern char *handle_message(char *data) {
     }
     char *out_data;
 cleanup:
-    out_data = encode_default_msg(msg->work_id,msg->code,data_value);
-    free(msg);
+    out_data = encode_default_msg(msg->work_id,code,data_value);
+    // free(msg);
+    // return out_data;
+    // if (data_value != NULL) {
+    //     json_value_free(data_value);
+    // }
     return out_data;
-    if (data_value != NULL) {
-        json_value_free(data_value);
-    }
-    return out_data;
-
-
 }
+
+
 int handle_new_conf_message (JSON_Object *data, sad_entry_msg *out) {
     int status = 0;
     // Decode the data of the message

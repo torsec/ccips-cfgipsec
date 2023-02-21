@@ -1,0 +1,1 @@
+sudo docker run -p 10000:10000 -v `pwd`/Enarx.toml:/Enarx.toml  -v `pwd`/target/wasm32-wasi/release/enarx.wasm:/i2nsf_enarx enarx/enarx:0.6.3 enarx run /i2nsf_enarx --wasmcfgfile  Enarx.toml  

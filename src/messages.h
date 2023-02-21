@@ -12,7 +12,7 @@
 #define ALERT_STATE_MSG       3
 #define OP_RESULT_MSG         4
 // #define REQUEST_entry_MSG     5 For the moment not used.
-#define INSERT_entry_MSG      6
+#define INSERT_ENTRY_MSG      6
 #define RETURN_entry_MSG      7 
 #define REQUEST_verify_MSG    8
 #define ERROR_MSG             -1
