@@ -81,7 +81,7 @@ main(int argc, char **argv) {
     spd_node->pfp_flag= false;
     // DF BIT?
     spd_node->df_bit = 0;
-    
+    int rc;
    
 
 
@@ -115,16 +115,33 @@ main(int argc, char **argv) {
     sad_node->srcport = 0;
     sad_node->dstport = 0;
     // IPsec mode, we are running this as a tunnel, we setup protocol_params as ESP
-    sad_node->ipsec_mode = IPSEC_MODE_TUNNEL;
+    sad_node->ipsec_mode = IPSEC_MODE_TRANSPORT;
     // sad_node->protocol_parameters = IPPROTO_ESP;
     sad_node->protocol_parameters = 50;
     // Algorithms configuration (Some random values)
     sad_node->integrity_alg = SADB_AALG_SHA1HMAC;
+// example input hex string
+    const char* hexstr = "af:6a:40:4c";
+    // convert the hex string to a byte array
+    char bytes[256];
+
+    remove_colon(bytes, hexstr);
+    if (bytes == NULL) {
+        printf("Invalid input hex string\n");
+        return 1;
+    }
     
+    // print the output byte array
+    for (size_t i=0; bytes[i] != '\0'; i++) {
+        printf("%02x ", bytes[i]);
+    }
+    printf("\n");
+
+    char* key = bytes;
     sad_node->encryption_alg = SADB_EALG_3DESCBC;
-    sad_node->encryption_key = "af6a404c";
-    sad_node->integrity_key = "af6a404c";
-	sad_node->encryption_iv = "af6a404c";
+    sad_node->encryption_key = key;
+    sad_node->integrity_key = key;
+	sad_node->encryption_iv = key;
 
     // TODO understand what those values do
     sad_node->bypass_dscp = false;
@@ -152,17 +169,17 @@ main(int argc, char **argv) {
 
     // if (!cser_raw_store_struct_spd_entry_node(spd_node,))
 
-    // int rc =  pf_addpolicy(spd_node);
-    // if (0 != rc) {
-    //     ERR("ADD SPD entry: %d", rc);
-    //     return rc;     
-    // }
+    rc =  pf_addpolicy(spd_node);
+    if (0 != rc) {
+        ERR("ADD SPD entry: %d", rc);
+        return rc;     
+    }
 
-    // rc = pf_addsad(sad_node);
-    // if (0 != rc) {
-    //     ERR("ADD SAD in getSAD_entry: %d", rc);
-    //     return rc;     
-    // }
+    rc = pf_addsad(sad_node);
+    if (0 != rc) {
+        ERR("ADD SAD in getSAD_entry: %d", rc);
+        return rc;     
+    }
     
 
     // rc = pf_delsad(sad_node);
@@ -172,9 +189,9 @@ main(int argc, char **argv) {
     // }
     // Check for lifetime
     
-    char *result = serialize_sad_node(sad_node);
-    deserialize_sad_node(result);
-    INFO(result);
+    // char *result = serialize_sad_node(sad_node);
+    // deserialize_sad_node(result);
+    // INFO(result);
 
 
 

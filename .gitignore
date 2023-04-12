@@ -19,3 +19,10 @@ missing
 TODO
 automate.*
 tmp
+build
+build/
+target
+target/
+libs/
+parson/
+parson

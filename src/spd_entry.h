@@ -31,7 +31,7 @@ typedef struct spd_entry_node {
 	char *name;
 	int index;
 	unsigned short policy_dir;
-	unsigned long long int req_id;
+	unsigned int req_id;
 	char *local_subnet;
 	char *remote_subnet;
 	char *tunnel_local;

@@ -34,5 +34,6 @@ spd_entry_node* create_spd_node(){
     spd_node->ecn = false;
     spd_node->tfc_pad = false;
     spd_node->df_bit = 0;
+    spd_node->next=NULL;
     return spd_node;
 }

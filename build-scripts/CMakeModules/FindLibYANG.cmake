@@ -131,3 +131,10 @@ else ()
     # show the LIBYANG_CPP_INCLUDE_DIRS and LIBYANG_CPP_LIBRARIES variables only in the advanced view
     mark_as_advanced(LIBYANG_CPP_INCLUDE_DIRS LIBYANG_CPP_LIBRARIES)
 endif()
+
+    # handle the QUIETLY and REQUIRED arguments and set LIBYANG_FOUND to TRUE
+    # if all listed variables are TRUE
+    find_package_handle_standard_args(LibYANG FOUND_VAR LIBYANG_FOUND
+        REQUIRED_VARS LIBYANG_LIBRARY LIBYANG_INCLUDE_DIR
+        VERSION_VAR LIBYANG_VERSION)
+endif()

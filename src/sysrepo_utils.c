@@ -67,9 +67,9 @@ new_entry(sr_change_oper_t op, sr_val_t *old_val, sr_val_t *new_val)
 // callback for spd-entry changes
 //int spd_entry_change_cb(sr_session_ctx_t *session, const char *spd_entry_xpath, sr_notif_event_t event, void *private_ctx) {
 
-int spd_entry_change_cb(sr_session_ctx_t *session, const char *module_name, const char *xpath, sr_event_t event, uint32_t request_id, void *private_data)
+int spd_entry_change_cb(sr_session_ctx_t *session, uint32_t sub_id, const char *module_name, const char *xpath, sr_event_t event, uint32_t request_id, void *private_data)
 {	
-	
+	char path[512];
     sr_change_iter_t *it = NULL;
     int rc = SR_ERR_OK;
     sr_change_oper_t oper;
@@ -87,7 +87,15 @@ int spd_entry_change_cb(sr_session_ctx_t *session, const char *module_name, cons
 
 		DBG(" ========== SPD Changes ========== ");   
 
-	    rc = sr_get_changes_iter(session, "//." , &it);
+		if (xpath) {
+        	sprintf(path, "%s//.", xpath);
+    	} else {
+        	sprintf(path, "/%s:*//.", module_name);
+    	}
+
+
+
+	    rc = sr_get_changes_iter(session, path , &it);
 	    if (SR_ERR_OK != rc) {
 	        ERR( "Get changes iter failed for xpath %s: %s", xpath, sr_strerror(rc));
 	        goto cleanup;
@@ -159,11 +167,12 @@ cleanup:
     return SR_ERR_OK;
 }
 
+pthread_mutex_t lock;
 
-
-int sad_entry_change_cb(sr_session_ctx_t *session, const char *module_name, const char *xpath, sr_event_t event, uint32_t request_id, void *private_data)
+int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char *module_name, const char *xpath, 
+	sr_event_t event, uint32_t request_id, void *private_data)
 {
-	
+	char path[512];
     sr_change_iter_t *it = NULL;
     int rc = SR_ERR_OK;
     sr_change_oper_t oper;
@@ -177,21 +186,26 @@ int sad_entry_change_cb(sr_session_ctx_t *session, const char *module_name, cons
     char *sad_name = NULL;
 	char *new_xpath = NULL; 
 
+
+	pthread_mutex_lock(&lock);
 	if (SR_EV_CHANGE == event) {
 
 		DBG(" ========== SAD Changes ========== ");   
+		
+		if (xpath) {
+        	sprintf(path, "%s//.", xpath);
+    	} else {
+        	sprintf(path, "/%s:*//.", module_name);
+    	}
 
-	    rc = sr_get_changes_iter(session, "//." , &it);
+	    rc = sr_get_changes_iter(session, path , &it);
 	    if (SR_ERR_OK != rc) {
 	        ERR( "Get changes iter failed for xpath %s: %s", xpath, sr_strerror(rc));
 	        goto cleanup;
 	    }
-	
 		while ((rc = sr_get_change_next(session, it, &oper, &old_value, &new_value)) == SR_ERR_OK) {
-		
 			switch(oper) {
 				case SR_OP_CREATED:
-					
 					if (new_entry(oper,old_value, new_value)) {
 						sad_name = new_value->data.string_val;   
 						INFO("Add sad-entry found %s ", sad_name); 
@@ -200,7 +214,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session, const char *module_name, cons
 						new_xpath = get_new_xpath(new_value->xpath);	
 
 	                	// In case 2, the SPD configuration values are applied into the kernel by means of pfkey_v2 or xfrm
-	                	rc = addSAD_entry(session,it,new_xpath,sad_name);
+		                rc = addSAD_entry(session,it,new_xpath,sad_name);
 	           		 	free(new_xpath);
 						if (SR_ERR_OK == rc) {
 	                    	INFO("sad-entry added ");
@@ -250,6 +264,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session, const char *module_name, cons
 	}
 	
 cleanup:
+	pthread_mutex_unlock(&lock);
     sr_free_change_iter(it);
     return SR_ERR_OK;	
 }

@@ -30,9 +30,6 @@ endif()
 set (PROJECT_NAME "i2nsf_enarx")
 project(${PROJECT_NAME} VERSION 1.0)
 
-
-
-
 include(GNUInstallDirs)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
@@ -129,9 +126,9 @@ include_directories("${SRC_DIRECTORY}")
 
 
 # add the executable
-if (${TARGET} STREQUAL "untrusted")
-    add_executable(${PROJECT_NAME} 
+add_executable(${PROJECT_NAME} 
     "${PROJECT_SOURCE_DIR}/cmd/i2nsf_ra/main.c"
+    # "${PROJECT_SOURCE_DIR}/test_trusted.c"
     "${SRC_DIRECTORY}/constants.h"
     )
 else()

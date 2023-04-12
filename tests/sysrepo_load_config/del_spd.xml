@@ -5,7 +5,6 @@
 	<spd>
   <spd-entry nc:operation="delete">
     <name>out/192.168.201.254/192.168.202.254</name>
-    <reqid>11</reqid>
   </spd-entry>
   </spd>
 </ipsec-ikeless>

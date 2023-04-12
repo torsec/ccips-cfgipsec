@@ -19,6 +19,9 @@
 
 #include "pfkeyv2_entry.h"
 #define MAX_IP 40
+#define TRUE 1
+#define FALSE 0
+
 //int pf_register_apply(const sr_val_t *input, const size_t input_cnt, int pid);
 char * pf_get_alg_enum_name(struct sadb_alg * alg, struct sadb_supported *sup);
 
@@ -49,31 +52,26 @@ static inline void memwipe(void *ptr, size_t n)
 }
 
 
+static uint8_t proto2satype(uint8_t proto)
+{
+	switch (proto)
+	{
+		case IPPROTO_ESP:
+			return SADB_SATYPE_ESP;
+		case IPPROTO_AH:
+			return SADB_SATYPE_AH;
+		case IPPROTO_COMP:
+			return SADB_X_SATYPE_IPCOMP;
+		default:
+			return proto;
+	}
+}
+
 static void set_port(sockaddr_t *addr, uint16_t port)
 {
     struct sockaddr_in *sin = (struct sockaddr_in*)addr;
     sin->sin_port = htons(port);
 }
-
-// /**
-//  * Copy a host_t as sockaddr_t to the given memory location.
-//  * @return		the number of bytes copied
-//  */
-// static size_t hostcpy(void *dest, host_t *host, bool include_port)
-// {
-// 	sockaddr_t *addr = host-, *dest_addr = dest;
-// 	socklen_t *len = host->get_sockaddr_len(host);
-
-// 	memcpy(dest, addr, *len);
-// #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-// 	dest_addr->sa_len = *len;
-// #endif
-// 	if (!include_port)
-// 	{
-// 		set_port(dest_addr, 0);
-// 	}
-// 	return *len;
-// }
 
 
 static void add_addr_ext(struct sadb_msg *msg, sad_entry_node *sad_node, uint16_t type,
@@ -92,6 +90,10 @@ static void add_addr_ext(struct sadb_msg *msg, sad_entry_node *sad_node, uint16_
     addr->sadb_address_len = PFKEY_LEN(sizeof(*addr) + len);
 	PFKEY_EXT_ADD(msg, addr);
 }
+
+
+
+
 
 static void* pf_sadb_esp_register_run(void* register_thread_info){
 
@@ -610,18 +612,52 @@ int pf_addsad(sad_entry_node *sad_node) {
             keyext = (struct sadb_key *) p;
             keyext->sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
             keyext->sadb_key_reserved = 0;
-            INFO("-----------KeyExt size %d",sizeof(*keyext)); 
+            // INFO("-----------KeyExt size %d",sizeof(*keyext)); 
             if(sad_node->encryption_alg == SADB_EALG_DESCBC){
+                DBG("selected SADB_EALG_DESCBC");
                     keyext->sadb_key_len = (sizeof(*keyext) + (EALG_DESCBC_KEY_BITS/8) + 7) / 8;
                     keyext->sadb_key_bits = EALG_DESCBC_KEY_BITS;
             } // SADB_X_EALG_AESCBC
             else if (sad_node->encryption_alg==SADB_X_EALG_AESCBC){
                 DBG("selected SADB_X_EALG_AESCBC");
+                keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_KEY_BITS/8) + 7) / 8;
+                keyext->sadb_key_bits = EAL_AES_KEY_BITS;   
+            } else if (sad_node->encryption_alg==SADB_EALG_3DESCBC) {
+                DBG("selected SADB_EALG_3DESCBC");
                 keyext->sadb_key_len = (sizeof(*keyext) + (EALG_3DESCBC_KEY_BITS/8) + 7) / 8;
-                keyext->sadb_key_bits = EAL_AES_KEY_BITS;
-            } else{
-                    keyext->sadb_key_len = (sizeof(*keyext) + (EALG_3DESCBC_KEY_BITS/8) + 7) / 8;
-                    keyext->sadb_key_bits = EALG_3DESCBC_KEY_BITS;
+                keyext->sadb_key_bits = EALG_3DESCBC_KEY_BITS;
+            } else if (sad_node->encryption_alg==SADB_X_EALG_CASTCBC) {
+                DBG("selected SADB_X_EALG_CASTCBC");
+                keyext->sadb_key_len = (sizeof(*keyext) + (EAL_CASTCBC_KEY_BITS/8) + 7) / 8;
+                keyext->sadb_key_bits = EAL_CASTCBC_KEY_BITS;
+            } else if (sad_node->encryption_alg==SADB_X_EALG_AESCTR) {
+                DBG("selected SADB_X_EALG_AESCTR");
+                keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AESCTR_KEY_BITS/8) + 7) / 8;
+                keyext->sadb_key_bits = EAL_AESCTR_KEY_BITS;
+            } else if (sad_node -> encryption_alg==SADB_X_EALG_AES_CCM_ICV8) {
+                DBG("selected SADB_X_EALG_AES_CCM_ICV8");
+                keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_CCM_ICV8_KEY_BITS/8) + 7) / 8;
+                keyext->sadb_key_bits = EAL_AES_CCM_ICV8_KEY_BITS;
+            } else if (sad_node -> encryption_alg==SADB_X_EALG_AES_CCM_ICV12) {
+                DBG("selected SADB_X_EALG_AES_CCM_ICV12");
+                keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_CCM_ICV12_KEY_BITS/8) + 7) / 8;
+                keyext->sadb_key_bits = EAL_AES_CCM_ICV12_KEY_BITS;
+            } else if (sad_node -> encryption_alg==SADB_X_EALG_AES_CCM_ICV16) {
+                DBG("selected SADB_X_EALG_AES_CCM_ICV16");
+                keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_CCM_ICV16_KEY_BITS/8) + 7) / 8;
+                keyext->sadb_key_bits = EAL_AES_CCM_ICV16_KEY_BITS;
+            } else if (sad_node -> encryption_alg==SADB_X_EALG_AES_GCM_ICV8) {
+                DBG("selected SADB_X_EALG_AES_GCM_ICV8");
+                keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_GCM_ICV8_KEY_BITS/8) + 7) / 8;
+                keyext->sadb_key_bits = EAL_AES_GCM_ICV8_KEY_BITS;
+            } else if (sad_node -> encryption_alg==SADB_X_EALG_AES_GCM_ICV12) {
+                DBG("selected SADB_X_EALG_AES_GCM_ICV12");
+                keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_GCM_ICV12_KEY_BITS/8) + 7) / 8;
+                keyext->sadb_key_bits = EAL_AES_GCM_ICV12_KEY_BITS;
+            } else if (sad_node -> encryption_alg==SADB_X_EALG_AES_GCM_ICV16) {
+                DBG("selected SADB_X_EALG_AES_GCM_ICV16");
+                keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_GCM_ICV16_KEY_BITS/8) + 7) / 8;
+                keyext->sadb_key_bits = EAL_AES_GCM_ICV16_KEY_BITS;
             }
             INFO("-----------Key length %d",keyext->sadb_key_len); 
             memcpy(keyext + 1, sad_node->encryption_key, strlen(sad_node->encryption_key));
@@ -646,17 +682,48 @@ int pf_addsad(sad_entry_node *sad_node) {
             len += keyext->sadb_key_len * 8;
             p += keyext->sadb_key_len * 8;
     }
-
-
     msg->sadb_msg_len = len / 8;
     INFO("print_sadb_msg pfkeyv2_addsad:");
     print_sadb_msg(msg, len);
     Write(s, buf, len);
     close(s);
-
     return SR_ERR_OK;
-
 }
+
+// int pf_delsad_v2(sad_entry_node *sad_node) {
+//     int s, mypid;
+//     unsigned char request[PFKEY_BUFFER_SIZE];
+//     struct sadb_msg *msg, *out;
+// 	struct sadb_sa *sa;
+//     size_t len;
+
+
+//     msg = (struct sadb_msg*)request;
+// 	msg->sadb_msg_version = PF_KEY_V2;
+// 	msg->sadb_msg_type = SADB_DELETE;
+// 	if (sad_node->protocol_parameters == IPPROTO_ESP)
+//     	msg->sadb_msg_satype = SADB_SATYPE_ESP;
+// 	msg->sadb_msg_len = PFKEY_LEN(sizeof(struct sadb_msg));
+
+//     sa = (struct sadb_sa*)PFKEY_EXT_ADD_NEXT(msg);
+// 	sa->sadb_sa_exttype = SADB_EXT_SA;
+// 	sa->sadb_sa_len = PFKEY_LEN(sizeof(struct sadb_sa));
+// 	sa->sadb_sa_spi = sad_node->spi;
+
+
+//     add_addr_ext(msg, sad_node->local_subnet, SADB_EXT_ADDRESS_SRC, 0, 0, FALSE);
+//     add_addr_ext(msg, sad_node->remote_subnet, SADB_EXT_ADDRESS_SRC, 0, 0, FALSE);
+
+//     unsigned char buf[PFKEY_BUFFER_SIZE];
+//     struct sadb_msg *msg;
+
+//     s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
+//     mypid = getpid();
+
+//     close(s);
+//     return SR_ERR_OK;
+
+// }
 
 
 int pf_delsad(sad_entry_node *sad_node) {
@@ -682,8 +749,7 @@ int pf_delsad(sad_entry_node *sad_node) {
     msg = (struct sadb_msg *) p;
     msg->sadb_msg_version = PF_KEY_V2;
     msg->sadb_msg_type = SADB_DELETE;
-	if (sad_node->protocol_parameters == IPPROTO_ESP)
-    	msg->sadb_msg_satype = SADB_SATYPE_ESP;
+    msg->sadb_msg_satype = proto2satype(sad_node->protocol_parameters);
     msg->sadb_msg_pid = getpid();
     len = sizeof(*msg);
     p += sizeof(*msg);
@@ -697,9 +763,10 @@ int pf_delsad(sad_entry_node *sad_node) {
 
 
     int src_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, get_mask(sad_node->local_subnet), sad_node->srcport, get_ip(sad_node->local_subnet));
-    p += src_len; len += src_len;    
+    p += src_len; len += src_len;
     int dst_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, get_mask(sad_node->remote_subnet), sad_node->dstport, get_ip(sad_node->remote_subnet));
     len += dst_len; p += dst_len;
+
 
     msg->sadb_msg_len = len / 8;
     DBG("print_sadb_msg pfkeyv2_delsad:");
@@ -707,9 +774,9 @@ int pf_delsad(sad_entry_node *sad_node) {
 
     Write(s, buf, len);
     close(s);
-    
+
     return SR_ERR_OK;
-    }
+}
 
 
 int pf_getsad(sad_entry_node *sad_node) {

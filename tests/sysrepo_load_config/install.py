@@ -8,3 +8,7 @@ server=manager.connect(host="localhost",
 
 conf = open('add_sad.xml').read()
 server.edit_config(target = "running", config = conf)
+
+
+0x286b8099b6907e99dcdda5017792a21ea1cfdf94
+0x286B8099B6907e99DcdDa5017792a21ea1cfDF94

@@ -194,7 +194,7 @@ int readSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,spd_e
 	                        spd_node->action = IPSEC_POLICY_DISCARD;
 	                    else {
 	                        rc = SR_ERR_VALIDATION_FAILED;    
-	                        ERR("spd-entry Bad action: %s", sr_strerror(rc));
+	                        ERR("spd-entry Bad action (%s): %s",value->data.string_val, sr_strerror(rc));
 	                        return rc;
 	                    }
 	                    DBG("action: %i",spd_node->action);
@@ -406,7 +406,8 @@ int removeSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
                 } else rc = SR_ERR_OK;
             }
         } else{
-            rc = SR_ERR_OPERATION_FAILED;
+            rc = 0;
+			// TODO do not return error so Sysrepo can at least clean the db
             ERR("Remove SPD, policy not found: %s",sr_strerror(rc));
         }		
 	}
@@ -520,7 +521,6 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
 
     sad_entry_node *node = get_sad_node(sad_name);
     if (node != NULL) {
-		pf_getsad(node);
         rc = pf_delsad(node);
         if (SR_ERR_OK != rc){
             ERR("Remove SAD in pfkeyv2_delsad: %s",sr_strerror(rc));
@@ -700,33 +700,29 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 DBG("protocol-parameters: %hu",sad_node->protocol_parameters);
             }
 			
-            /*<encryption>
-               <!-- //ENCR_AES_CBC -->
-               <encryption-algorithm>12</encryption-algorithm>
-               <key>01:23:45:67:89:AB:CE:DF</key>
-               <iv>01:23:45:67:89:AB:CE:DF</iv>
-            </encryption>
-            <integrity>
-               <!-- //AUTH_HMAC_SHA1_96 -->
-               <integrity-algorithm>2</integrity-algorithm>
-               <key>01:23:45:67:89:AB:CE:DF</key>
-            </integrity>*/
 			// integrity and encryption are defined as list, list are not supported yet. TBD
             else if (0 == strcmp("/encryption-algorithm", name)) {
             	sad_node->encryption_alg = value->data.int16_val;
                 DBG("encryption: %i",sad_node->encryption_alg);
             }
             else if (0 == strcmp("/iv", name)) {
-				strcpy(sad_node->encryption_iv,hexstr_to_char(value->data.string_val));
+
+
+				remove_colon(sad_node->encryption_iv,value->data.string_val);
                 DBG("encryption iv: %s",sad_node->encryption_iv);
             }
+			else if (0 == strncmp("/key-length", name,strlen("/key-length"))) {
+				sad_node->encryption_key_length = value->data.uint16_val;
+				DBG("encryption key length: %d",sad_node->encryption_key_length);
+			}
 			else if (0 == strncmp("/key", name,strlen("/key"))) {
+
                     if (NULL != strstr(value->xpath,"/encryption")) {
-						strcpy(sad_node->encryption_key,hexstr_to_char(value->data.string_val));
+							remove_colon(sad_node->encryption_key,value->data.string_val);
 						DBG("encryption_keyt: %s",sad_node->encryption_key);
 					}
 					if (NULL != strstr(value->xpath,"/integrity")) {
-						strcpy(sad_node->integrity_key,hexstr_to_char(value->data.string_val));
+						remove_colon(sad_node->integrity_key,value->data.string_val);
                         DBG("integrity_key: %s",sad_node->integrity_key);
                     }
 			}
@@ -814,7 +810,7 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 
     } while (SR_ERR_OK == sr_get_change_next(sess, it,&oper, &old_value, &new_value));
 
-    return SR_ERR_OK;
+	    return SR_ERR_OK;
 }
 
 int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *sad_name) {
@@ -834,13 +830,8 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
     }
 
     add_sad_node(sad_node);
-	// TODO create message and wait to receive the confirmation the sad_entrie decrypted.
-	
-	
-
-
-
     rc = pf_addsad(sad_node);
+
     if (SR_ERR_OK != rc) {
         ERR("ADD SAD in getSAD_entry: %s", sr_strerror(rc));
         return rc;     
@@ -848,7 +839,6 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
  
     //INFO("SAD entry added! ");
     show_sad_list();
-	
 
     return SR_ERR_OK;
 
@@ -923,7 +913,7 @@ int get_sad_state(sr_session_ctx_t *session, const char *module_name, const char
 			sprintf(str_time, "%u", node->lft_time_current);
 			
 			if (i == 0) {
-				*parent = lyd_new_path(NULL, sr_get_context(sr_session_get_connection(session)), tmp_bytes_xpath, str_bytes, 0, 0);
+				lyd_new_path(*parent, NULL, tmp_bytes_xpath, str_bytes, 0, 0);
 				i++;
 			} else {
 				lyd_new_path(*parent,NULL,tmp_bytes_xpath, str_bytes, 0, 0);
@@ -959,10 +949,10 @@ int send_acquire_notification(sr_session_ctx_t *session, int policy_index){
 	
 	connection = sr_session_get_connection(session); 
 	
-	ctx = sr_get_context(connection);
+	ctx = sr_acquire_context(connection);
 	
 	/* create the notification */
-    notif = lyd_new_path(NULL, ctx, path, NULL, 0, 0);
+    lyd_new_path(notif, ctx, path, NULL, 0, 0);
     if (!notif) {
         ERR("Creating notification \"%s\" failed.\n", path);
         goto cleanup;
@@ -988,7 +978,7 @@ int send_acquire_notification(sr_session_ctx_t *session, int policy_index){
 	    }
 		
 	    /* send the notification */
-	    rc = sr_event_notif_send_tree(session, notif);
+	    rc = sr_notif_send_tree(session, notif,0,0);
 	    if (rc != SR_ERR_OK) {
 	        goto cleanup;
 	    }
@@ -997,13 +987,17 @@ int send_acquire_notification(sr_session_ctx_t *session, int policy_index){
 		INFO("send acquire notification: policy not found: %s", policy_index);
 	}
 	
-	lyd_free_withsiblings(notif);
+	lyd_free_all(notif);
 
 	
 	return rc;	
 	
 cleanup:
-    lyd_free_withsiblings(notif);
+	// sr_release_context(ctx);
+    lyd_free_all(notif);
+	if (ctx) {
+        sr_release_context(connection);
+    }
     //sr_disconnect(connection);
     return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }
@@ -1037,34 +1031,38 @@ int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi
 		ERR("Error obtaining connection");
 	}
 
-	ctx = sr_get_context(connection);
+	ctx = sr_acquire_context(connection);
 
 	if (ctx == NULL) {
 		ERR("Error obtaining ctx");
 	}
 	// ly_verb(LY_LLDBG);
 	/* create the notification */
-    notif = lyd_new_path(NULL, ctx, path, NULL, 0, 0);
+	// lyd_new_path(notif, ctx, path, NULL, 0, 0);
+    if (lyd_new_path(NULL, ctx, path, NULL, 0, &notif)) {
+        ERR("Creating notification \"%s\" failed.\n", path);
+        goto cleanup;
+    }
     if (!notif) {
         ERR("Creating notification \"%s\" failed.\n", path);
         goto cleanup;
     }
-	
+	INFO("Creating notification \"%s\"\n", path);
 	sad_entry_node* sad_node = get_sad_node_by_spi(spi);
     if (sad_node != NULL) {
 		
-	    if (!lyd_new_path(notif, NULL, "/ietf-i2nsf-ikeless:sadb-expire/ipsec-sa-name", (void *)sad_node->name, 0, 0)) {
+	    if (lyd_new_path(notif, NULL, "/ietf-i2nsf-ikeless:sadb-expire/ipsec-sa-name", sad_node->name, 0, NULL)) {
 	    	DEBUG("Creating value \"%s\" failed.\n", sad_node->name);
 	        goto cleanup;
 	    }
 		
-	    if (!lyd_new_path(notif, NULL, "/ietf-i2nsf-ikeless:sadb-expire/soft-lifetime-expire", soft ? (void *)"true" : (void *)"false", 0, 0)) {
+	    if (lyd_new_path(notif, NULL, "/ietf-i2nsf-ikeless:sadb-expire/soft-lifetime-expire", soft ? "true" : "false", 0, 0)) {
 	    	DEBUG("Creating value \"%s\" failed.\n", sad_node->name);
 	        goto cleanup;
 		}
 		
 	    /* send the notification */
-	    rc = sr_event_notif_send_tree(session, notif);
+	    rc = sr_notif_send_tree(session, notif,0,0);
 	    if (rc != SR_ERR_OK) {
 	        goto cleanup;
 	    }
@@ -1074,13 +1072,17 @@ int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi
 		rc = SR_ERR_NOT_FOUND; 
 	}
 	
-    lyd_free_withsiblings(notif);
+    lyd_free_all(notif);
     //sr_disconnect(connection);
 	return rc;	
 	
 cleanup:
-    lyd_free_withsiblings(notif);
+	// sr_release_context(ctx);
+    lyd_free_all(notif);
     //sr_disconnect(connection);
+	if (ctx) {
+        sr_release_context(connection);
+    }
     return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 	//return rc;
 		
@@ -1109,6 +1111,10 @@ int send_delete_SAD_request(unsigned long int spi) {
     }
 
 	sad_entry_node* sad_node = get_sad_node_by_spi(spi);
+	if (sad_node == NULL) {
+		INFO("SAD entry with SPI %d already deleted or does not exists",spi);
+		goto cleanup;
+	}
 	
     sprintf(xpath, "/ietf-i2nsf-ikeless:ipsec-ikeless/sad/sad-entry[name='%s']", sad_node->name);
     DBG("removeSADbySPI xpath: %s", xpath);
@@ -1117,7 +1123,7 @@ int send_delete_SAD_request(unsigned long int spi) {
         ERR("sr_delete_item: %s", sr_strerror(rc));
         goto cleanup;
     }
-    rc =  sr_apply_changes(session,0,0);
+    rc =  sr_apply_changes(session,0);
     if (SR_ERR_OK != rc) {
         ERR("sr_commit: %s", sr_strerror(rc));
         goto cleanup;

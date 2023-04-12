@@ -169,9 +169,5 @@ void key_print(struct sadb_ext *ext) {
 		key->sadb_key_exttype == SADB_EXT_KEY_AUTH ?
 		"Authentication" : "Encryption",
 		key->sadb_key_bits);
-	/*for (p = (unsigned char *)(key + 1), bits = key->sadb_key_bits;
-			bits > 0; p++, bits -= 8)
-		DBG("%02x", *p);
-	DBG("");*/
 }
 

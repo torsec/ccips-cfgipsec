@@ -237,6 +237,7 @@ get_sadb_msg_type(int type) {
 	case SADB_GETSPI:	return "Get SPI";
 	case SADB_UPDATE:	return "Update";
 	case SADB_ADD:		return "Add";
+	case SADB_X_SPDADD: return "SADB_X_SPADD";
 	case SADB_DELETE:	return "Delete";
 	case SADB_GET:		return "Get";
 	case SADB_ACQUIRE:	return "Acquire";
@@ -315,6 +316,7 @@ sock_ntop(const struct sockaddr *sa, socklen_t salen) {
 	}
 }
 
+// function to remove all occurrences of a character from a string
 void remove_all_chars(char* str, char c) {
     char *pr = str, *pw = str;
     while (*pr) {
@@ -324,22 +326,38 @@ void remove_all_chars(char* str, char c) {
     *pw = '\0';
 }
 
-
-
-unsigned char* hexstr_to_char(char* hexstr)
+// function to convert a hex string to a byte array
+unsigned char* hexstr_to_char(const char* hexstr)
 {
-	remove_all_chars(hexstr,':');
-	size_t len = strlen(hexstr);
+	// make a copy of the input string
+    char* hexstr_copy = strdup(hexstr);
+    if (hexstr_copy == NULL) {
+        return NULL;
+    }
+
+	remove_all_chars(hexstr_copy, ':');
+	size_t len = strlen(hexstr_copy);
     if (len % 2 != 0)
         return NULL;
     size_t final_len = len / 2;
     unsigned char* chrs = (unsigned char*)malloc((final_len+1) * sizeof(*chrs));
     for (size_t i=0, j=0; j<final_len; i+=2, j++)
-        chrs[j] = (hexstr[i] % 32 + 9) % 25 * 16 + (hexstr[i+1] % 32 + 9) % 25;
+        chrs[j] = (hexstr_copy[i] % 32 + 9) % 25 * 16 + (hexstr_copy[i+1] % 32 + 9) % 25;
     chrs[final_len] = '\0';
     return chrs;
 }
 
+
+void remove_colon(char* out, char* str) {
+    int len = strlen(str);
+    int j = 0;
+    for(int i = 0; i < len; i++) {
+        if(str[i] != ':') {
+            out[j++] = str[i]; // copy the character to the output buffer if it's not a colon
+        }
+    }
+    out[j] = '\0'; // add the null terminator at the end of the output string
+}
 // int checkIKE_connection() {
 
 // 	vici_conn_t *conn;

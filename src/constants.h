@@ -36,6 +36,14 @@
 #define EALG_3DESCBC_KEY_BITS	  192
 #define EAL_BLOWFISH_KEY_BITS     192
 #define EAL_AES_KEY_BITS          256
+#define EAL_CASTCBC_KEY_BITS      128
+#define EAL_AESCTR_KEY_BITS      512  
+#define EAL_AES_CCM_ICV8_KEY_BITS  256
+#define EAL_AES_CCM_ICV12_KEY_BITS 384
+#define EAL_AES_CCM_ICV16_KEY_BITS 512
+#define EAL_AES_GCM_ICV8_KEY_BITS 256  
+#define EAL_AES_GCM_ICV12_KEY_BITS 384  
+#define EAL_AES_GCM_ICV16_KEY_BITS 512  
 
 
 #define AALG_MD5HMAC_KEY_BITS    160
@@ -141,7 +149,7 @@
 #define SADB_X_EALG_BLOWFISHCBC		7 // key length 32bits-448
 #define SADB_EALG_NULL			11 
 #define SADB_X_EALG_AESCBC		12 // key length 128/192/256 
-#define SADB_X_EALG_AESCTR		13 // key length 128/192/256 
+#define     		13 // key length 128/192/256 
 #define SADB_X_EALG_AES_CCM_ICV8	14 //key length 128/192/256 
 #define SADB_X_EALG_AES_CCM_ICV12	15 //key length 128/192/256 
 #define SADB_X_EALG_AES_CCM_ICV16	16 //key length 128/192/256 
