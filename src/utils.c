@@ -327,26 +327,19 @@ void remove_all_chars(char* str, char c) {
 }
 
 // function to convert a hex string to a byte array
-unsigned char* hexstr_to_char(const char* hexstr)
+unsigned char* hexstr_to_char(char* hexstr)
 {
-	// make a copy of the input string
-    char* hexstr_copy = strdup(hexstr);
-    if (hexstr_copy == NULL) {
-        return NULL;
-    }
-
-	remove_all_chars(hexstr_copy, ':');
-	size_t len = strlen(hexstr_copy);
+	remove_all_chars(hexstr,':');
+	size_t len = strlen(hexstr);
     if (len % 2 != 0)
         return NULL;
     size_t final_len = len / 2;
     unsigned char* chrs = (unsigned char*)malloc((final_len+1) * sizeof(*chrs));
     for (size_t i=0, j=0; j<final_len; i+=2, j++)
-        chrs[j] = (hexstr_copy[i] % 32 + 9) % 25 * 16 + (hexstr_copy[i+1] % 32 + 9) % 25;
+        chrs[j] = (hexstr[i] % 32 + 9) % 25 * 16 + (hexstr[i+1] % 32 + 9) % 25;
     chrs[final_len] = '\0';
     return chrs;
 }
-
 
 void remove_colon(char* out, char* str) {
     int len = strlen(str);
@@ -358,37 +351,10 @@ void remove_colon(char* out, char* str) {
     }
     out[j] = '\0'; // add the null terminator at the end of the output string
 }
-// int checkIKE_connection() {
-
-// 	vici_conn_t *conn;
-//     int rc = SR_ERR_OK;
-
-//     vici_init();
-//     conn = vici_connect(NULL);
-//     if (conn){
-//             INFO(" Connected to vici ");
-// 	} else {
-//             ERR("Connecting failed: %s", strerror(errno));
-//             return SR_ERR_OPERATION_FAILED;
-//     }
-    
-//     vici_deinit();
-//     return SR_ERR_OK;
-// }
-
+// only include the following if we are developing for a trusted application
+// only included in 	
+#ifdef TRUSTED_APP
 int found_name(char *path) {
-
-	/*int len = strlen(path);
-	//char *tmp_name = malloc(len + 1);
-	char * tmp_name=strdup(path);
-	char *name = strrchr(tmp_name, '/');
-	if (0 == strncmp("/name",name,strlen("/name"))) {
-		free(tmp_name);
-		return 1;
-	} else {
-		free(tmp_name);
-		return 0;
-	}*/
 	int len = strlen(path);
 	const char *last = &path[len-5];
 	if (0 == strcmp("/name",last)) {
@@ -396,8 +362,6 @@ int found_name(char *path) {
 	}
 	return 0;
 }
-
-
 
 
 sad_entry_node *m_get_sad_entry(map_struct m, char *hash) {
@@ -444,3 +408,4 @@ void free_map_entry(void* key, size_t ksize, uintptr_t value, void* usr)
 {
 	free((sad_entry_node*)value);
 }
+#endif

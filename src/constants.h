@@ -149,7 +149,7 @@
 #define SADB_X_EALG_BLOWFISHCBC		7 // key length 32bits-448
 #define SADB_EALG_NULL			11 
 #define SADB_X_EALG_AESCBC		12 // key length 128/192/256 
-#define     		13 // key length 128/192/256 
+#define SADB_X_EALG_AESCTR		13 // key length 128/192/256 
 #define SADB_X_EALG_AES_CCM_ICV8	14 //key length 128/192/256 
 #define SADB_X_EALG_AES_CCM_ICV12	15 //key length 128/192/256 
 #define SADB_X_EALG_AES_CCM_ICV16	16 //key length 128/192/256 

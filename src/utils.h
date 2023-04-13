@@ -40,11 +40,13 @@
 #include "log.h"
 #include "constants.h"
 #include "sad_entry.h"
+#ifdef TRUSTED_APP
 #include "map.h"
+#endif 
+
 
 char * get_ip(char * ip_mask);
 int get_mask(char * ip_mask);
-
 void set_verbose(int setting);
 int v_printf(const char * restrict format, ...);
 const char * get_sadb_msg_type(int type);
@@ -61,12 +63,15 @@ const char * get_auth_alg(int alg);
 const char * get_encrypt_alg(int alg);
 int getAuthAlg(char* alg);
 int getEncryptAlg(char* alg);
-
 unsigned char* hexstr_to_char(char* hexstr);
 int checkIKE_connection();
-
 void remove_colon(char* out, char* str) ;
 
 
 
-
+#ifdef TRUSTED_APP
+sad_entry_node *m_get_sad_entry(map_struct m, char *hash);
+int m_set_sad_entry(map_struct m, char *hash, sad_entry_node *map_node);
+int m_delete_sad_entry(map_struct m, char *hash);
+void free_map_entry(void* key, size_t ksize, uintptr_t value, void* usr);
+#endif
