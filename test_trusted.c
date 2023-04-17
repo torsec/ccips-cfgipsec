@@ -10,6 +10,14 @@
 #include <assert.h>
 #include <stdbool.h>
 #include "parson.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include "messages.h"
+#include "trust_client.h"
+#include "trust_handler.h"
 // #include "constants.h"
 // #include "base/serializers/sad_serializer.h"
 // #include "base/serializers/spd_serializer.h"
@@ -28,6 +36,37 @@ sigint_handler(int signum)
 
 int 
 main(int argc, char **argv) {
+
+
+ connect_ta();
+//  disconnect_ta();
+
+//  int sock = socket(AF_INET, SOCK_STREAM, 0);
+//     if (sock < 0) {
+//         perror("socket failed");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     struct sockaddr_in server_addr;
+//     server_addr.sin_family = AF_INET;
+//     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+//     server_addr.sin_port = htons(10000);
+
+//     if (connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+//         perror("connect failed");
+//         exit(EXIT_FAILURE);
+//     }
+
+
+//     char buffer[2048] = {0};
+//     if (recv(sock, buffer, 2048, 0) < 0) {
+//         perror("recv failed");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     printf("Received response from server: %s\n", buffer);
+
+
 
     // pf_exec_register(SADB_SATYPE_ESP);    
     unsigned long long int req_id = 100;
@@ -167,38 +206,89 @@ main(int argc, char **argv) {
 	sad_node->lft_idle_current= 10;
 
 
-    // if (!cser_raw_store_struct_spd_entry_node(spd_node,))
+    // // if (!cser_raw_store_struct_spd_entry_node(spd_node,))  
+    // sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
+    // message->sad_entry =  sad_node;
 
-    rc =  pf_addpolicy(spd_node);
-    if (0 != rc) {
-        ERR("ADD SPD entry: %d", rc);
-        return rc;     
+    // JSON_Value *new_conf_msg = encode_sad_entry_msg(message);
+    // char *serialized_msg = encode_default_msg(10,NEW_CONFIG_MSG,new_conf_msg);
+    sad_entry_node *rec_sad = (sad_entry_node*) malloc(sizeof(sad_entry_node)); 
+    if (add_sad_entry(sad_node,rec_sad) != 0) {
+        printf("Error when adding\n");
+    } else {
+        printf("Added Sad entry\n");
     }
 
-    rc = pf_addsad(sad_node);
-    if (0 != rc) {
-        ERR("ADD SAD in getSAD_entry: %d", rc);
-        return rc;     
-    }
     
-
-    // rc = pf_delsad(sad_node);
-    // if (0 != rc) {
-    //     ERR("ADD SAD in getSAD_entry: %d", rc);
-    //     return rc;     
+    // if (del_sad_entry(rec_sad) != 0) {
+    //     printf("Error when deleting\n");
+    // } else {
+    //     printf("Deleted Sad entry\n");
     // }
-    // Check for lifetime
+
+    // if (send(sock, serialized_msg, strlen(serialized_msg), 0) < 0) {
+    //     perror("send failed");
+    //     exit(EXIT_FAILURE);
+    // }
+    // // send(sock, buffer, strlen(buffer), 0);
+
+
+    // char buffer2[2048] = {0};
+    // if (recv(sock, buffer2, 2048, 0) < 0) {
+    //     perror("recv failed");
+    //     exit(EXIT_FAILURE);
+    // }
+
+    // printf("Received response from server: %s\n", buffer2);
+
+    // // Now parse the answer 
+ 
+    // JSON_Value *data_value;
+    // default_msg *msg = malloc(sizeof(default_msg));
+    // JSON_Object *schema = json_object(json_parse_string(buffer2));
+    // if (schema == NULL) {
+    //     int result = -1;
+    //     int code = -1;
+    //     data_value = generate_op_message("WRONG JSON",-1);    
+    //     //goto cleanup;
+    //     exit(1);
+    // }
+
+    // if (schema == NULL || decode_default_msg(schema,msg) != 0) {
+    //     // TODO handle error of decode_default
+    //     //goto cleanup;
+    //     exit(1);
+    // }
+
+    // int result = 0;
+
+    // sad_entry_node *sad_return; 
+    // switch (msg->code) {
+    //     case INSERT_ENTRY_MSG: {
+    //         sad_entry_msg *config = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
+    //         sad_entry_msg *entry_msg = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
+    //         if ((result = handle_new_conf_message(msg->data,entry_msg)), result != 0) {
+    //             //goto cleanup;
+    //             exit(1);
+    //         }
+    //         sad_return = entry_msg->sad_entry;
+    //         break;
+    //     }
+    //     case OP_RESULT_MSG: {
+    //         op_result_msg *result = (op_result_msg*) malloc(sizeof(op_result_msg)); 
+    //         if ((result = decode_op_result_msg(msg->data,result)), result != 0) {
+    //             //goto cleanup;
+    //             exit(1);
+    //         }
+    //         if (result->success != 0) {
+    //              printf("Error when adding %s.\n",result);
+    //             exit(1);
+    //         }
+    //     }
+    // }
+    printf("Application exit requested, exiting.\n");
     
-    // char *result = serialize_sad_node(sad_node);
-    // deserialize_sad_node(result);
-    // INFO(result);
-
-
-
-
-    INFO("Application exit requested, exiting.");
     return 0;
-
 }
 
 

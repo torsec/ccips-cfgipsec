@@ -89,7 +89,7 @@ cleanup:
 }
 
 
-int handle_new_conf_message (JSON_Object *data, sad_entry_msg *out) {
+int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     int status = 0;
     // Decode the data of the message
     sad_entry_msg *config = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
@@ -192,5 +192,6 @@ cleanup:
     out->success = status;
     return status;
 }
+
 
 
