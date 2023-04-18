@@ -4,6 +4,7 @@ set(SRC_DIRECTORY "${PROJECT_SOURCE_DIR}/src")
 # Include directories
 include_directories("${SRC_DIRECTORY}")
 
+
 message(STATUS "Add libraries for untrusted")
 add_library(i2nsf
 "${SRC_DIRECTORY}/sad_entry.c"
@@ -12,6 +13,7 @@ add_library(i2nsf
 "${SRC_DIRECTORY}/messages.c"
 "${SRC_DIRECTORY}/pfkeyv2_utils.c"
 "${SRC_DIRECTORY}/pfkeyv2_entry.c"
+"${SRC_DIRECTORY}/trust_client.c"
 "${SRC_DIRECTORY}/sysrepo_utils.c"
 "${SRC_DIRECTORY}/sysrepo_entries.c"
 "${SRC_DIRECTORY}/sysrepo_print.c"
@@ -22,6 +24,7 @@ add_library(i2nsf
 "${SRC_DIRECTORY}/messages.h"
 "${SRC_DIRECTORY}/pfkeyv2_utils.h"
 "${SRC_DIRECTORY}/pfkeyv2_entry.h"
+"${SRC_DIRECTORY}/trust_client.h"
 "${SRC_DIRECTORY}/sysrepo_utils.h"
 "${SRC_DIRECTORY}/sysrepo_entries.h"
 "${SRC_DIRECTORY}/sysrepo_print.h"
@@ -36,8 +39,8 @@ include_directories("${PROJECT_SOURCE_DIR}/parson")
 
 # add the executable
 add_executable(${PROJECT_NAME} 
-    "${PROJECT_SOURCE_DIR}/cmd/i2nsf_ra/main.c"
-    # "${PROJECT_SOURCE_DIR}/test_trusted.c"
+    # "${PROJECT_SOURCE_DIR}/cmd/i2nsf_ra/main.c"
+    "${PROJECT_SOURCE_DIR}/test_trusted.c"
     "${SRC_DIRECTORY}/constants.h"
     "${SRC_DIRECTORY}/host.h"
 )

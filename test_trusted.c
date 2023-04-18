@@ -213,18 +213,39 @@ main(int argc, char **argv) {
     // JSON_Value *new_conf_msg = encode_sad_entry_msg(message);
     // char *serialized_msg = encode_default_msg(10,NEW_CONFIG_MSG,new_conf_msg);
     sad_entry_node *rec_sad = (sad_entry_node*) malloc(sizeof(sad_entry_node)); 
-    if (add_sad_entry(sad_node,rec_sad) != 0) {
+    if (add_sad_entry(rec_sad,sad_node) != 0) {
         printf("Error when adding\n");
     } else {
         printf("Added Sad entry\n");
     }
 
+    char verify_response[32];
+    rec_sad->integrity_key = "aaaaaaaa";
+    rec_sad->encryption_key = "aaaaaaaa";
+    int verification = verify_sad_entry(verify_response,rec_sad);
+    switch (verification)
+    {
+    case 1:
+        // Socket error 
+        break;
+    case 2:
+        ERR("ALERT: %s", verify_response);
+        break;
+    case 3:
+        ERR("INVALID ANSWER!");
+        break;
+    default:
+        INFO("Verification has been done correctly");
+        break;
+    }
     
-    // if (del_sad_entry(rec_sad) != 0) {
-    //     printf("Error when deleting\n");
-    // } else {
-    //     printf("Deleted Sad entry\n");
-    // }
+
+
+    if (del_sad_entry(rec_sad) != 0) {
+        printf("Error when deleting\n");
+    } else {
+        printf("Deleted Sad entry\n");
+    }
 
     // if (send(sock, serialized_msg, strlen(serialized_msg), 0) < 0) {
     //     perror("send failed");

@@ -14,7 +14,7 @@
 // #define REQUEST_entry_MSG     5 For the moment not used.
 #define INSERT_ENTRY_MSG      6
 #define RETURN_entry_MSG      7 
-#define REQUEST_verify_MSG    8
+#define REQUEST_VERIFY_MSG    8
 #define ERROR_MSG             -1
 
 
@@ -26,8 +26,6 @@ typedef struct default_msg {
     int code;
     JSON_Object *data;
 } default_msg;
-
-
 
 // sad_entry_msg Message used to share the new spa_entry to the trusted part
 typedef struct sad_entry_msg {

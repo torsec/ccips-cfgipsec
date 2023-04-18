@@ -46,7 +46,7 @@ extern char *handle_message(char *data) {
             }
             break;
         }
-        case REQUEST_verify_MSG: {
+        case REQUEST_VERIFY_MSG: {
             alert_state_msg *alert_msg = (alert_state_msg*) malloc(sizeof(alert_state_msg));    
             if (result = handle_request_verify_message(msg->data,alert_msg), result == 0) {
                 // The confirmation has been succesfull

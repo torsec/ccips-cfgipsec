@@ -95,7 +95,7 @@ int add_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
             break;
         }
         default: {
-            ERR("Message type found");
+            ERR("Message type not found");
             goto cleanup;
         }
     }
@@ -103,7 +103,80 @@ int add_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
     cleanup:
         free(message);
         free(msg);
+        free(serialized_msg);
         json_value_free(schema);
+        json_value_free(new_conf_msg);
+        return result;
+}
+
+int verify_sad_entry(char *alert, sad_entry_node *sad_node) {
+    sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
+    message->sad_entry =  sad_node;
+    JSON_Value *verify_entry = encode_sad_entry_msg(message);
+    char *serialized_msg = encode_default_msg(10,REQUEST_VERIFY_MSG,verify_entry);
+    int result = 1;
+
+    if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
+        ERR("Couldnt send any information to the server");
+        goto cleanup;
+    }
+
+    char buffer2[2048] = {0};
+    if (recv(ENARX_SOCKET, buffer2, 2048, 0) < 0) {
+        ERR("Couldnt receive any information from the server");
+        goto cleanup;
+    }
+
+    default_msg *msg = malloc(sizeof(default_msg));
+    JSON_Object *schema = json_object(json_parse_string(buffer2));
+    if (schema == NULL) {
+        result = 1;
+        goto cleanup;
+    }
+
+    if (schema == NULL || decode_default_msg(schema,msg) != 0) {
+        // TODO handle error of decode_default
+        goto cleanup;
+    }
+    switch (msg->code) {
+        case ALERT_STATE_MSG: {
+            alert_state_msg *alert_msg = (alert_state_msg*) malloc(sizeof(alert_state_msg)); 
+            if ((result = decode_alert_state_msg(msg->data,alert_msg)), result == 0) {
+                strcpy(alert, alert_msg->message);
+                result = 2;
+            }
+            free(alert_msg);
+            goto cleanup;
+        }
+        case OP_RESULT_MSG: {
+            op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result_msg)); 
+            if (decode_op_result_msg(msg->data,op_result) != 0) {
+                goto cleanup;
+            }
+            if (op_result->success != 0) {
+                ERR("Error when verifying: %s\n",op_result->message);
+                strcpy(alert,"TA could not verify");
+                free(op_result);
+                result = 3;
+                goto cleanup;
+            }
+            break;
+            DBG("Verification successful");
+        }
+        default: {
+            ERR("Message type not found");
+            strcpy(alert,"Message type found");
+            result = 3;
+            goto cleanup;
+        }
+    }
+    result = 0;
+    cleanup:
+        free(message);
+        free(msg);
+        free(serialized_msg);
+        json_value_free(schema);
+        json_value_free(verify_entry);
         return result;
 }
 
@@ -125,7 +198,6 @@ int del_sad_entry(sad_entry_node *sad_node) {
         ERR("Couldnt receive any information from the server");
         goto cleanup;
     }
-
 
     default_msg *msg = malloc(sizeof(default_msg));
     JSON_Object *schema = json_object(json_parse_string(bufferAnswer));
@@ -150,7 +222,6 @@ int del_sad_entry(sad_entry_node *sad_node) {
         goto cleanup;
     }
 
-
     if (op_result->success != 0) {
         ERR("Error when deleting the sad entry: %s\n",op_result->message);
         free(op_result);
@@ -162,9 +233,14 @@ int del_sad_entry(sad_entry_node *sad_node) {
         free(message);
         free(msg);
         free(op_result);
+        free(serialized_msg);
         json_value_free(schema);
+        json_value_free(delete_msg);
         return result;
 }
+
+
+
 
 
 

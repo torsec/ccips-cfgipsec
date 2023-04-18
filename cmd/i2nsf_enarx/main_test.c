@@ -180,7 +180,7 @@ int main(void) {
 
     // Test the encoding
     JSON_Value *new_ver_msg = encode_sad_entry_msg(ver_message);
-    serialized_msg = encode_default_msg(10,REQUEST_verify_MSG,new_ver_msg);
+    serialized_msg = encode_default_msg(10,REQUEST_VERIFY_MSG,new_ver_msg);
     handle_message(serialized_msg);
 
     // DELETE
