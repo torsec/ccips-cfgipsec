@@ -163,17 +163,18 @@ int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 
 
 char* get_sad_hash(sad_entry_node *sad_node, char *output) {
-	// char *input = (char *) malloc(sizeof(char) * MAX_ID_LENGTH);
-	// strcpy(input,sad_node->name);
-	// strcat(input,sad_node->local_subnet);
-	// strcat(input,sad_node->remote_subnet);
-	// strcat(input,sad_node->tunnel_local);
-	// strcat(input,sad_node->tunnel_remote);
-	// MD5(input, strlen(input), output);
-	//     for (int i = 0; i < 16; i++) {
-    //     printf("%02x", output[i]);
-    // }
-	// free(input);
-	strcpy(output,"hashtestof16by");
+	char *input = (char *) malloc(sizeof(char) * MAX_ID_LENGTH);
+	strcpy(input,sad_node->name);
+	strcat(input,sad_node->local_subnet);
+	strcat(input,sad_node->remote_subnet);
+	strcat(input,sad_node->tunnel_local);
+	strcat(input,sad_node->tunnel_remote);
+	// This is just for testing, it can be replaced by other alternatives.
+	MD5(input, strlen(input), output);
+	    for (int i = 0; i < 16; i++) {
+        printf("%02x", output[i]);
+    }
+	free(input);
+	// strcpy(output,"hashtestof16by");
 	return output;
 }

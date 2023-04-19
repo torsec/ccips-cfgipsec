@@ -64,7 +64,7 @@ typedef struct insert_entry_msg
 
 
 
-int decode_default_msg(JSON_Object *schema, default_msg* msg);
+int decode_default_msg(default_msg* msg, JSON_Object *schema);
 char *encode_default_msg(int work_id, int code, JSON_Value *data);
 
 
@@ -72,12 +72,12 @@ char *encode_default_msg(int work_id, int code, JSON_Value *data);
 
 
 // Functions called to decode the messages
-int decode_sad_entry_msg(JSON_Object *schema, sad_entry_msg *msg);
-int decode_delete_config_msg(JSON_Object *schema, delete_config_msg *msg);
-int decode_alert_state_msg(JSON_Object *schema, alert_state_msg *msg);
-int decode_op_result_msg(JSON_Object *schema, op_result_msg *msg);
-int decode_request_entry_msg(JSON_Object *schema, request_entry_msg *msg);
-int decode_insert_entry_msg(JSON_Object *schema, insert_entry_msg *msg);
+int decode_sad_entry_msg(sad_entry_msg *msg, JSON_Object *schema);
+int decode_delete_config_msg(delete_config_msg *msg, JSON_Object *schema);
+int decode_alert_state_msg(alert_state_msg *msg, JSON_Object *schema);
+int decode_op_result_msg(op_result_msg *msg, JSON_Object *schema);
+int decode_request_entry_msg(request_entry_msg *msg, JSON_Object *schema);
+int decode_insert_entry_msg(insert_entry_msg *msg, JSON_Object *schema);
 
 // Functions to encode the messages
 JSON_Value *encode_sad_entry_msg(sad_entry_msg *msg);

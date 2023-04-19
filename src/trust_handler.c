@@ -26,7 +26,7 @@ extern char *handle_message(char *data) {
         goto cleanup;
     }
     // TODO handle error of decode_default
-    if (schema == NULL || decode_default_msg(schema,msg) != 0) {
+    if (schema == NULL || decode_default_msg(msg, schema) != 0) {
         // TODO handle error of decode_default
         goto cleanup;
     } 
@@ -93,7 +93,7 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     int status = 0;
     // Decode the data of the message
     sad_entry_msg *config = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
-    if (decode_sad_entry_msg(data,config) != 0) {
+    if (decode_sad_entry_msg(config,data) != 0) {
         ERR("Error decoding the data of the message");
         status = 1;
         goto cleanup;
@@ -124,7 +124,7 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
     int status = 0;
     // Decode the data of the message
     sad_entry_msg *config = (sad_entry_msg*) malloc(sizeof(sad_entry_msg));
-    if (decode_sad_entry_msg(data,config) != 0) {
+    if (decode_sad_entry_msg(config,data) != 0) {
         ERR("Error decoding the data of the message");
         status = 1;
         goto cleanup;
@@ -163,7 +163,7 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out) {
     char message[16];
     // Decode the data of the message
     delete_config_msg *config = (delete_config_msg*) malloc(sizeof(delete_config_msg));
-    if (decode_delete_config_msg(data,config) != 0) {
+    if (decode_delete_config_msg(config,data) != 0) {
         ERR("Error decoding the data of the message");
         strcpy(message,"decoding\0");
         status = 1;

@@ -3,7 +3,7 @@
 
 
 
-int decode_default_msg(JSON_Object *schema, default_msg* msg) {
+int decode_default_msg(default_msg* msg, JSON_Object *schema) {
     msg->work_id = json_object_get_number(schema,"work_id");
     msg->code = json_object_get_number(schema,"code");
     msg->data = json_object_get_object(schema,"data");
@@ -20,7 +20,7 @@ char *encode_default_msg(int work_id, int code, JSON_Value *data) {
 }
 
 
-int decode_sad_entry_msg(JSON_Object *schema, sad_entry_msg *msg) {
+int decode_sad_entry_msg(sad_entry_msg *msg, JSON_Object *schema) {
     strcpy(msg->entry_id,json_object_get_string(schema,"entry_id"));
     msg->sad_entry = deserialize_sad_node(json_object_get_object(schema,"sad_entry"));
     return 0;
@@ -34,7 +34,7 @@ JSON_Value *encode_sad_entry_msg(sad_entry_msg *msg) {
     return root_value;
 }
 
-int decode_delete_config_msg(JSON_Object *schema, delete_config_msg *msg) {
+int decode_delete_config_msg(delete_config_msg *msg, JSON_Object *schema) {
     strcpy(msg->entry_id,json_object_get_string(schema,"entry_id"));
     return 0;
 }
@@ -46,7 +46,7 @@ JSON_Value *encode_delete_config_msg(delete_config_msg *msg) {
     return root_value;
 }
 
-int decode_alert_state_msg(JSON_Object *schema, alert_state_msg *msg) {
+int decode_alert_state_msg(alert_state_msg *msg, JSON_Object *schema) {
     strcpy(msg->entry_id,json_object_get_string(schema,"entry_id"));
     strcpy(msg->message,json_object_get_string(schema,"message"));
     return 0;
@@ -61,7 +61,7 @@ JSON_Value *encode_alert_state_msg(alert_state_msg *msg) {
 }
 
 
-int decode_op_result_msg(JSON_Object *schema, op_result_msg *msg) {
+int decode_op_result_msg(op_result_msg *msg, JSON_Object *schema) {
     msg->success = json_object_get_number(schema,"success");
     strcpy(msg->message,json_object_get_string(schema,"message"));
     return 0;
@@ -75,7 +75,7 @@ JSON_Value *encode_op_result_msg(op_result_msg *msg) {
     return root_value;
 }
 
-int decode_request_entry_msg(JSON_Object *schema, request_entry_msg *msg) {
+int decode_request_entry_msg(request_entry_msg *msg, JSON_Object *schema) {
     strcpy(msg->entry_id,json_object_get_string(schema,"entry_id"));
     return 0;
 }
