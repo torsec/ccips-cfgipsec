@@ -5,7 +5,7 @@ void init_map() {
     if (trusted_map == NULL) {
         trusted_map = map_create();
     } else {
-        WARN("Map already started %d, %d", trusted_map, &trusted_map);
+        // WARN("Map already started %d, %d", trusted_map, &trusted_map);
     }
 }
 
@@ -88,7 +88,7 @@ cleanup:
     return out_data;
 }
 
-
+// TODO change order of input parameters
 int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     int status = 0;
     // Decode the data of the message
@@ -104,17 +104,17 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     // XOR the key parameters
     // TODO Add this part
     // Store the values
-    char hash[HASH_MAP_SIZE];
-    get_sad_hash(config->sad_entry,hash);
+    char *hash=get_sad_hash(config->sad_entry);
     if (m_set_sad_entry(trusted_map,hash,entry) != 0) {
         ERR("Error adding sad_entry to map");
         status =  1;
         goto cleanup;
     }
-    // Free data
-    strcpy(out->entry_id,config->entry_id);
+
+    strcpy(out->entry_id,hash);
     out->sad_entry = entry;
 cleanup:
+    // Free data
 	free(config);
     return status;
 }
@@ -130,17 +130,18 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
         goto cleanup;
     }
     // Check if the node exists based in the hash
-    char hash[HASH_MAP_SIZE];
-    get_sad_hash(config->sad_entry,hash);
+    char *hash = get_sad_hash(config->sad_entry);
 
-    // Check if hash is equal to entry_id
-    if (sizeof(config->entry_id) != sizeof(hash) && strcmp(config->entry_id,hash) != 0) {
-        status = 1;
-        goto cleanup;
-    }
+    // Check if hash is equal to entry_id Do no check for this since this needs to be calculated by the trusted app
+    // if (sizeof(config->entry_id) != sizeof(hash) && strcmp(config->entry_id,hash) != 0) {
+    //     ERR("Hash not equal");
+    //     status = 1;
+    //     goto cleanup;
+    // }
 
     sad_entry_node *stored_entry = m_get_sad_entry(trusted_map,hash);
     if (stored_entry == NULL) {
+        ERR("Entry not found");
         status = 1;
         goto cleanup;
     }

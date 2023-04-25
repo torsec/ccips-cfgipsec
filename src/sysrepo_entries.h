@@ -13,6 +13,11 @@
 #include "log.h"
 #include "messages.h"
 
+// #ifdef ENARX
+#include "trust_client.h"
+// #endif ENARX
+
+
 void print_current_config(sr_session_ctx_t *session, const char *module_name);
 
 // Removed from spd and sad
@@ -27,5 +32,8 @@ int get_sad_state(sr_session_ctx_t *session, const char *module_name, const char
         uint32_t request_id, struct lyd_node **parent, void *private_data);
 int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi, bool soft);
 int send_delete_SAD_request(unsigned long int spi);
+// #ifdef ENARX
+void verify_sad_nodes();
+// #endif ENARX
 
 #endif

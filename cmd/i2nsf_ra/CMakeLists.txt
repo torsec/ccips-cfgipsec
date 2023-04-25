@@ -36,6 +36,9 @@ add_library(parson STATIC "${PROJECT_SOURCE_DIR}/parson/parson.c")
 # set_target_properties(parson PROPERTIES PRIVATE_HEADER "parson.h")
 include_directories("${PROJECT_SOURCE_DIR}/parson")
 
+add_library(md5 STATIC "${PROJECT_SOURCE_DIR}/md5-c/md5.c")
+include_directories("${PROJECT_SOURCE_DIR}/md5-c")
+include_directories("${SRC_DIRECTORY}")
 
 # add the executable
 add_executable(${PROJECT_NAME} 
@@ -53,6 +56,7 @@ message(STATUS "Linking libraries for untrusted target")
 target_link_libraries(${PROJECT_NAME} PUBLIC 
     i2nsf
     parson
+    md5
     ${SYSREPO_LIBRARIES}
     ${LIBYANG_LIBRARIES}
     pthread

@@ -41,7 +41,7 @@ int disconnect_ta() {
     }
 }
 
-int add_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
+int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     message->sad_entry =  old_sad;
     JSON_Value *new_conf_msg = encode_sad_entry_msg(message);
@@ -80,6 +80,7 @@ int add_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
             }
             // new_sad = entry_msg->sad_entry;
             memcpy(new_sad,entry_msg->sad_entry,sizeof(sad_entry_node));
+            strcpy(new_sad->entry_id,entry_msg->entry_id);
             break;
         }
         case OP_RESULT_MSG: {
@@ -109,7 +110,7 @@ int add_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
         return result;
 }
 
-int verify_sad_entry(char *alert, sad_entry_node *sad_node) {
+int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     message->sad_entry =  sad_node;
     JSON_Value *verify_entry = encode_sad_entry_msg(message);
@@ -180,10 +181,10 @@ int verify_sad_entry(char *alert, sad_entry_node *sad_node) {
         return result;
 }
 
-int del_sad_entry(sad_entry_node *sad_node) {
+int del_trusted_sad_entry(sad_entry_node *sad_node) {
     delete_config_msg *message = (delete_config_msg*) malloc(sizeof(delete_config_msg));
     op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result_msg)); 
-    get_sad_hash(sad_node,message->entry_id);
+    strcpy(message->entry_id,sad_node->entry_id);
     int result = 1;
     JSON_Value *delete_msg =  encode_delete_config_msg(message);
     char *serialized_msg = encode_default_msg(10,DELETE_CONFIG_MSG,delete_msg);
@@ -224,7 +225,7 @@ int del_sad_entry(sad_entry_node *sad_node) {
 
     if (op_result->success != 0) {
         ERR("Error when deleting the sad entry: %s\n",op_result->message);
-        free(op_result);
+        // free(op_result);
         goto cleanup;
     }
 

@@ -91,10 +91,6 @@ static void add_addr_ext(struct sadb_msg *msg, sad_entry_node *sad_node, uint16_
 	PFKEY_EXT_ADD(msg, addr);
 }
 
-
-
-
-
 static void* pf_sadb_esp_register_run(void* register_thread_info){
 
     char buf[4096];
@@ -270,12 +266,11 @@ int pf_exec_register(sr_session_ctx_t *session, int satype){
 
 
 int pf_setsadbaddr(void *p, int exttype, int protocol, int prefixlen, int port, char ip[]){
-    
     struct sockaddr_in *addr= malloc (sizeof(struct sockaddr_in));
     addr->sin_family = AF_INET; 
     addr->sin_port = htons(port); 
     addr->sin_addr.s_addr = inet_addr(ip);
-    
+
     struct sadb_address *addrext = (struct sadb_address *) p;
     addrext->sadb_address_len = (sizeof(*addrext) + sizeof(struct sockaddr_in))/8 ;
     addrext->sadb_address_exttype = exttype;
@@ -284,10 +279,10 @@ int pf_setsadbaddr(void *p, int exttype, int protocol, int prefixlen, int port, 
     // addrext->sadb_address_reserved = 0;
     INFO("PF_SETSADBADDR: %d, %d, %d, %d, %s",exttype,protocol,prefixlen,port,ip);
     memcpy(addrext +1, addr, sizeof(struct sockaddr_in));
-
     return (addrext->sadb_address_len *8);
-
 }
+
+
 
 
 
@@ -690,45 +685,8 @@ int pf_addsad(sad_entry_node *sad_node) {
     return SR_ERR_OK;
 }
 
-// int pf_delsad_v2(sad_entry_node *sad_node) {
-//     int s, mypid;
-//     unsigned char request[PFKEY_BUFFER_SIZE];
-//     struct sadb_msg *msg, *out;
-// 	struct sadb_sa *sa;
-//     size_t len;
-
-
-//     msg = (struct sadb_msg*)request;
-// 	msg->sadb_msg_version = PF_KEY_V2;
-// 	msg->sadb_msg_type = SADB_DELETE;
-// 	if (sad_node->protocol_parameters == IPPROTO_ESP)
-//     	msg->sadb_msg_satype = SADB_SATYPE_ESP;
-// 	msg->sadb_msg_len = PFKEY_LEN(sizeof(struct sadb_msg));
-
-//     sa = (struct sadb_sa*)PFKEY_EXT_ADD_NEXT(msg);
-// 	sa->sadb_sa_exttype = SADB_EXT_SA;
-// 	sa->sadb_sa_len = PFKEY_LEN(sizeof(struct sadb_sa));
-// 	sa->sadb_sa_spi = sad_node->spi;
-
-
-//     add_addr_ext(msg, sad_node->local_subnet, SADB_EXT_ADDRESS_SRC, 0, 0, FALSE);
-//     add_addr_ext(msg, sad_node->remote_subnet, SADB_EXT_ADDRESS_SRC, 0, 0, FALSE);
-
-//     unsigned char buf[PFKEY_BUFFER_SIZE];
-//     struct sadb_msg *msg;
-
-//     s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
-//     mypid = getpid();
-
-//     close(s);
-//     return SR_ERR_OK;
-
-// }
-
 
 int pf_delsad(sad_entry_node *sad_node) {
-
-
     struct sadb_msg *msg;
     struct sadb_x_policy *policyext;
     int s, len, spi;
@@ -779,18 +737,15 @@ int pf_delsad(sad_entry_node *sad_node) {
 }
 
 
-int pf_getsad(sad_entry_node *sad_node) {
-
-
+int pf_getsad(sad_entry_node *out_node, sad_entry_node *sad_node) {
     struct sadb_msg *msg;
     struct sadb_x_policy *policyext;
     int s, len, spi;
     int rc = SR_ERR_OK;
     char buf[4096], *p;
     struct sadb_sa *saext;
-    struct sadb_x_sa2 *sa2;
-    struct sadb_key *keyext;
-    struct sadb_address *addrext;
+    // struct sadb_key *keyext;
+    // struct sadb_address *addrext;
     int mypid;
 
     s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
@@ -815,26 +770,149 @@ int pf_getsad(sad_entry_node *sad_node) {
     len += saext->sadb_sa_len * 8;
     p += saext->sadb_sa_len * 8;
 
+    if(sad_node->ipsec_mode == IPSEC_MODE_TUNNEL){
+        int src_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, 32, sad_node->srcport, sad_node->tunnel_local);
+        p += src_len; len += src_len;
+        int dst_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, 32, sad_node->dstport, sad_node->tunnel_remote);
+        len += dst_len; p += dst_len;
+    } else {
+        int src_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, get_mask(sad_node->local_subnet), sad_node->srcport, get_ip(sad_node->local_subnet));
+        p += src_len; len += src_len;    
+        int dst_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, get_mask(sad_node->remote_subnet), sad_node->dstport, get_ip(sad_node->remote_subnet));
+        len += dst_len; p += dst_len;
+    }
 
-    int src_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, get_mask(sad_node->local_subnet), sad_node->srcport, get_ip(sad_node->local_subnet));
-    p += src_len; len += src_len;    
-    int dst_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, get_mask(sad_node->remote_subnet), sad_node->dstport, get_ip(sad_node->remote_subnet));
-    len += dst_len; p += dst_len;
 
     msg->sadb_msg_len = len / 8;
     print_sadb_msg(msg, len);
    
     Write(s, buf, len);
+     // Read and print SADB_DUMP replies until done 
+    int msglen;
+    struct sadb_ext *ext;
+    struct sadb_msg *msgp;
+    msglen = Read(s, &buf, sizeof (buf));
+    msgp = (struct sadb_msg *) &buf;
     close(s);
 
+    if (msglen != msgp->sadb_msg_len * 8) {
+        ERR("SADB Message length (%d) doesn't match msglen (%d)",
+        msgp->sadb_msg_len * 8, msglen);
+        return SR_ERR_OPERATION_FAILED;
+    }
+    if (msgp->sadb_msg_version != PF_KEY_V2) {
+        ERR("SADB Message version not PF_KEY_V2");
+        return SR_ERR_OPERATION_FAILED;
+    }
+    if (msgp->sadb_msg_errno != 0) {
+        ERR("Unknown errno %s", strerror(msgp->sadb_msg_errno));
+    }
+    if (msglen == sizeof(struct sadb_msg)) {
+        return SR_ERR_OPERATION_FAILED; // no extensions 
+    }
+    msglen -= sizeof(struct sadb_msg);
+    ext = (struct sadb_ext *)(msgp + 1);
+    int prefixLenDst, prefixLenSrc;
+    char ipDst[MAX_IP], ipSrc[MAX_IP];
+    int mode;
+    // TODO extract more information
+    // for the moment, in first demo we can check only this values.
+    while (msglen > 0) {
+        switch (ext->sadb_ext_type) {
+            case SADB_EXT_KEY_ENCRYPT:{
+                DBG("Parsing ENC KEY");
+                struct  sadb_key *keyext = (struct sadb_key *) ext;
+                out_node->encryption_key = malloc(keyext->sadb_key_bits / 8);
+                memcpy(out_node->encryption_key, (char *) (keyext + 1), keyext->sadb_key_bits / 8);
+                break;
+            }
+            case SADB_EXT_KEY_AUTH: {
+                DBG("Parsing INT KEY");
+                struct  sadb_key *keyext = (struct sadb_key *) ext;
+                out_node->integrity_key = malloc(keyext->sadb_key_bits / 8);
+                memcpy(out_node->integrity_key, (char *) (keyext + 1), keyext->sadb_key_bits / 8);
+                break;
+            }
+            case SADB_EXT_SA: {
+                struct sadb_sa *sa;
+                sa = (struct sadb_sa *)ext;
+                DBG("Parsing SPI %i",ntohl(sa->sadb_sa_spi));
+                out_node->spi = ntohl(sa->sadb_sa_spi);
+                break;
+            }
+            case SADB_X_EXT_SA2: {
+                struct sadb_x_sa2 *sa2; 
+                sa2 = (struct sadb_x_sa2 *) ext;
+                mode = sa2->sadb_x_sa2_mode;
+                break;
+            }
+            case SADB_EXT_ADDRESS_SRC: {
+                struct sadb_address *addrext = (struct sadb_address *) ext;
+                int addr_len = (addrext->sadb_address_len * 8) - sizeof(struct sadb_address);
+                struct sockaddr_in *addr = (struct sockaddr_in *) (addrext + 1);
+                strcpy(ipSrc,inet_ntoa(addr->sin_addr));
+                // int port = ntohs(addr->sin_port);
+                // int protocol = addrext->sadb_address_proto;
+                prefixLenSrc = addrext->sadb_address_prefixlen;
+                break;
+            }
+            case SADB_EXT_ADDRESS_DST: {
+                struct sadb_address *addrext = (struct sadb_address *) ext;
+                int addr_len = (addrext->sadb_address_len * 8) - sizeof(struct sadb_address);
+                struct sockaddr_in *addr = (struct sockaddr_in *) (addrext + 1);
+                strcpy(ipDst,inet_ntoa(addr->sin_addr));
+                // int port = ntohs(addr->sin_port);
+                // int protocol = addrext->sadb_address_proto;
+                prefixLenDst = addrext->sadb_address_prefixlen;
+                break;
+            }
+            
+            //default: DBG("ext type: %i", ext->sadb_ext_type);
+        }
+        msglen -= ext->sadb_ext_len << 3;
+        ext = (struct sadb_ext*) ((char *)ext + (ext->sadb_ext_len << 3));
+    }
+    out_node->ipsec_mode = mode;
+    if (mode == IPSEC_MODE_TUNNEL) {
+        strcpy(out_node->tunnel_local,ipSrc);
+        strcpy(out_node->tunnel_remote,ipDst);
+    } else {
+        sprintf(out_node->local_subnet,"%s/%d",ipSrc,prefixLenSrc);
+        sprintf(out_node->remote_subnet,"%s/%d",ipDst,prefixLenDst);
+    }
     return SR_ERR_OK;
 }
 
 
+// Review and merge with code in utils.c
+char * pf_get_alg_enum_name(struct sadb_alg * alg, struct sadb_supported *sup) {
 
-int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node)
-{
+    char name[100];
 
+    if ("Null" ==  get_sadb_alg_type(alg->sadb_alg_id, sup->sadb_supported_exttype)){
+        return NULL;
+    } 
+
+    strcpy(name,get_sadb_alg_type(alg->sadb_alg_id, sup->sadb_supported_exttype));
+
+    if (0 == strcmp(name,"HMAC-MD5")) {
+        return "hmac-md5-96";
+    } else if (0 == strcmp(name,"HMAC-SHA-1")) {
+        return "hmac-sha1-96";
+    } else if (0 == strcmp(name,"DES-CBC")) {
+        return "des";
+    } else if (0 == strcmp(name,"3DES-CBC")) {
+        return "3des";
+    } else if (0 == strcmp(name,"Blowfish-CBC")) {
+        return "blowfish";
+    } else {
+        DBG("pf_get_alg_enum_name unknown : %s]", name);
+        return NULL;
+    }
+    
+}
+
+int pf_dump_sads(sad_entry_node *node) {
     struct sadb_ext *ext;
     int i = 0;
     int s;
@@ -916,6 +994,100 @@ int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node)
             ext = (struct sadb_ext*) ((char *)ext + (ext->sadb_ext_len << 3));
         }
 
+        // if (i == 1) return SR_ERR_OK;
+
+        if (msgp->sadb_msg_seq == 0)
+             goteof = 1;
+    }
+    close(s);
+    return SR_ERR_NOT_FOUND;
+}
+
+
+
+int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node)
+{
+
+    struct sadb_ext *ext;
+    int i = 0;
+    int s;
+    char buf[4096];
+    struct sadb_msg msg;
+    int goteof;
+    int rc = 0;   
+    int type = SADB_SATYPE_UNSPEC;
+
+    s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
+    
+      // Build and write SADB_DUMP request 
+    bzero(&msg, sizeof (msg));
+    msg.sadb_msg_version = PF_KEY_V2;
+    msg.sadb_msg_type = SADB_DUMP;
+    msg.sadb_msg_satype = type;
+    msg.sadb_msg_len = sizeof (msg) / 8;
+    msg.sadb_msg_pid = getpid();
+    //print_sadb_msg (&msg, sizeof (msg));
+    Write(s, &msg, sizeof (msg));
+
+     // Read and print SADB_DUMP replies until done 
+    goteof = 0;
+    while (goteof == 0) {
+        int     msglen;
+        struct sadb_msg *msgp;
+
+        msglen = Read(s, &buf, sizeof (buf));
+        msgp = (struct sadb_msg *) &buf;
+        
+
+        if (msglen != msgp->sadb_msg_len * 8) {
+            ERR("SADB Message length (%d) doesn't match msglen (%d)",
+            msgp->sadb_msg_len * 8, msglen);
+            return SR_ERR_OPERATION_FAILED;
+        }
+        if (msgp->sadb_msg_version != PF_KEY_V2) {
+            ERR("SADB Message version not PF_KEY_V2");
+            return SR_ERR_OPERATION_FAILED;
+        }
+        if (msgp->sadb_msg_errno != 0)
+            ERR("Unknown errno %s", strerror(msgp->sadb_msg_errno));
+        if (msglen == sizeof(struct sadb_msg))
+            return SR_ERR_OPERATION_FAILED; // no extensions 
+        msglen -= sizeof(struct sadb_msg);
+        ext = (struct sadb_ext *)(msgp + 1);
+
+        while (msglen > 0) {
+        
+            struct sadb_sa *sa;
+            struct sadb_lifetime *life;;
+
+            switch (ext->sadb_ext_type) {
+                case SADB_EXT_SA: 
+                    sa = (struct sadb_sa *)ext;
+                    if (ntohl(sa->sadb_sa_spi) == node->spi) {
+                        DBG("SA %i found",node->spi);
+                        i = 1;
+                    }  
+                    break;
+                case SADB_EXT_LIFETIME_CURRENT:
+                    life = (struct sadb_lifetime *)ext;
+                    node->lft_packets_current = life->sadb_lifetime_allocations;
+                    node->lft_bytes_current = life->sadb_lifetime_bytes;
+                    time_t a = life->sadb_lifetime_addtime;
+                    node->lft_time_current = (uint64_t)a;
+                    if (life->sadb_lifetime_usetime == 0) {
+                        //DBG("never used");
+                        node->lft_idle_current = 0;
+                    } else {
+                        time_t u = life->sadb_lifetime_usetime;
+                        node->lft_idle_current = (uint64_t)u;
+                    }
+                    break;
+                //default: DBG("ext type: %i", ext->sadb_ext_type);
+            }
+            msglen -= ext->sadb_ext_len << 3;
+            ext = (struct sadb_ext*) ((char *)ext + (ext->sadb_ext_len << 3));
+        }
+
         if (i == 1) return SR_ERR_OK;
 
         if (msgp->sadb_msg_seq == 0)
@@ -925,328 +1097,3 @@ int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node)
     return SR_ERR_NOT_FOUND;
 
 }
-
-
-// int pf_supported_xml_node(sr_val_t **output, size_t *output_cnt,struct sadb_ext *ext){
-    
-//     int rc = SR_ERR_OK;
-//     char xpath[MAX_PATH];
-//     char full_xpath[MAX_PATH];
-//     struct sadb_supported *sup = (struct sadb_supported *)ext;
-//     struct sadb_alg * alg;
-//     int len;
-        
-//     len = sup->sadb_supported_len * 8;
-//     len -= sizeof(*sup);
-
-//     if(len == 0) return SR_ERR_OPERATION_FAILED;
-
-//     for(alg = (struct sadb_alg*)(sup + 1); len>0; len -= sizeof(*alg), alg++){
-
-//         char * alg_enum_name = pf_get_alg_enum_name(alg,sup);
-
-//         if (alg_enum_name != NULL) {
-
-//             DBG("alg_enum_name %s", alg_enum_name);
-
-//             if(sup->sadb_supported_exttype == SADB_EXT_SUPPORTED_AUTH) 
-//                 strcpy(xpath, "/ietf-ipsec:sadb_register/algorithm-supported/auth-algs[name='");
-//             else    
-//                 strcpy(xpath, "/ietf-ipsec:sadb_register/algorithm-supported/enc-algs[name='");
-
-//             strcat(xpath,alg_enum_name);
-//             strcat(xpath,"']"); 
-            
-//             *output_cnt = (*output_cnt)+1;
-//             rc = sr_realloc_values((*output_cnt)-1,*output_cnt,output);
-//             if (rc != SR_ERR_OK) {
-//                 ERR("sr_realloc_values: %s", sr_strerror(rc));
-//                 return rc;
-//             }
-
-//             strcpy(full_xpath,xpath);
-//             strcat(full_xpath,"/name");
-//             rc = sr_val_set_xpath(&(*output)[(*output_cnt)-1],full_xpath);
-//             if (SR_ERR_OK != rc) {
-//                 return rc;
-//             }
-//             (*output)[(*output_cnt)-1].type = SR_ENUM_T;
-//             (*output)[(*output_cnt)-1].data.enum_val = alg_enum_name;
-
-//             //ivlen
-//             *output_cnt = (*output_cnt)+1;
-//             rc = sr_realloc_values((*output_cnt)-1,*output_cnt,output);
-//             if (rc != SR_ERR_OK) {
-//                 ERR("sr_realloc_values: %s", sr_strerror(rc));
-//                 return rc;
-//             }
-//             strcpy(full_xpath,xpath);
-//             strcat(full_xpath,"/ivlen");
-//             rc = sr_val_set_xpath(&(*output)[(*output_cnt)-1],full_xpath);
-//             if (SR_ERR_OK != rc) {
-//                 return rc;
-//             }
-//             (*output)[(*output_cnt)-1].type = SR_UINT8_T;
-//             (*output)[(*output_cnt)-1].data.uint8_val = alg->sadb_alg_ivlen;
-
-
-//             //min-bits
-//             *output_cnt = (*output_cnt)+1;
-//             rc = sr_realloc_values((*output_cnt)-1,*output_cnt,output);
-//             if (rc != SR_ERR_OK) {
-//                 ERR("sr_realloc_values: %s", sr_strerror(rc));
-//                 return rc;
-//             }
-//             strcpy(full_xpath,xpath);
-//             strcat(full_xpath,"/min-bits");
-//             rc = sr_val_set_xpath(&(*output)[(*output_cnt)-1],full_xpath);
-//             if (SR_ERR_OK != rc) {
-//                 return rc;
-//             }
-//             (*output)[(*output_cnt)-1].type = SR_UINT16_T;
-//             (*output)[(*output_cnt)-1].data.uint16_val = alg->sadb_alg_minbits;
-
-//             //max-bits
-//             *output_cnt = (*output_cnt)+1;
-//             rc = sr_realloc_values((*output_cnt)-1,*output_cnt,output);
-//             if (rc != SR_ERR_OK) {
-//                 ERR("sr_realloc_values: %s", sr_strerror(rc));
-//                 return rc;
-//             }
-//             strcpy(full_xpath,xpath);
-//             strcat(full_xpath,"/max-bits");
-//             rc = sr_val_set_xpath(&(*output)[(*output_cnt)-1],full_xpath);
-//             if (SR_ERR_OK != rc) {
-//                 return rc;
-//             }
-//             (*output)[(*output_cnt)-1].type = SR_UINT16_T;
-//             (*output)[(*output_cnt)-1].data.uint16_val = alg->sadb_alg_maxbits;
-
-//         }
-//     }
-
-//     return SR_ERR_OK;
-// }
-
-// Review and merge with code in utils.c
-char * pf_get_alg_enum_name(struct sadb_alg * alg, struct sadb_supported *sup) {
-
-    char name[100];
-
-    if ("Null" ==  get_sadb_alg_type(alg->sadb_alg_id, sup->sadb_supported_exttype)){
-        return NULL;
-    } 
-
-    strcpy(name,get_sadb_alg_type(alg->sadb_alg_id, sup->sadb_supported_exttype));
-
-    if (0 == strcmp(name,"HMAC-MD5")) {
-        return "hmac-md5-96";
-    } else if (0 == strcmp(name,"HMAC-SHA-1")) {
-        return "hmac-sha1-96";
-    } else if (0 == strcmp(name,"DES-CBC")) {
-        return "des";
-    } else if (0 == strcmp(name,"3DES-CBC")) {
-        return "3des";
-    } else if (0 == strcmp(name,"Blowfish-CBC")) {
-        return "blowfish";
-    } else {
-        DBG("pf_get_alg_enum_name unknown : %s]", name);
-        return NULL;
-    }
-    
-}
-
-
-
-
-int pfkey_send_socket(int socket,
-					struct sadb_msg *in, struct sadb_msg **out, size_t *out_len)
-{
-	unsigned char buf[PFKEY_BUFFER_SIZE];
-	struct sadb_msg *msg;
-	int in_len, len;
-
-
-	/* the kernel may broadcast messages not related to our requests (e.g. when
-	 * managing SAs and policies via an external tool), so let's clear the
-	 * receive buffer so there is room for our request and its reply. */
-	while (true)
-	{
-		len = recv(socket, buf, sizeof(buf), MSG_DONTWAIT);
-
-		if (len < 0)
-		{
-			if (errno == EINTR)
-			{	/* interrupted, try again */
-				continue;
-			}
-			break;
-		}
-	}
-
-	/* FIXME: our usage of sequence numbers is probably wrong. check RFC 2367,
-	 * in particular the behavior in response to an SADB_ACQUIRE. */
-	// in->sadb_msg_seq = ++this->seq;
-	in->sadb_msg_pid = getpid();
-
-	in_len = PFKEY_USER_LEN(in->sadb_msg_len);
-
-	while (true)
-	{
-		len = send(socket, in, in_len, 0);
-
-		if (len != in_len)
-		{
-			if (errno == EINTR)
-			{
-				/* interrupted, try again */
-				continue;
-			}
-			ERR("error sending to PF_KEY socket: %s",
-						   strerror(errno));
-			return 1;
-		}
-		break;
-	}
-
-	while (true)
-	{
-		msg = (struct sadb_msg*)buf;
-
-		len = recv(socket, buf, sizeof(buf), 0);
-
-		if (len < 0)
-		{
-			if (errno == EINTR)
-			{
-				ERR("got interrupted");
-				/* interrupted, try again */
-				continue;
-			}
-			ERR("error reading from PF_KEY socket: %s",
-						   strerror(errno));
-			return 1;
-		}
-		if (len < sizeof(struct sadb_msg) ||
-			msg->sadb_msg_len < PFKEY_LEN(sizeof(struct sadb_msg)))
-		{
-			ERR("received corrupted PF_KEY message");
-			return 1;
-		}
-		if (msg->sadb_msg_len > len / PFKEY_ALIGNMENT)
-		{
-			ERR("buffer was too small to receive the complete PF_KEY "
-					      "message");
-			return 1;
-		}
-		if (msg->sadb_msg_pid != in->sadb_msg_pid)
-		{
-			ERR("received PF_KEY message is not intended for us");
-			continue;
-		}
-
-        INFO("Sequence number of the message is %d",in->sadb_msg_seq);
-
-
-        // TODO handle this with a proper struct
-		// if (msg->sadb_msg_seq != this->seq)
-		// {
-		// 	ERR("received PF_KEY message with unexpected sequence "
-		// 				  "number, was %d expected %d", msg->sadb_msg_seq,
-		// 				  this->seq);
-		// 	if (msg->sadb_msg_seq == 0)
-		// 	{
-		// 		/* FreeBSD and Mac OS X do this for the response to
-		// 		 * SADB_X_SPDGET (but not for the response to SADB_GET).
-		// 		 * FreeBSD: 'key_spdget' in /usr/src/sys/netipsec/key.c. */
-		// 	}
-		// 	else if (msg->sadb_msg_seq < this->seq)
-		// 	{
-		// 		continue;
-		// 	}
-		// 	else
-		// 	{
-		// 		return 1;
-		// 	}
-		// }
-		if (msg->sadb_msg_type != in->sadb_msg_type)
-		{
-			ERR("received PF_KEY message of wrong type, "
-						  "was %d expected %d, ignoring", msg->sadb_msg_type,
-						   in->sadb_msg_type);
-		}
-		break;
-	}
-
-	*out_len = len;
-	*out = (struct sadb_msg*)malloc(len);
-	memcpy(*out, buf, len);
-
-	return 0;
-}
-
-// int xfrm_getsad(sad_entry_node *node) {
-//     sa = xfrmnl_sa_get(cache, sad_entry_node., spi, proto);
-//     if (sa == NULL) {
-//         printf("sa null\n");
-//         return 0;
-//     }
-// }
-
-/**
- * Send a message to the default PF_KEY socket and handle the response.
- */
-int pfkey_send(int socket, struct sadb_msg *in, struct sadb_msg **out, size_t *out_len)
-{
-	return pfkey_send_socket(socket, in, out, out_len);
-}
-
-
-int parse_pfkey_message(struct sadb_msg *msg, pfkey_msg_t *out)
-{
-	struct sadb_ext* ext;
-	size_t len;
-
-	memset(out, 0, sizeof(pfkey_msg_t));
-	out->msg = msg;
-
-	len = msg->sadb_msg_len;
-	len -= PFKEY_LEN(sizeof(struct sadb_msg));
-
-	ext = (struct sadb_ext*)(((char*)msg) + sizeof(struct sadb_msg));
-
-	while (len >= PFKEY_LEN(sizeof(struct sadb_ext)))
-	{
-		if (ext->sadb_ext_len < PFKEY_LEN(sizeof(struct sadb_ext)) ||
-			ext->sadb_ext_len > len)
-		{
-			ERR("length of  extension is invalid");
-			break;
-		}
-
-		if ((ext->sadb_ext_type > SADB_EXT_MAX) || (!ext->sadb_ext_type))
-		{
-			ERR("type of PF_KEY extension (%d) is invalid", ext->sadb_ext_type);
-			break;
-		}
-
-		if (out->ext[ext->sadb_ext_type])
-		{
-			ERR("duplicate extension");
-			break;
-		}
-
-		out->ext[ext->sadb_ext_type] = ext;
-		ext = PFKEY_EXT_NEXT_LEN(ext, len);
-	}
-
-	if (len)
-	{
-		DBG("PF_KEY message length is invalid");
-		return 1;
-	}
-
-	return 0;
-}
-
-

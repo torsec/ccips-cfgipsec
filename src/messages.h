@@ -18,7 +18,7 @@
 #define ERROR_MSG             -1
 
 
-#define HASH_MAP_SIZE         16
+#define HASH_MAP_SIZE         33
 
 // default_msg Message format used to share information between the nodes
 typedef struct default_msg {
@@ -29,35 +29,35 @@ typedef struct default_msg {
 
 // sad_entry_msg Message used to share the new spa_entry to the trusted part
 typedef struct sad_entry_msg {
-    char entry_id[16];
+    sad_entry_id entry_id;
     sad_entry_node *sad_entry;
 } sad_entry_msg;
 
 // delet_config_msg Message used to delete a set of entry from the trusted part.
 typedef struct delete_config_msg {
-    char entry_id[16];
+    sad_entry_id entry_id;
 } delete_config_msg;
 
 // alert_state_msg
 typedef struct alert_state_msg {
-    char entry_id[16];
+    sad_entry_id entry_id;
     char message[32];
 } alert_state_msg;
 
 // op_result_mgs;
 typedef struct op_result_msg {
     int success; // 0 Success / 1 Fail
-    char message[32];
+    char message[HASH_MAP_SIZE];
 } op_result_msg;
 
 // request_entry_msg
 typedef struct request_entry_msg {
-    char entry_id[16];
+    sad_entry_id entry_id;
 } request_entry_msg;
 
 typedef struct insert_entry_msg 
 {
-    char entry_id[16];
+    sad_entry_id entry_id;
     sad_entry_node *sad_entry;
 } insert_entry_msg;
 

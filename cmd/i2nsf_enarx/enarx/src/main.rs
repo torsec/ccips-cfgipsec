@@ -179,6 +179,7 @@ fn handle_connection_event(
                     // echo back what we received and ignore any errors while doing so
                     
                     let data = std::str::from_utf8(&received_data[..n]).unwrap().trim().to_string();
+                    println!("Input data: {}", data.trim_end());
                     let output = handle_message_rust(&data);
                     
 

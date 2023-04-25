@@ -444,11 +444,45 @@ void show_sad_list(){
         node=node->next;
     }
 }
+// #ifdef ENARX
+// For verification of the existing sad_nodes 
+void verify_sad_nodes() {
+	sad_entry_node *node = init_sad_node;
+	while (node != NULL) {
+		sad_entry_node *out_node = create_sad_node();
+		if (pf_getsad(out_node,node) != 0) {
+			ERR("SAD in sysrepo not found in kernel");
+		} else {
+			strcpy(out_node->name,node->name);
+			// Now lets against the trusted app
+			char verify_response[32];
+			int verification = verify_trusted_sad_entry(verify_response,out_node);
+			switch (verification)
+			{
+			case 1:
+				// Socket error 
+				break;
+			case 2:
+				ERR("ALERT with %s: %s", node->name , verify_response);
+				break;
+			case 3:
+				ERR("INVALID ANSWER!");
+				break;
+			default:
+				INFO("Verification of %s has been done correctly",node->name);
+				break;
+			}
+		}
+		node=node->next;
+
+	}
+}
+
+
+// #endif
 
 sad_entry_node *get_sad_node(char *sad_name){
-
     sad_entry_node *node = init_sad_node;
-
 	while (node != NULL) {
 		if (!strcmp(node->name, sad_name)) {
 			return node;
@@ -456,9 +490,7 @@ sad_entry_node *get_sad_node(char *sad_name){
 			node = node->next;
 		}
 	}
-	
 	return NULL;
-	
 }
 
 

@@ -351,9 +351,34 @@ void remove_colon(char* out, char* str) {
     }
     out[j] = '\0'; // add the null terminator at the end of the output string
 }
-// only include the following if we are developing for a trusted application
-// only included in 	
-#ifdef TRUSTED_APP
+
+
+
+char* hash_to_string(uint8_t *p) {
+    char* str = malloc(SAD_ENTRY_SIZE * sizeof(char)); // allocate memory for 32 hexadecimal characters + '\0'
+    if (str == NULL) {
+        // error handling if malloc fails
+        return NULL;
+    }
+    for (unsigned int i = 0; i < 16; ++i) {
+        sprintf(str + 2*i, "%02x", p[i]);
+    }
+    str[32] = '\0'; // add null terminator at the end of the string
+	DBG("Hash calculated: %s",str);
+    return str;
+}
+
+char* get_sad_hash(sad_entry_node *sad_node) {
+	MD5Context ctx;
+    md5Init(&ctx);
+	DBG("hashing name: %s",sad_node->name);
+	md5Update(&ctx, sad_node->name,MAX_PATH);
+	md5Finalize(&ctx);
+	return hash_to_string(ctx.digest);
+}
+
+
+
 int found_name(char *path) {
 	int len = strlen(path);
 	const char *last = &path[len-5];
@@ -363,7 +388,9 @@ int found_name(char *path) {
 	return 0;
 }
 
-
+// only include the following if we are developing for a trusted application
+// only included in 	
+#ifdef TRUSTED_APP
 sad_entry_node *m_get_sad_entry(map_struct m, char *hash) {
 	uint64_t result;
     // Check first that the value does not exists

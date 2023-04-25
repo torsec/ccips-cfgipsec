@@ -48,11 +48,12 @@ typedef struct{
 
 int pf_addsad(sad_entry_node *sad_node);
 int pf_exec_register(sr_session_ctx_t *session,int satype);
-int pf_getsad(sad_entry_node *sad_node);
+int pf_getsad(sad_entry_node *out_node, sad_entry_node *sad_node);
 int pf_delsad(sad_entry_node *sad_node);
 int pf_addpolicy(spd_entry_node *spd_node);
 int pf_delpolicy(spd_entry_node *spd_node);
 int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node);
+int pf_dump_sads(sad_entry_node *node);
 // int pf_getsad(sad_entry_node *sad_node);
 
 // https://fossies.org/dox/tinc-1.0.36/net_8h_source.html

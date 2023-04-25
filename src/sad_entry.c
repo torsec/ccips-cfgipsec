@@ -145,6 +145,7 @@ struct sad_entry_node *deserialize_sad_node(JSON_Object *schema) {
 }   
 
 // TODO see what values should be compared for the moment only the keys are compared, more values will be added in the future
+// TODO move this to utils.c
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 	// verify enc key
     if (strncmp(i->encryption_key,j->encryption_key,MAX_KEY) != 0) {
@@ -154,27 +155,23 @@ int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
     if (strncmp(i->integrity_key,j->integrity_key,MAX_KEY) != 0) {
             return 1;
     }
-	// verify iv key
-    if (strncmp(i->encryption_iv,j->encryption_iv,MAX_KEY) != 0) {
-            return 1;
-    }
+	// Check that they have the same SPI
+	if (i->spi != j->spi) {
+		printf("Entries SPI differ\n");
+		return 1;
+	}
+	// Check that they have they are using the same mode
+	if (i->ipsec_mode != j->ipsec_mode) {
+		printf("Entries MODE differ\n");
+		return 1;
+	}
+	// TODO add more verification steps
+
+	// verify iv key for the moment ommit this
+    // if (strncmp(i->encryption_iv,j->encryption_iv,MAX_KEY) != 0) {
+    //         return 1;
+    // }
 	return 0;
 }
 
 
-char* get_sad_hash(sad_entry_node *sad_node, char *output) {
-	char *input = (char *) malloc(sizeof(char) * MAX_ID_LENGTH);
-	strcpy(input,sad_node->name);
-	strcat(input,sad_node->local_subnet);
-	strcat(input,sad_node->remote_subnet);
-	strcat(input,sad_node->tunnel_local);
-	strcat(input,sad_node->tunnel_remote);
-	// This is just for testing, it can be replaced by other alternatives.
-	MD5(input, strlen(input), output);
-	    for (int i = 0; i < 16; i++) {
-        printf("%02x", output[i]);
-    }
-	free(input);
-	// strcpy(output,"hashtestof16by");
-	return output;
-}

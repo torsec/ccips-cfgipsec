@@ -7,7 +7,8 @@ fn main()
     env::set_var("LLVM_CONFIG_PATH", llvm_config_path);
     println!("cargo:rustc-link-search=native=/home/debian/ipsec_tests/ipsec_interactor/libs");
     println!("cargo:rustc-link-lib=static=i2nsf");
-    println!("cargo:rustc-link-lib=static=parson");    
+    println!("cargo:rustc-link-lib=static=parson");   
+    println!("cargo:rustc-link-lib=static=md5"); 
     let bindings = bindgen::Builder::default()
         .header("/home/debian/ipsec_tests/ipsec_interactor/libs/trust_handler.h")
         .generate()

@@ -36,6 +36,11 @@ add_library(parson STATIC "${PROJECT_SOURCE_DIR}/parson/parson.c")
 include_directories("${PROJECT_SOURCE_DIR}/parson")
 include_directories("${SRC_DIRECTORY}")
 
+# Add MD5 library
+add_library(md5 STATIC "${PROJECT_SOURCE_DIR}/md5-c/md5.c")
+include_directories("${PROJECT_SOURCE_DIR}/md5-c")
+include_directories("${SRC_DIRECTORY}")
+
 # add_executable(${PROJECT_NAME} 
 #     "wrapper.c"
 #     "${SRC_DIRECTORY}/constants.h"
@@ -53,6 +58,9 @@ install(TARGETS i2nsf
 install(TARGETS parson
         ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/libs
         LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/libs)
+install(TARGETS md5
+        ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/libs
+        LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/libs)
 install(FILES 
 "${SRC_DIRECTORY}/trust_handler.h"
 "${SRC_DIRECTORY}/sad_entry.h"
@@ -62,6 +70,7 @@ install(FILES
 "${SRC_DIRECTORY}/messages.h"
 "${SRC_DIRECTORY}/log.h"
 "${PROJECT_SOURCE_DIR}/parson/parson.h"
+"${PROJECT_SOURCE_DIR}/md5-c/md5.h"
 "${SRC_DIRECTORY}/constants.h"
 DESTINATION ${PROJECT_SOURCE_DIR}/libs)
 

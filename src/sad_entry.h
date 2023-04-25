@@ -1,4 +1,3 @@
-
 #ifndef __SAD_ENTRY
 #define __SAD_ENTRY
 #include <stdbool.h>
@@ -7,10 +6,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parson.h"
+#include "md5.h"
 #include <crypt.h>
+
+#define SAD_ENTRY_SIZE 33
+
+typedef char sad_entry_id[SAD_ENTRY_SIZE];
 
 typedef struct sad_entry_node{
 	char *name;
+	sad_entry_id entry_id;
 	unsigned long long int req_id;
 	unsigned long int spi;
 	bool ext_seq_num;
@@ -54,7 +59,7 @@ typedef struct sad_entry_node{
 sad_entry_node* create_sad_node();
 JSON_Value *serialize_sad_node(sad_entry_node *sad_node);
 sad_entry_node *deserialize_sad_node(JSON_Object *schema);
-char* get_sad_hash(sad_entry_node *sad_node, char *output);
-int compare_sad_entries(sad_entry_node *i, sad_entry_node *j);
+// char *get_sad_hash(sad_entry_node *sad_node);
+// int compare_sad_entries(sad_entry_node *i, sad_entry_node *j);
 
 #endif
