@@ -487,7 +487,7 @@ void verify_sad_nodes() {
 				ERR("INVALID ANSWER!");
 				break;
 			default:
-				INFO("Verification of %s has been done correctly",node->name);
+				DBG("Verification of %s has been done correctly",node->name);
 				break;
 			}
 		}

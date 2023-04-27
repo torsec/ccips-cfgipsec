@@ -95,6 +95,7 @@ int main(int argc, char **argv)
     sr_subscription_ctx_t *subscription_sad  = NULL; 
 	const char *mod_name, *xpath = NULL;
 
+
     int rc = SR_ERR_OK;
 	//char *module_name = NULL;
 	mod_name = "ietf-i2nsf-ikeless";
@@ -149,13 +150,19 @@ int main(int argc, char **argv)
 
     signal(SIGINT, sigint_handler);
     signal(SIGPIPE, SIG_IGN);
+    pthread_t verificationThread;
+    pthread_create(&verificationThread, NULL, sad_verification_process,NULL);
+
     while (!exit_application) {
         sleep(1000);  /* or do some more useful work... */
     }
 
+    
+
     INFO("Application exit requested, exiting.");
 
 cleanup:
+    close_verification_process();
 	sr_disconnect(connection);
     return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }
