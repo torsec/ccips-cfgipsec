@@ -28,6 +28,8 @@ char * pf_get_alg_enum_name(struct sadb_alg * alg, struct sadb_supported *sup);
 static pthread_mutex_t pf_sadb_esp_register_run_lock = PTHREAD_MUTEX_INITIALIZER;
 
 
+
+
 #define PFKEY_ALIGNMENT 8
 /** aligns len to 64 bits */
 #define PFKEY_ALIGN(len) (((len) + PFKEY_ALIGNMENT - 1) & ~(PFKEY_ALIGNMENT - 1))
@@ -252,14 +254,12 @@ int pf_exec_register(sr_session_ctx_t *session, int satype){
        	INFO("Regiter ok  ... ");
 
     }
-
     if (satype == SADB_SATYPE_ESP) {
         if ((r = pthread_create(&pf_sadb_esp_register_run_thread, NULL, &pf_sadb_esp_register_run, (void *)info)) != 0) {
             ERR("Unable to start sadb_esp_register thread (%s)", strerror(r));
             return SR_ERR_OPERATION_FAILED;
         }
-    } 
-	
+    }
     return EXIT_SUCCESS;
 }
 
@@ -287,7 +287,6 @@ int pf_setsadbaddr(void *p, int exttype, int protocol, int prefixlen, int port, 
 
 
 int pf_addpolicy(spd_entry_node *spd_node) {
-
     int s, len, error;
     char buf[PFKEY_BUFFER_SIZE], *p;
     struct sadb_msg *msg;
@@ -307,7 +306,6 @@ int pf_addpolicy(spd_entry_node *spd_node) {
     msg->sadb_msg_pid = getpid();
     len = sizeof(*msg);
     p += sizeof(*msg);
-
     policyext = (struct sadb_x_policy *) p;
     policyext->sadb_x_policy_len = sizeof(struct sadb_x_policy)/8;
     policyext->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
@@ -317,10 +315,8 @@ int pf_addpolicy(spd_entry_node *spd_node) {
     policyext->sadb_x_policy_id = spd_node->index; // doesn't work, policy_id is asigned by kernel 
     policyext->sadb_x_policy_priority =0;
 	
-	
     len += policyext->sadb_x_policy_len *8;
     p += policyext->sadb_x_policy_len *8;
-
     req = (struct sadb_x_ipsecrequest *) p;
     req->sadb_x_ipsecrequest_proto = spd_node->protocol_parameters;
     req->sadb_x_ipsecrequest_len = sizeof(struct sadb_x_ipsecrequest);
@@ -334,7 +330,6 @@ int pf_addpolicy(spd_entry_node *spd_node) {
     p += req->sadb_x_ipsecrequest_len;
 
     if(spd_node->ipsec_mode == IPSEC_MODE_TUNNEL){
-
         struct sockaddr_in *src_t= malloc(sizeof(struct sockaddr_in));
         src_t->sin_family = AF_INET;
         src_t->sin_port = htons(0);

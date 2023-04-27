@@ -155,8 +155,7 @@ int main(void) {
 
 
 
-    char hash[16];
-    get_sad_hash(sad_node,hash);
+    char *hash = get_sad_hash(sad_node);
 
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     strcpy(message->entry_id,hash);

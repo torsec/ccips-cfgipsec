@@ -26,6 +26,7 @@
 #include "sysrepo_entries.h"
 #include "pfkeyv2_entry.h"
 #include "pfkeyv2_utils.h"
+#include "trust_client.h"
 #define VERSION "2"
 
 int exit_application = 0;
@@ -80,7 +81,13 @@ int main(int argc, char **argv)
             }
         }
     }
-
+// #ifdef Enarx
+    // Enable connectivity with enarx client
+    if(connect_ta() != 0) {
+        ERR("Couldnt connect to TA");
+        exit(1);
+    }
+// #endif
     //// connect to sysrepo
     sr_conn_ctx_t *connection = NULL;
     sr_session_ctx_t *session = NULL;

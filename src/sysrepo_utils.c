@@ -167,7 +167,7 @@ cleanup:
     return SR_ERR_OK;
 }
 
-pthread_mutex_t lock;
+// pthread_mutex_t sad_entry_change_lock =  PTHREAD_MUTEX_INITIALIZER;
 
 int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char *module_name, const char *xpath, 
 	sr_event_t event, uint32_t request_id, void *private_data)
@@ -187,7 +187,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 	char *new_xpath = NULL; 
 
 
-	pthread_mutex_lock(&lock);
+	// pthread_mutex_lock(&sad_entry_change_lock);
 	if (SR_EV_CHANGE == event) {
 
 		DBG(" ========== SAD Changes ========== ");   
@@ -222,12 +222,12 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 	                	else {
 							ERR("Adding sad-entry: %s",sr_strerror(rc));
 	                    	sr_free_change_iter(it);
+							// pthread_mutex_unlock(&sad_entry_change_lock);
 							return SR_ERR_OPERATION_FAILED;                                
 	                	} 
 					}
 					break;
 	        	case SR_OP_DELETED:                   
-			
 					if (new_entry(oper,old_value, new_value)) {
 						sad_name = old_value->data.string_val;   
 						INFO("Delete sad-entry found %s ", sad_name); 
@@ -244,6 +244,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 	                	else {
 	                    	ERR("Deleting sad-entry: %s",sr_strerror(rc));
 	                    	sr_free_change_iter(it);
+							// pthread_mutex_unlock(&sad_entry_change_lock);
 							return SR_ERR_OPERATION_FAILED;                             
 	                	} 
 					}
@@ -264,7 +265,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 	}
 	
 cleanup:
-	pthread_mutex_unlock(&lock);
+	// pthread_mutex_unlock(&sad_entry_change_lock);
     sr_free_change_iter(it);
     return SR_ERR_OK;	
 }

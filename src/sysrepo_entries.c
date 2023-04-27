@@ -2,11 +2,11 @@
 
 sad_entry_node *init_sad_node = NULL;
 spd_entry_node* init_spd_node = NULL;
-
+pthread_mutex_t sad_entries_locker =PTHREAD_MUTEX_INITIALIZER; 
 
 // FROM spd_entry.c
 void add_spd_node(spd_entry_node* node_entry){
-	
+	// pthread_mutex_lock(&sad_entries_locker);
 	if (init_spd_node == NULL) {
 		init_spd_node=node_entry;
 		node_entry->next=NULL;
@@ -419,39 +419,57 @@ int removeSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
 
 
 // From sad_entry.c
-
 void add_sad_node(sad_entry_node* node_entry){
+// #ifdef ENARX
+	// We need to add the node_entry into the enarx client
+	// It will return a new sad_entry_node whith the decrypted contents and an entryid
+	sad_entry_node* rec_entry = create_sad_node();
+	// We may change the method in a future, so we dont need to malloc more data
+	if (add_trusted_sad_entry(rec_entry, node_entry) != 0) {
+		ERR("Couldnt add sad_entry node");
+		free(rec_entry);
+		return;
+	}
+	strcpy(node_entry->encryption_key,rec_entry->encryption_key);
+	strcpy(node_entry->integrity_key,rec_entry->integrity_key);
+	strcpy(node_entry->entry_id,rec_entry->entry_id);
+	free(rec_entry);
+// #endif
 
-    if (init_sad_node == NULL){
+
+    if (init_sad_node == NULL) {
         init_sad_node=node_entry;
         node_entry->next=NULL;
     } else{
+		pthread_mutex_lock(&sad_entries_locker);
         sad_entry_node *node = init_sad_node;
         while(node->next != NULL)
             node=node->next;
         node->next=node_entry;
+		pthread_mutex_unlock(&sad_entries_locker);
     }
 }
 
 // for case 1
 void show_sad_list(){
-
+	pthread_mutex_lock(&sad_entries_locker);
     sad_entry_node *node = init_sad_node;
-    
     INFO("Name -- SPI -- SRC --- DST --- MODE --- ");
     while (node != NULL){
         INFO("%s --- %d --- %s --- %s --- %d --- ", node->name, node->spi, node->local_subnet, node->remote_subnet, node->ipsec_mode);
         node=node->next;
     }
+	pthread_mutex_unlock(&sad_entries_locker);
 }
 // #ifdef ENARX
 // For verification of the existing sad_nodes 
 void verify_sad_nodes() {
+	pthread_mutex_lock(&sad_entries_locker);
 	sad_entry_node *node = init_sad_node;
 	while (node != NULL) {
 		sad_entry_node *out_node = create_sad_node();
 		if (pf_getsad(out_node,node) != 0) {
-			ERR("SAD in sysrepo not found in kernel");
+			ERR("SAD in sysrepo not found in kernel, probably removed");
 		} else {
 			strcpy(out_node->name,node->name);
 			// Now lets against the trusted app
@@ -476,37 +494,41 @@ void verify_sad_nodes() {
 		node=node->next;
 
 	}
+	pthread_mutex_unlock(&sad_entries_locker);
 }
 
 
 // #endif
-
 sad_entry_node *get_sad_node(char *sad_name){
+	pthread_mutex_lock(&sad_entries_locker);
     sad_entry_node *node = init_sad_node;
 	while (node != NULL) {
 		if (!strcmp(node->name, sad_name)) {
+			pthread_mutex_unlock(&sad_entries_locker);
 			return node;
 		} else {
 			node = node->next;
 		}
 	}
+	pthread_mutex_unlock(&sad_entries_locker);
 	return NULL;
 }
 
 
 
 sad_entry_node *get_sad_node_by_spi(unsigned long int spi){
-
+	pthread_mutex_lock(&sad_entries_locker);
     sad_entry_node *node = init_sad_node;
 	
 	while (node != NULL) {
 		if (node->spi == spi) {
+			pthread_mutex_unlock(&sad_entries_locker);
 			return node;
 		} else {
 			node = node->next;
 		}
 	}
-	
+	pthread_mutex_unlock(&sad_entries_locker);
 	return NULL;
 }	
 	
@@ -519,11 +541,60 @@ void free_sad_node(sad_entry_node * n) {
     } 
 }
 
-
 int del_sad_node(char *sad_name) {
+	pthread_mutex_lock(&sad_entries_locker);
 
+	// Do we have initialized the sad_node
+	if (init_sad_node == NULL) {
+		ERR("There is no SAD_ENTRIES stored");
+		pthread_mutex_unlock(&sad_entries_locker);
+		return SR_ERR_OPERATION_FAILED;
+	}
+	// Check that the initial sad_node is not the one we are looking for
+	if(strcmp(sad_name,init_sad_node->name) == 0) {
+		// This are some helpers variables
+		sad_entry_node *nh = init_sad_node;
+		// This is redundant, but just to clarify how this should work
+		if(nh -> next == NULL) {
+			init_sad_node = NULL;
+		} else {
+			init_sad_node = init_sad_node->next;
+		}
+		if (del_trusted_sad_entry(nh) != 0) {
+			ERR("Error when removing sad entry %s",nh->entry_id);
+		}
+		free(nh);
+	} else {
+		sad_entry_node *nc = init_sad_node;
+		sad_entry_node *np;
+		while (strcmp(sad_name,nc->name) != 0) {
+				np = nc;
+				nc = nc->next;
+				if (nc == NULL) {
+					ERR("There is no SAD_ENTRIES stored");
+					pthread_mutex_unlock(&sad_entries_locker);
+					return SR_ERR_OPERATION_FAILED;
+				} 
+		}
+		// Nc is the current node and we want to delete it
+		// Np in this case is the previous node
+		if (nc == NULL) {
+			np->next = NULL;
+		} else {
+			np->next = nc->next;
+		}
+		if (del_trusted_sad_entry(nc) != 0) {
+				ERR("Error when removing sad entry %s",nc->entry_id);
+		}
+		free(nc);
+	}
+	pthread_mutex_unlock(&sad_entries_locker);
+}
+
+int del_sad_node_2(char *sad_name) {
+	pthread_mutex_lock(&sad_entries_locker);
     sad_entry_node *node = init_sad_node;
-
+	DBG("Deleting SAD Node from local storage %s",sad_name);
     if (node != NULL) {
         sad_entry_node *prev_node = NULL;
         prev_node = create_sad_node();
@@ -534,14 +605,30 @@ int del_sad_node(char *sad_name) {
         }
         if (node == init_sad_node){
             init_sad_node = init_sad_node->next;
+			// #ifdef Enarx
+			if (del_trusted_sad_entry(prev_node) != 0) {
+				ERR("Error when removing sad entry %s",prev_node->entry_id);
+			}
+			// // #endif
+			// // TODO revise this because I think it is incorerct 
             free_sad_node(prev_node);
         }
         else if (!strcmp(sad_name,node->name)) {
             prev_node->next = node->next;
+			// #ifdef Enarx
+			if (del_trusted_sad_entry(node) != 0) {
+				ERR("Error when removing sad entry %s",node->entry_id);
+			}
+			// #endif
             free_sad_node(node);
         }
-    } else return SR_ERR_OPERATION_FAILED;
+    } else { 
+		pthread_mutex_unlock(&sad_entries_locker);
+		ERR("Trying to remove a SAD entry when it does not exists");
+		return SR_ERR_OPERATION_FAILED;
+	}
 
+	pthread_mutex_unlock(&sad_entries_locker);
     return SR_ERR_OK;
 }
 
@@ -1147,7 +1234,8 @@ int send_delete_SAD_request(unsigned long int spi) {
 		INFO("SAD entry with SPI %d already deleted or does not exists",spi);
 		goto cleanup;
 	}
-	
+
+
     sprintf(xpath, "/ietf-i2nsf-ikeless:ipsec-ikeless/sad/sad-entry[name='%s']", sad_node->name);
     DBG("removeSADbySPI xpath: %s", xpath);
     rc = sr_delete_item(session, xpath, SR_EDIT_DEFAULT);
@@ -1160,6 +1248,8 @@ int send_delete_SAD_request(unsigned long int spi) {
         ERR("sr_commit: %s", sr_strerror(rc));
         goto cleanup;
     }
+
+	del_sad_node(sad_node->name);
 
 	sr_disconnect(conn);
 	return rc ? EXIT_FAILURE : EXIT_SUCCESS;

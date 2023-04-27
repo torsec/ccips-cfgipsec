@@ -59,7 +59,7 @@ void print_sadb_msg(struct sadb_msg *msg, int msglen) {
 }
 
 void  sa_print(struct sadb_ext *ext) {
-	return;
+	// return;
 	struct sadb_sa *sa = (struct sadb_sa *)ext;
 	DBG(" SA: SPI=%d Replay Window=%d State=%s",
 		sa->sadb_sa_spi, sa->sadb_sa_replay,
@@ -133,7 +133,7 @@ void lifetime_print(struct sadb_ext *ext) {
 
 void
 address_print(struct sadb_ext *ext) {
-	return;
+	// return;
 	struct sadb_address *addr = (struct sadb_address *)ext;
 	struct sockaddr *sa;
 

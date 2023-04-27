@@ -12,6 +12,7 @@
 #include "spd_entry.h"
 #include "log.h"
 #include "messages.h"
+#include <pthread.h>
 
 // #ifdef ENARX
 #include "trust_client.h"

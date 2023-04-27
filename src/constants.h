@@ -4,6 +4,8 @@
 #define MAX_IP 40
 #define MAX_KEY 1024
 
+#define MAP_HASH_SIZE 32
+
 #define CASE1_IPSECIKE 1
 #define CASE2_IPSEC 2
 
