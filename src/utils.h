@@ -67,14 +67,14 @@ int getEncryptAlg(char* alg);
 unsigned char* hexstr_to_char(char* hexstr);
 int checkIKE_connection();
 void remove_colon(char* out, char* str) ;
-char* hash_to_string(uint8_t *p);
-char* get_sad_hash(sad_entry_node *sad_node);
 
 #ifdef TRUSTED_APP
 sad_entry_node *m_get_sad_entry(map_struct m, char *hash);
 int m_set_sad_entry(map_struct m, char *hash, sad_entry_node *map_node);
 int m_delete_sad_entry(map_struct m, char *hash);
 void free_map_entry(void* key, size_t ksize, uintptr_t value, void* usr);
+char* hash_to_string(uint8_t *p);
+char* get_sad_hash(sad_entry_node *sad_node);
 #endif
 
 

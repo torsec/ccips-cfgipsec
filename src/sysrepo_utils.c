@@ -305,7 +305,7 @@ int sad_state_cb(sr_session_ctx_t *session, const char *module_name, const char 
 }
 
 int exit_verification = 0;
-// #ifdef ENARX
+#ifdef Enarx
 int sad_verification_process() {
 	while(exit_verification == 0) {
 		DBG("====== Starting sad_entries verification process ======");
@@ -316,8 +316,9 @@ int sad_verification_process() {
 	}
 
 }
-// #endif
+
 
 int close_verification_process() {
 	exit_verification = 1;
 }
+#endif ENARX

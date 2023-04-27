@@ -352,7 +352,7 @@ void remove_colon(char* out, char* str) {
     out[j] = '\0'; // add the null terminator at the end of the output string
 }
 
-
+#ifdef TRUSTED_APP
 
 char* hash_to_string(uint8_t *p) {
     char* str = malloc(SAD_ENTRY_SIZE * sizeof(char)); // allocate memory for 32 hexadecimal characters + '\0'
@@ -390,7 +390,6 @@ int found_name(char *path) {
 
 // only include the following if we are developing for a trusted application
 // only included in 	
-#ifdef TRUSTED_APP
 sad_entry_node *m_get_sad_entry(map_struct m, char *hash) {
 	uint64_t result;
     // Check first that the value does not exists

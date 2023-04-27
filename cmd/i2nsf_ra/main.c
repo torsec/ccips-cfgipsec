@@ -45,6 +45,8 @@ int main(int argc, char **argv)
         fprintf ( stderr, "Must be root in order to execute cfgipsec2. You are UID=%u, EUID=%u\n", getuid(), geteuid() );
         return 1;
     }
+    
+
 
     // Get options
     int foreground = false;
@@ -81,13 +83,14 @@ int main(int argc, char **argv)
             }
         }
     }
-// #ifdef Enarx
+#ifdef Enarx
+    INFO("Enarx CCIPs version");
     // Enable connectivity with enarx client
     if(connect_ta() != 0) {
         ERR("Couldnt connect to TA");
         exit(1);
     }
-// #endif
+#endif
     //// connect to sysrepo
     sr_conn_ctx_t *connection = NULL;
     sr_session_ctx_t *session = NULL;
@@ -150,9 +153,10 @@ int main(int argc, char **argv)
 
     signal(SIGINT, sigint_handler);
     signal(SIGPIPE, SIG_IGN);
+#ifdef Enarx
     pthread_t verificationThread;
     pthread_create(&verificationThread, NULL, sad_verification_process,NULL);
-
+#endif
     while (!exit_application) {
         sleep(1000);  /* or do some more useful work... */
     }
@@ -162,7 +166,9 @@ int main(int argc, char **argv)
     INFO("Application exit requested, exiting.");
 
 cleanup:
+#ifdef Enarx
     close_verification_process();
+#endif
 	sr_disconnect(connection);
     return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }

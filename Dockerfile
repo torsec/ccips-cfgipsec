@@ -19,7 +19,7 @@ sysrepoctl -i yang/ietf-i2nsf-ikeless.yang  --permissions=666 -v3
 
 RUN sysrepoctl -c ietf-i2nsf-ikeless -e ikeless-notification  -v3
 
-RUN rm -rf parson && git clone https://github.com/kgabis/parson
+# RUN rm -rf parson && git clone https://github.com/kgabis/parson
 RUN mkdir -p build && cd build && rm -rf * &&  cmake  .. && make
 
 ADD supervisord.conf /etc/supervisord.conf

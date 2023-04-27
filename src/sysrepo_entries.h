@@ -11,12 +11,12 @@
 #include "sad_entry.h"
 #include "spd_entry.h"
 #include "log.h"
-#include "messages.h"
 #include <pthread.h>
 
-// #ifdef ENARX
+#ifdef Enarx
 #include "trust_client.h"
-// #endif ENARX
+#include "messages.h"
+#endif Enarx
 
 
 void print_current_config(sr_session_ctx_t *session, const char *module_name);
@@ -33,8 +33,8 @@ int get_sad_state(sr_session_ctx_t *session, const char *module_name, const char
         uint32_t request_id, struct lyd_node **parent, void *private_data);
 int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi, bool soft);
 int send_delete_SAD_request(unsigned long int spi);
-// #ifdef ENARX
+#ifdef Enarx
 void verify_sad_nodes();
-// #endif ENARX
+#endif Enarx
 
 #endif

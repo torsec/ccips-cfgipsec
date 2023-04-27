@@ -1,7 +1,6 @@
 #include "trust_client.h"
 #include "trust_handler.h"
 
-// #ifdef ENARX_RA
 
 int ENARX_SOCKET;
 
@@ -240,11 +239,3 @@ int del_trusted_sad_entry(sad_entry_node *sad_node) {
         return result;
 }
 
-
-
-
-
-
-    
-
-// #endif

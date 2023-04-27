@@ -420,7 +420,7 @@ int removeSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
 
 // From sad_entry.c
 void add_sad_node(sad_entry_node* node_entry){
-// #ifdef ENARX
+#ifdef Enarx
 	// We need to add the node_entry into the enarx client
 	// It will return a new sad_entry_node whith the decrypted contents and an entryid
 	sad_entry_node* rec_entry = create_sad_node();
@@ -434,7 +434,7 @@ void add_sad_node(sad_entry_node* node_entry){
 	strcpy(node_entry->integrity_key,rec_entry->integrity_key);
 	strcpy(node_entry->entry_id,rec_entry->entry_id);
 	free(rec_entry);
-// #endif
+#endif
 
 
     if (init_sad_node == NULL) {
@@ -461,7 +461,7 @@ void show_sad_list(){
     }
 	pthread_mutex_unlock(&sad_entries_locker);
 }
-// #ifdef ENARX
+#ifdef Enarx
 // For verification of the existing sad_nodes 
 void verify_sad_nodes() {
 	pthread_mutex_lock(&sad_entries_locker);
@@ -496,9 +496,8 @@ void verify_sad_nodes() {
 	}
 	pthread_mutex_unlock(&sad_entries_locker);
 }
+#endif
 
-
-// #endif
 sad_entry_node *get_sad_node(char *sad_name){
 	pthread_mutex_lock(&sad_entries_locker);
     sad_entry_node *node = init_sad_node;
@@ -560,9 +559,11 @@ int del_sad_node(char *sad_name) {
 		} else {
 			init_sad_node = init_sad_node->next;
 		}
+#ifdef Enarx
 		if (del_trusted_sad_entry(nh) != 0) {
 			ERR("Error when removing sad entry %s",nh->entry_id);
 		}
+#endif
 		free(nh);
 	} else {
 		sad_entry_node *nc = init_sad_node;
@@ -583,9 +584,11 @@ int del_sad_node(char *sad_name) {
 		} else {
 			np->next = nc->next;
 		}
+#ifdef Enarx
 		if (del_trusted_sad_entry(nc) != 0) {
 				ERR("Error when removing sad entry %s",nc->entry_id);
 		}
+#endif
 		free(nc);
 	}
 	pthread_mutex_unlock(&sad_entries_locker);
@@ -605,21 +608,21 @@ int del_sad_node_2(char *sad_name) {
         }
         if (node == init_sad_node){
             init_sad_node = init_sad_node->next;
-			// #ifdef Enarx
+			#ifdef Enarx
 			if (del_trusted_sad_entry(prev_node) != 0) {
 				ERR("Error when removing sad entry %s",prev_node->entry_id);
 			}
-			// // #endif
+			#endif
 			// // TODO revise this because I think it is incorerct 
             free_sad_node(prev_node);
         }
         else if (!strcmp(sad_name,node->name)) {
             prev_node->next = node->next;
-			// #ifdef Enarx
+			#ifdef Enarx
 			if (del_trusted_sad_entry(node) != 0) {
 				ERR("Error when removing sad entry %s",node->entry_id);
 			}
-			// #endif
+			#endif
             free_sad_node(node);
         }
     } else { 

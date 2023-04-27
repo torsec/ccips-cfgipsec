@@ -51,6 +51,8 @@ sad_entry_node* create_sad_node(){
 
 }
 
+#ifdef Enarx
+
 // https://github.com/kgabis/parson
 JSON_Value *serialize_sad_node(sad_entry_node *sad_node) {
     JSON_Value *root_value = json_value_init_object();
@@ -144,34 +146,6 @@ struct sad_entry_node *deserialize_sad_node(JSON_Object *schema) {
     return sad_node;
 }   
 
-// TODO see what values should be compared for the moment only the keys are compared, more values will be added in the future
-// TODO move this to utils.c
-int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
-	// verify enc key
-    if (strncmp(i->encryption_key,j->encryption_key,MAX_KEY) != 0) {
-            return 1;
-    }
-	// verify int key
-    if (strncmp(i->integrity_key,j->integrity_key,MAX_KEY) != 0) {
-            return 1;
-    }
-	// Check that they have the same SPI
-	if (i->spi != j->spi) {
-		printf("Entries SPI differ\n");
-		return 1;
-	}
-	// Check that they have they are using the same mode
-	if (i->ipsec_mode != j->ipsec_mode) {
-		printf("Entries MODE differ\n");
-		return 1;
-	}
-	// TODO add more verification steps
-
-	// verify iv key for the moment ommit this
-    // if (strncmp(i->encryption_iv,j->encryption_iv,MAX_KEY) != 0) {
-    //         return 1;
-    // }
-	return 0;
-}
+#endif
 
 
