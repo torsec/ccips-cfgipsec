@@ -67,6 +67,7 @@ int getEncryptAlg(char* alg);
 unsigned char* hexstr_to_char(char* hexstr);
 int checkIKE_connection();
 void remove_colon(char* out, char* str) ;
+int compare_sad_entries(sad_entry_node *i, sad_entry_node *j);
 
 #ifdef TRUSTED_APP
 sad_entry_node *m_get_sad_entry(map_struct m, char *hash);

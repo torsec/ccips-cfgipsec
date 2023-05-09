@@ -352,6 +352,35 @@ void remove_colon(char* out, char* str) {
     out[j] = '\0'; // add the null terminator at the end of the output string
 }
 
+
+int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
+	// verify enc key
+    if (strncmp(i->encryption_key,j->encryption_key,MAX_KEY) != 0) {
+            return 1;
+    }
+	// verify int key
+    if (strncmp(i->integrity_key,j->integrity_key,MAX_KEY) != 0) {
+            return 1;
+    }
+	// Check that they have the same SPI
+	if (i->spi != j->spi) {
+		printf("Entries SPI differ\n");
+		return 1;
+	}
+	// Check that they have they are using the same mode
+	if (i->ipsec_mode != j->ipsec_mode) {
+		printf("Entries MODE differ\n");
+		return 1;
+	}
+	// TODO add more verification steps
+
+	// verify iv key for the moment ommit this
+    // if (strncmp(i->encryption_iv,j->encryption_iv,MAX_KEY) != 0) {
+    //         return 1;
+    // }
+	return 0;
+}
+
 #ifdef TRUSTED_APP
 
 char* hash_to_string(uint8_t *p) {
