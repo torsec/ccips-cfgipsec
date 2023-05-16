@@ -145,7 +145,6 @@ struct sad_entry_node *deserialize_sad_node(JSON_Object *schema) {
 	sad_node->lft_idle_current = json_object_get_number(schema, "lft_idle_current");
     return sad_node;
 }   
-
 #endif
 
 

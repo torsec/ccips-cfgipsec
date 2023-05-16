@@ -117,7 +117,7 @@ int spd_entry_change_cb(sr_session_ctx_t *session, uint32_t sub_id, const char *
 	                	rc = addSPD_entry(session,it,new_xpath,spd_name,feature_case_value);
 	           		 	free(new_xpath);
 						if (SR_ERR_OK == rc) {
-	                    	INFO("spd-entry added ");
+	                    	// INFO("spd-entry added ");
 	               	 	}
 	                	else {
 							ERR("Adding spd-entry: %s",sr_strerror(rc));
@@ -217,7 +217,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 		                rc = addSAD_entry(session,it,new_xpath,sad_name);
 	           		 	free(new_xpath);
 						if (SR_ERR_OK == rc) {
-	                    	INFO("sad-entry added ");
+	                    	// DBG("sad-entry ");
 	               	 	}
 	                	else {
 							ERR("Adding sad-entry: %s",sr_strerror(rc));
@@ -308,7 +308,7 @@ int exit_verification = 0;
 #ifdef Enarx
 int sad_verification_process() {
 	while(exit_verification == 0) {
-		DBG("====== Starting sad_entries verification process ======");
+		// DBG("====== Starting sad_entries verification process ======");
 		verify_sad_nodes();
 		DBG("====== END sad_entries verification process ======");
 		// manage verification process every 10 seconds

@@ -16,9 +16,7 @@
 #define LOG_VERSION "0.1.0"
 
 
-#define CI_VERB_ERROR 0   /**< Print only error messages. */
-#define CI_VERB_INFO 1	 /**< Besides errors and warnings, print some other verbose messages. */
-#define CI_VERB_DEBUG 2    /**< Print all messages including some development debug messages. */
+
 
 typedef struct {
   va_list ap;
@@ -33,7 +31,14 @@ typedef struct {
 typedef void (*log_LogFn)(log_Event *ev);
 typedef void (*log_LockFn)(bool lock, void *udata);
 
-enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
+enum {  LOG_FATAL,LOG_ERROR,LOG_WARN,LOG_INFO,  LOG_DEBUG, LOG_TRACE };
+
+#define CI_VERB_FATAL LOG_FATAL
+#define CI_VERB_ERROR LOG_ERROR 
+#define CI_VERB_WARN LOG_WARN
+#define CI_VERB_INFO LOG_INFO
+#define CI_VERB_DEBUG LOG_DEBUG
+#define CI_VERB_TRACE LOG_TRACE
 
 #define log_trace(...) log_log(LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
 #define log_debug(...) log_log(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)

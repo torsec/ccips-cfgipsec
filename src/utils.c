@@ -352,24 +352,42 @@ void remove_colon(char* out, char* str) {
     out[j] = '\0'; // add the null terminator at the end of the output string
 }
 
+char* stringToBytes(char* str) {
+    // Calculate the length of the input string
+    size_t len = strlen(str);
+    
+    // Allocate memory for the byte string
+    char* bytes = (char*)malloc(len * 2 + 1);  // Each byte is represented by 2 characters in hexadecimal, +1 for null terminator
+    
+    // Convert each character to byte string
+    for (size_t i = 0; i < len; i++) {
+        sprintf(bytes + i * 2, "%02X", (unsigned char)str[i]);  // Convert byte value to hexadecimal string
+    }
+    
+    return bytes;
+}
 
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 	// verify enc key
+	TRACE("I_ENC_KEY: %s \t J_ENC_KEY: %s",stringToBytes(i->encryption_key),stringToBytes(j->encryption_key));
     if (strncmp(i->encryption_key,j->encryption_key,MAX_KEY) != 0) {
-            return 1;
+		ERR("Entries ENC KEYS differ");
+		return 1;
     }
 	// verify int key
+	TRACE("I_INT_KEY: %s \t J_INT_KEY: %s",stringToBytes(i->integrity_key),stringToBytes(j->integrity_key));
     if (strncmp(i->integrity_key,j->integrity_key,MAX_KEY) != 0) {
-            return 1;
+		ERR("Entries AUTH KEYS differ");
+		return 1;
     }
 	// Check that they have the same SPI
 	if (i->spi != j->spi) {
-		printf("Entries SPI differ\n");
+		ERR("Entries SPI differ");
 		return 1;
 	}
 	// Check that they have they are using the same mode
 	if (i->ipsec_mode != j->ipsec_mode) {
-		printf("Entries MODE differ\n");
+		ERR("Entries MODE differ");
 		return 1;
 	}
 	// TODO add more verification steps

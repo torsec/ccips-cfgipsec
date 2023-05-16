@@ -251,7 +251,7 @@ int pf_exec_register(sr_session_ctx_t *session, int satype){
     msglen = Read(s, &buf, sizeof(buf));
     msgp = (struct sadb_msg *) &buf;
     if (msgp->sadb_msg_pid == pid && msgp->sadb_msg_type == SADB_REGISTER) {
-       	INFO("Regiter ok  ... ");
+       	INFO("Register ok  ... ");
 
     }
     if (satype == SADB_SATYPE_ESP) {
@@ -277,7 +277,7 @@ int pf_setsadbaddr(void *p, int exttype, int protocol, int prefixlen, int port, 
     addrext->sadb_address_proto = protocol;
     addrext->sadb_address_prefixlen = prefixlen;
     // addrext->sadb_address_reserved = 0;
-    INFO("PF_SETSADBADDR: %d, %d, %d, %d, %s",exttype,protocol,prefixlen,port,ip);
+    DBG("PF_SETSADBADDR: %d, %d, %d, %d, %s",exttype,protocol,prefixlen,port,ip);
     memcpy(addrext +1, addr, sizeof(struct sockaddr_in));
     return (addrext->sadb_address_len *8);
 }
@@ -810,6 +810,7 @@ int pf_getsad(sad_entry_node *out_node, sad_entry_node *sad_node) {
     int prefixLenDst, prefixLenSrc;
     char ipDst[MAX_IP], ipSrc[MAX_IP];
     int mode;
+    int reqid;
     // TODO extract more information
     // for the moment, in first demo we can check only this values.
     while (msglen > 0) {
@@ -839,6 +840,7 @@ int pf_getsad(sad_entry_node *out_node, sad_entry_node *sad_node) {
                 struct sadb_x_sa2 *sa2; 
                 sa2 = (struct sadb_x_sa2 *) ext;
                 mode = sa2->sadb_x_sa2_mode;
+                reqid = sa2->sadb_x_sa2_reqid;
                 break;
             }
             case SADB_EXT_ADDRESS_SRC: {
@@ -868,6 +870,7 @@ int pf_getsad(sad_entry_node *out_node, sad_entry_node *sad_node) {
         ext = (struct sadb_ext*) ((char *)ext + (ext->sadb_ext_len << 3));
     }
     out_node->ipsec_mode = mode;
+    out_node->req_id = reqid;
     if (mode == IPSEC_MODE_TUNNEL) {
         strcpy(out_node->tunnel_local,ipSrc);
         strcpy(out_node->tunnel_remote,ipDst);

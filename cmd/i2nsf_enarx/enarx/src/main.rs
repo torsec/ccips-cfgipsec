@@ -15,6 +15,7 @@ use mio::net::{TcpListener, TcpStream};
 use mio::{Events, Interest, Poll, Registry, Token};
 extern "C" {
     fn handle_message(data: *const libc::c_char) -> *mut libc::c_char;
+    fn log_set_level(level: libc::c_int);
 }
 
 pub fn handle_message_rust(data: &str) -> String {
@@ -29,6 +30,12 @@ pub fn handle_message_rust(data: &str) -> String {
     }
 }
 
+pub fn set_log_level(level: i32) {
+    let c_level = level as libc::c_int;
+    unsafe {
+        log_set_level(c_level);
+    }
+}
 
 // Setup some tokens to allow us to identify which event is for which socket.
 const SERVER: Token = Token(0);
@@ -38,7 +45,7 @@ const DATA: &[u8] = b"Server is connected!\n";
 
 fn main() -> io::Result<()> {
     env_logger::init();
-
+    set_log_level(5);
     // Create a poll instance.
     let mut poll = Poll::new()?;
     // Create storage for events.
@@ -179,16 +186,13 @@ fn handle_connection_event(
                     // echo back what we received and ignore any errors while doing so
                     
                     let data = std::str::from_utf8(&received_data[..n]).unwrap().trim().to_string();
-                    println!("Input data: {}", data.trim_end());
+                    // println!("Input data: {}", data.trim_end());
                     let output = handle_message_rust(&data);
                     
-
-
-
                     // let _ = connection.write_all(&received_data[bytes_read..(bytes_read + n)]);
-                    let mut outgoing_data = output.as_bytes().to_vec();
+                    let  outgoing_data = output.as_bytes().to_vec();
                     let mut outgoing_offset = 0;
-                    println!("Output data: {}", output.trim_end());
+                    // println!("Output data: {}", output.trim_end());
                     loop {
                         match connection.write(&outgoing_data[outgoing_offset..]) {
                             Ok(n) if n > 0 => outgoing_offset += n,
@@ -212,7 +216,7 @@ fn handle_connection_event(
 
         if bytes_read != 0 {
             let received_data = &received_data[..bytes_read];
-            if let Ok(str_buf) = from_utf8(received_data) {
+            if let Ok(_str_buf) = from_utf8(received_data) {
                 // println!("Received data: {}", str_buf.trim_end());
                 
             } else {

@@ -51,19 +51,20 @@ int main(int argc, char **argv)
     // Get options
     int foreground = false;
     int c;
+    int l = CI_VERB_INFO;
+    log_set_level(l);
     while ( ( c = getopt ( argc, argv, "f:c:v:h" ) ) != -1 ) {
         switch ( c ) {
             case 'f':
                 foreground = true; // TBD
                 break;
             case 'v':
-                if (strcmp(optarg,"0") != 0 && strcmp(optarg,"1") != 0 && strcmp(optarg,"2") != 0) {
-                    printf("verbose not valid: %s\n",optarg);
+                l = atoi(optarg);  // Convert optarg to an integer
+                if (l < 0 || l > CI_VERB_TRACE) {
+                    printf("verbose level out of range: %d\n", l);
                     exit(EXIT_FAILURE);
-                } else if (strcmp(optarg,"0") == 0) {
-                    log_level_string(CI_VERB_ERROR);
-                } else if (strcmp(optarg,"2") == 0) {
-                    log_level_string(CI_VERB_DEBUG);
+                } else {
+                    log_set_level(l);  // Set the log level based on the converted value
                 }
                 break;
             case 'h': {
@@ -73,7 +74,7 @@ int main(int argc, char **argv)
                 fprintf(stderr, "\n" );
                 fprintf(stderr, "Where:\n" );
                 fprintf(stderr, "       - case is `case1` (IKE case) or `case2` (IKE-less case, default)\n" );
-                fprintf(stderr, "       - verbose_level is 0: ERROR, 1: INFORMATIONAL (default), 2: DEBUG\n" );
+                fprintf(stderr, "       - verbose_level is 0: FATAL, 1: ERR, 2: WARN, 3: INFO (default), 4: DEBUG, 5: TRACE\n" );
                 fprintf(stderr, "" );
                 return 0;
             }
@@ -83,6 +84,7 @@ int main(int argc, char **argv)
             }
         }
     }
+    INFO("LOG level set to: %d",l);
 #ifdef Enarx
     INFO("Enarx CCIPs version");
     // Enable connectivity with enarx client
@@ -121,8 +123,9 @@ int main(int argc, char **argv)
     }
 
     /* read current config */
-    INFO("\n ========== READING RUNNING CONFIG: ==========\n\n");
+    DBG("========== READING RUNNING CONFIG: ==========");
     print_current_config(session, mod_name);
+    DBG("========== END RUNNING CONFIG: ==========");
 
 
 

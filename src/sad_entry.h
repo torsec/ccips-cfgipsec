@@ -7,7 +7,7 @@
 #include <string.h>
 #ifdef Enarx
 #include "parson.h"
-#endif Enarx
+#endif
 #include <crypt.h>
 #define SAD_ENTRY_SIZE 33
 

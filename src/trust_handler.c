@@ -42,7 +42,7 @@ extern char *handle_message(char *data) {
             } else {
                 data_value = encode_sad_entry_msg(entry_msg);
                 code = INSERT_ENTRY_MSG;
-                INFO("NEW CONFIG MANAGED SUCCESFUL");
+                // INFO("NEW CONFIG MANAGED SUCCESFUL");
             }
             break;
         }
@@ -52,11 +52,12 @@ extern char *handle_message(char *data) {
                 // The confirmation has been succesfull
                 data_value = generate_op_message("SAD_ENTRY is valid",0);
                 code = OP_RESULT_MSG;
-                INFO("VERIFY MANAGED SUCCESFUL");
+                // INFO("VERIFY MANAGED SUCCESFUL");
             } else if (result  == 2){
                 data_value = encode_alert_state_msg(alert_msg);
                 code = ALERT_STATE_MSG;
-                ERR("VERIFY WAS UNCSUCCESFUL");
+                // Show the hash, reqid, and spi
+                
             } else {
                 data_value = generate_op_message("Verify error",result);
                 code = OP_RESULT_MSG;
@@ -101,6 +102,9 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     sad_entry_node *entry = (sad_entry_node*) malloc(sizeof(sad_entry_node));
     // Copy struct into another so we can free later the config value
     memcpy(&entry, &config->sad_entry, sizeof(config->sad_entry));
+    // Just strcpy the auth and encryption key seems to be missing in RUST implementation after been added into the map
+    strcpy(entry->encryption_key,config->sad_entry->encryption_key);
+    strcpy(entry->integrity_key,config->sad_entry->integrity_key);
     // XOR the key parameters
     // TODO Add this part
     // Store the values
@@ -113,6 +117,8 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
 
     strcpy(out->entry_id,hash);
     out->sad_entry = entry;
+    INFO("\n+++++ Added SAD entry ++++ \n HASH: %s \t SPI: %d \t REQID: %d\n++++++++++++++++++++++++++++++++++",
+    hash,entry->spi,entry->req_id);
 cleanup:
     // Free data
 	free(config);
@@ -124,6 +130,7 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
     int status = 0;
     // Decode the data of the message
     sad_entry_msg *config = (sad_entry_msg*) malloc(sizeof(sad_entry_msg));
+
     if (decode_sad_entry_msg(config,data) != 0) {
         ERR("Error decoding the data of the message");
         status = 1;
@@ -138,21 +145,26 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
     //     status = 1;
     //     goto cleanup;
     // }
-
+    sad_entry_node *received_entry = config->sad_entry;
     sad_entry_node *stored_entry = m_get_sad_entry(trusted_map,hash);
     if (stored_entry == NULL) {
         ERR("Entry not found");
         status = 1;
         goto cleanup;
     }
+    INFO("Veryfiying entry:  HASH: %s\t SPI: %d\t REQID: %d",hash, stored_entry->spi,stored_entry->req_id);
     // Is the same entry?
     if (compare_sad_entries(config->sad_entry,stored_entry) != 0) {
         // Generate out message
         strcpy(out->message, "entries differ");
         strcpy(out->entry_id,config->entry_id);
         status = 2;
+        ERR("Entry could not be validated:\n \tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
         goto cleanup;
     }
+    // Hash, spi, reqid, auth_key_sored,
+    INFO("Entry verified:\n \tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
+
 cleanup:
 	free(config);
     return status;
@@ -186,6 +198,8 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out) {
     }
     strcpy(message,"deleted\0");
     // Delete the sad entry
+    INFO("\n+++++ Deleted SAD entry ++++ \n HASH: %s \t SPI: %d \t REQID: %d \n++++++++++++++++++++++++++++++++++",
+    config->entry_id,stored_entry->spi,stored_entry->req_id);
     m_delete_sad_entry(trusted_map,config->entry_id);
 cleanup:
 	free(config);

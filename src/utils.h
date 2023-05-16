@@ -43,6 +43,7 @@
 #include "sad_entry.h"
 #ifdef TRUSTED_APP
 #include "map.h"
+#include "md5.h"
 #endif 
 
 
@@ -68,6 +69,7 @@ unsigned char* hexstr_to_char(char* hexstr);
 int checkIKE_connection();
 void remove_colon(char* out, char* str) ;
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j);
+char* stringToBytes(char* str);
 
 #ifdef TRUSTED_APP
 sad_entry_node *m_get_sad_entry(map_struct m, char *hash);

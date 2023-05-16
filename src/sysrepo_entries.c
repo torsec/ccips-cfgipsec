@@ -355,7 +355,7 @@ int addSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 		}
 	}
     
-    INFO("SPD entry added ");
+    INFO("SPD entry added: REQID %d",spd_node->req_id);
     show_spd_list();
 	
 
@@ -592,47 +592,6 @@ int del_sad_node(char *sad_name) {
 		free(nc);
 	}
 	pthread_mutex_unlock(&sad_entries_locker);
-}
-
-int del_sad_node_2(char *sad_name) {
-	pthread_mutex_lock(&sad_entries_locker);
-    sad_entry_node *node = init_sad_node;
-	DBG("Deleting SAD Node from local storage %s",sad_name);
-    if (node != NULL) {
-        sad_entry_node *prev_node = NULL;
-        prev_node = create_sad_node();
-
-        while (strcmp(sad_name,node->name)) {
-            prev_node = node;
-            node = node->next;
-        }
-        if (node == init_sad_node){
-            init_sad_node = init_sad_node->next;
-			#ifdef Enarx
-			if (del_trusted_sad_entry(prev_node) != 0) {
-				ERR("Error when removing sad entry %s",prev_node->entry_id);
-			}
-			#endif
-			// // TODO revise this because I think it is incorerct 
-            free_sad_node(prev_node);
-        }
-        else if (!strcmp(sad_name,node->name)) {
-            prev_node->next = node->next;
-			#ifdef Enarx
-			if (del_trusted_sad_entry(node) != 0) {
-				ERR("Error when removing sad entry %s",node->entry_id);
-			}
-			#endif
-            free_sad_node(node);
-        }
-    } else { 
-		pthread_mutex_unlock(&sad_entries_locker);
-		ERR("Trying to remove a SAD entry when it does not exists");
-		return SR_ERR_OPERATION_FAILED;
-	}
-
-	pthread_mutex_unlock(&sad_entries_locker);
-    return SR_ERR_OK;
 }
 
 int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *sad_name) {
@@ -959,7 +918,7 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
         return rc;     
     }
  
-    //INFO("SAD entry added! ");
+    INFO("SAD entry added: REQID: %d \t SPI: %d",sad_node->req_id,sad_node->spi);
     show_sad_list();
 
     return SR_ERR_OK;
