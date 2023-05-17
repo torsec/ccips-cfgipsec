@@ -22,7 +22,8 @@ sysrepoctl -i yang/ietf-i2nsf-ikeless.yang  --permissions=666 -v3
 
 RUN sysrepoctl -c ietf-i2nsf-ikeless -e ikeless-notification  -v3
 
-# RUN rm -rf parson && git clone https://github.com/kgabis/parson
+RUN rm -rf parson && git clone https://github.com/kgabis/parson
+RUN rm -rf md5-c && git clone https://github.com/Zunawe/md5-c
 RUN mkdir -p build && cd build && rm -rf * &&  cmake -D ENARX_RA=${ENARX_RA} .. && make
 
 ADD supervisord.conf /etc/supervisord.conf
