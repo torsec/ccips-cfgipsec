@@ -487,7 +487,7 @@ void verify_sad_nodes() {
 				ERR("INVALID ANSWER!");
 				break;
 			default:
-				DBG("Verification of %s has been done correctly",node->name);
+				INFO("Verification of %s has been done correctly: SPI %d\t REQID: %d",node->name,node->spi,node->req_id);
 				break;
 			}
 		}
@@ -541,7 +541,7 @@ void free_sad_node(sad_entry_node * n) {
 }
 
 int del_sad_node(char *sad_name) {
-	pthread_mutex_lock(&sad_entries_locker);
+	// pthread_mutex_lock(&sad_entries_locker);
 
 	// Do we have initialized the sad_node
 	if (init_sad_node == NULL) {
@@ -591,7 +591,7 @@ int del_sad_node(char *sad_name) {
 #endif
 		free(nc);
 	}
-	pthread_mutex_unlock(&sad_entries_locker);
+	// pthread_mutex_unlock(&sad_entries_locker);
 }
 
 int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *sad_name) {
@@ -599,9 +599,9 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
     int rc = SR_ERR_OK;
 
     DBG("SAD entry REMOVE: %s",sad_name);
-
-    sad_entry_node *node = get_sad_node(sad_name);
+	  sad_entry_node *node = get_sad_node(sad_name);
     if (node != NULL) {
+		pthread_mutex_lock(&sad_entries_locker);
         rc = pf_delsad(node);
         if (SR_ERR_OK != rc){
             ERR("Remove SAD in pfkeyv2_delsad: %s",sr_strerror(rc));
@@ -613,11 +613,11 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
                 rc = SR_ERR_OPERATION_FAILED;
             } else rc = SR_ERR_OK;
         }
+		pthread_mutex_unlock(&sad_entries_locker);
     } else{
         rc = SR_ERR_OPERATION_FAILED;
         ERR("Remove SAD, spi not found: %s",sr_strerror(rc));
     }
-
     show_sad_list();
     return rc;
 

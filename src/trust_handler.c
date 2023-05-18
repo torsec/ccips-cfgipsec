@@ -152,19 +152,19 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
         status = 1;
         goto cleanup;
     }
-    INFO("Veryfiying entry:  HASH: %s\t SPI: %d\t REQID: %d",hash, stored_entry->spi,stored_entry->req_id);
+    
     // Is the same entry?
     if (compare_sad_entries(config->sad_entry,stored_entry) != 0) {
         // Generate out message
         strcpy(out->message, "entries differ");
         strcpy(out->entry_id,config->entry_id);
         status = 2;
-        ERR("Entry could not be validated:\n \tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
+        ERR("Entry could not be validated: HASH: %s\tSPI: %d\tREQID: %d",hash, stored_entry->spi,stored_entry->req_id);
+        ERR("\nStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
         goto cleanup;
+    } else {
+        INFO("Entry validated: HASH: %s\tSPI: %d\tREQID: %d",hash, stored_entry->spi,stored_entry->req_id);
     }
-    // Hash, spi, reqid, auth_key_sored,
-    INFO("Entry verified:\n \tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
-
 cleanup:
 	free(config);
     return status;

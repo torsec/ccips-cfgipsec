@@ -310,9 +310,8 @@ int sad_verification_process() {
 	while(exit_verification == 0) {
 		// DBG("====== Starting sad_entries verification process ======");
 		verify_sad_nodes();
-		DBG("====== END sad_entries verification process ======");
 		// manage verification process every 10 seconds
-		sleep(10);
+		sleep(5);
 	}
 
 }

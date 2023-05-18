@@ -45,7 +45,7 @@ const DATA: &[u8] = b"Server is connected!\n";
 
 fn main() -> io::Result<()> {
     env_logger::init();
-    set_log_level(5);
+    set_log_level(4);
     // Create a poll instance.
     let mut poll = Poll::new()?;
     // Create storage for events.

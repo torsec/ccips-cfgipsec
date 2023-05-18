@@ -116,7 +116,7 @@ static void* pf_sadb_esp_register_run(void* register_thread_info){
         if (msgp->sadb_msg_type == SADB_ACQUIRE) {
         	INFO("SADB_ACQUIRE received");
             print_sadb_msg(msgp,msglen);
-            DBG("print_sadb_msg sadb_esp_register_run end ..."); 
+            TRACE("print_sadb_msg sadb_esp_register_run end ..."); 
 			
 			msglen -= sizeof(struct sadb_msg);
 		    struct sadb_ext *ext;
@@ -189,22 +189,22 @@ static void* pf_sadb_esp_register_run(void* register_thread_info){
 				    	INFO("SADB_ entry deleted in running: %i", spi); 
 					}
 				} else {
-					DBG("not remove");
+					// DBG("not remove");
 				}
             } else {
 				DBG("soft");
             	rc = send_sa_expire_notification(session,spi,true); 
                 INFO("SOFT life expire received for SPI: %d",spi);
 				if (rc != SR_ERR_OK) {
-					ERR("sending soft expire notification: %i", rc);
+					INFO("sending soft expire notification: %i", rc);
 				}
             }              
         } else {
-            DBG("Unknown SADB notification received.");
+            TRACE("Unknown SADB notification received.");
         }
         
     }
-    pthread_mutex_unlock(&pf_sadb_esp_register_run_lock);
+    // pthread_mutex_unlock(&pf_sadb_esp_register_run_lock);
     close(s);
     return NULL;
 }
@@ -277,7 +277,7 @@ int pf_setsadbaddr(void *p, int exttype, int protocol, int prefixlen, int port, 
     addrext->sadb_address_proto = protocol;
     addrext->sadb_address_prefixlen = prefixlen;
     // addrext->sadb_address_reserved = 0;
-    DBG("PF_SETSADBADDR: %d, %d, %d, %d, %s",exttype,protocol,prefixlen,port,ip);
+    TRACE("PF_SETSADBADDR: %d, %d, %d, %d, %s",exttype,protocol,prefixlen,port,ip);
     memcpy(addrext +1, addr, sizeof(struct sockaddr_in));
     return (addrext->sadb_address_len *8);
 }
@@ -360,7 +360,7 @@ int pf_addpolicy(spd_entry_node *spd_node) {
 
     msg->sadb_msg_len = len/8;
 
-    DBG("print_sadb_msg pfkeyv2_addpolicy");
+    TRACE("print_sadb_msg pfkeyv2_addpolicy");
     print_sadb_msg(msg, len);
     Write(s, buf, len);
     close(s);
@@ -456,9 +456,7 @@ int pf_addpolicy(spd_entry_node *spd_node) {
              goteof = 1;
     }  
     close(s);  
-
-    DBG("print_sadb_msg pfkeyv2_addpolicy end"); 
-
+    TRACE("print_sadb_msg pfkeyv2_addpolicy end"); 
     return SR_ERR_OK;
 
 }
@@ -499,9 +497,9 @@ int pf_delpolicy(spd_entry_node *spd_node) {
 
     msg->sadb_msg_len = len/8;
 
-    DBG("print_sadb_msg pfkeyv2_delpolicy");
+    TRACE("print_sadb_msg pfkeyv2_delpolicy");
     print_sadb_msg(msg, len);
-
+    TRACE("end print_sadb_msg pfkeyv2_delpolicy");
     Write(s, buf, len);
     close(s);
 
@@ -673,8 +671,9 @@ int pf_addsad(sad_entry_node *sad_node) {
             p += keyext->sadb_key_len * 8;
     }
     msg->sadb_msg_len = len / 8;
-    INFO("print_sadb_msg pfkeyv2_addsad:");
+    TRACE("print_sadb_msg pfkeyv2_addsad:");
     print_sadb_msg(msg, len);
+    TRACE("end print_sadb_msg pfkeyv2_addsad:");
     Write(s, buf, len);
     close(s);
     return SR_ERR_OK;
@@ -722,9 +721,9 @@ int pf_delsad(sad_entry_node *sad_node) {
 
 
     msg->sadb_msg_len = len / 8;
-    DBG("print_sadb_msg pfkeyv2_delsad:");
+    TRACE("print_sadb_msg pfkeyv2_delsad:");
     print_sadb_msg(msg, len);
-
+    TRACE("end print_sadb_msg pfkeyv2_delsad:");
     Write(s, buf, len);
     close(s);
 
@@ -816,14 +815,14 @@ int pf_getsad(sad_entry_node *out_node, sad_entry_node *sad_node) {
     while (msglen > 0) {
         switch (ext->sadb_ext_type) {
             case SADB_EXT_KEY_ENCRYPT:{
-                DBG("Parsing ENC KEY");
+                TRACE("Parsing ENC KEY");
                 struct  sadb_key *keyext = (struct sadb_key *) ext;
                 out_node->encryption_key = malloc(keyext->sadb_key_bits / 8);
                 memcpy(out_node->encryption_key, (char *) (keyext + 1), keyext->sadb_key_bits / 8);
                 break;
             }
             case SADB_EXT_KEY_AUTH: {
-                DBG("Parsing INT KEY");
+                TRACE("Parsing INT KEY");
                 struct  sadb_key *keyext = (struct sadb_key *) ext;
                 out_node->integrity_key = malloc(keyext->sadb_key_bits / 8);
                 memcpy(out_node->integrity_key, (char *) (keyext + 1), keyext->sadb_key_bits / 8);
@@ -832,7 +831,7 @@ int pf_getsad(sad_entry_node *out_node, sad_entry_node *sad_node) {
             case SADB_EXT_SA: {
                 struct sadb_sa *sa;
                 sa = (struct sadb_sa *)ext;
-                DBG("Parsing SPI %i",ntohl(sa->sadb_sa_spi));
+                TRACE("Parsing SPI %i",ntohl(sa->sadb_sa_spi));
                 out_node->spi = ntohl(sa->sadb_sa_spi);
                 break;
             }
@@ -904,7 +903,7 @@ char * pf_get_alg_enum_name(struct sadb_alg * alg, struct sadb_supported *sup) {
     } else if (0 == strcmp(name,"Blowfish-CBC")) {
         return "blowfish";
     } else {
-        DBG("pf_get_alg_enum_name unknown : %s]", name);
+        TRACE("pf_get_alg_enum_name unknown : %s]", name);
         return NULL;
     }
     

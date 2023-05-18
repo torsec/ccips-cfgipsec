@@ -3,7 +3,6 @@ set(CMAKE_BUILD_TYPE Debug)
 set(TARGET ${TARGET} "rich_app")
 message(STATUS "Selected target is ${TARGET}")
 option(ENARX_RA "Add the depencies for the Enarx riach aplication" OFF)
-message(STATUS "ENARX_RA option: ${ENARX_RA}")
 
 
 add_compile_definitions(LOG_USE_COLOR)
