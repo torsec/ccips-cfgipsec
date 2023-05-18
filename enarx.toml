@@ -1,3 +1,0 @@
-[env]
-emscripten_resize_heap = "1000"
-EMSCRIPTEN_RESIZE_HEAP = "1000"

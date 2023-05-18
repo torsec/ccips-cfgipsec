@@ -160,7 +160,7 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
         strcpy(out->entry_id,config->entry_id);
         status = 2;
         ERR("Entry could not be validated: HASH: %s\tSPI: %d\tREQID: %d",hash, stored_entry->spi,stored_entry->req_id);
-        ERR("\nStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
+        ERR("\n\tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
         goto cleanup;
     } else {
         INFO("Entry validated: HASH: %s\tSPI: %d\tREQID: %d",hash, stored_entry->spi,stored_entry->req_id);
