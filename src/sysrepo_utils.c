@@ -26,7 +26,7 @@ int feature_case_value = 2;
 char *get_new_xpath(char * xpath) {
 	
 	int len = strlen(xpath)-strlen("/name");	
-	char *new_xpath=malloc(len);
+	char *new_xpath=malloc(len+1);
 	if (!new_xpath)
 		return NULL;
 	for (int i = 0; i < len; ++i)
