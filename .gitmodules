@@ -1,0 +1,6 @@
+[submodule "md5-c"] 
+  path = md5-c 
+  url = https://github.com/Zunawe/md5-c.git
+[submodule "parson"] 
+  path = parson
+  url = https://github.com/kgabis/parson
