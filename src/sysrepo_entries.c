@@ -436,21 +436,19 @@ void add_sad_node(sad_entry_node* node_entry){
 	free(rec_entry);
 #endif
 
-
+	pthread_mutex_lock(&sad_entries_locker);
     if (init_sad_node == NULL) {
         init_sad_node=node_entry;
         node_entry->next=NULL;
     } else{
-		pthread_mutex_lock(&sad_entries_locker);
         sad_entry_node *node = init_sad_node;
         while(node->next != NULL)
             node=node->next;
         node->next=node_entry;
-		pthread_mutex_unlock(&sad_entries_locker);
     }
+	pthread_mutex_unlock(&sad_entries_locker);
 }
 
-// for case 1
 void show_sad_list(){
 	pthread_mutex_lock(&sad_entries_locker);
     sad_entry_node *node = init_sad_node;
@@ -541,7 +539,7 @@ void free_sad_node(sad_entry_node * n) {
 }
 
 int del_sad_node(char *sad_name) {
-	// pthread_mutex_lock(&sad_entries_locker);
+	pthread_mutex_lock(&sad_entries_locker);
 
 	// Do we have initialized the sad_node
 	if (init_sad_node == NULL) {
@@ -591,17 +589,15 @@ int del_sad_node(char *sad_name) {
 #endif
 		free(nc);
 	}
-	// pthread_mutex_unlock(&sad_entries_locker);
+	pthread_mutex_unlock(&sad_entries_locker);
 }
 
 int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *sad_name) {
 
     int rc = SR_ERR_OK;
-
     DBG("SAD entry REMOVE: %s",sad_name);
 	  sad_entry_node *node = get_sad_node(sad_name);
     if (node != NULL) {
-		pthread_mutex_lock(&sad_entries_locker);
         rc = pf_delsad(node);
         if (SR_ERR_OK != rc){
             ERR("Remove SAD in pfkeyv2_delsad: %s",sr_strerror(rc));
@@ -613,7 +609,7 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
                 rc = SR_ERR_OPERATION_FAILED;
             } else rc = SR_ERR_OK;
         }
-		pthread_mutex_unlock(&sad_entries_locker);
+
     } else{
         rc = SR_ERR_OPERATION_FAILED;
         ERR("Remove SAD, spi not found: %s",sr_strerror(rc));
@@ -625,8 +621,6 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
 }
 
 int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_entry_node *sad_node) {
-
-
     int rc = SR_ERR_OK;
     sr_val_t *old_value = NULL;
     sr_val_t *new_value = NULL;
