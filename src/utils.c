@@ -411,14 +411,14 @@ char* hash_to_string(uint8_t *p) {
         sprintf(str + 2*i, "%02x", p[i]);
     }
     str[32] = '\0'; // add null terminator at the end of the string
-	DBG("Hash calculated: %s",str);
+	TRACE("Hash calculated: %s",str);
     return str;
 }
 
 char* get_sad_hash(sad_entry_node *sad_node) {
 	MD5Context ctx;
     md5Init(&ctx);
-	DBG("hashing name: %s",sad_node->name);
+	TRACE("hashing name: %s",sad_node->name);
 	md5Update(&ctx, sad_node->name,MAX_PATH);
 	md5Finalize(&ctx);
 	return hash_to_string(ctx.digest);

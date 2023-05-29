@@ -2,7 +2,13 @@
 
 sad_entry_node *init_sad_node = NULL;
 spd_entry_node* init_spd_node = NULL;
-pthread_mutex_t sad_entries_locker =PTHREAD_MUTEX_INITIALIZER; 
+pthread_mutex_t sad_entries_locker =PTHREAD_MUTEX_INITIALIZER;
+
+#ifdef Enarx
+// Only for enarx
+// Maybe a better approach should be using the some kind of RWMUTEX
+pthread_mutex_t pf_interact_locker =PTHREAD_MUTEX_INITIALIZER; 
+#endif
 
 // FROM spd_entry.c
 void add_spd_node(spd_entry_node* node_entry){
@@ -434,6 +440,7 @@ void add_sad_node(sad_entry_node* node_entry){
 	strcpy(node_entry->integrity_key,rec_entry->integrity_key);
 	strcpy(node_entry->entry_id,rec_entry->entry_id);
 	free(rec_entry);
+
 #endif
 
 	pthread_mutex_lock(&sad_entries_locker);
@@ -479,13 +486,14 @@ void verify_sad_nodes() {
 				// Socket error 
 				break;
 			case 2:
-				ERR("ALERT with %s: %s", node->name , verify_response);
+				ERR("ALERT with %s", verify_response);
+				ERR("Invalid verification of %s: SPI %d\tREQID: %d",node->name,node->spi,node->req_id);
 				break;
 			case 3:
 				ERR("INVALID ANSWER!");
 				break;
 			default:
-				INFO("Verification of %s has been done correctly: SPI %d\t REQID: %d",node->name,node->spi,node->req_id);
+				INFO("Correct verification of %s has been done correctly: SPI %d\t REQID: %d",node->name,node->spi,node->req_id);
 				break;
 			}
 		}
@@ -595,6 +603,9 @@ int del_sad_node(char *sad_name) {
 int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *sad_name) {
 
     int rc = SR_ERR_OK;
+	#ifdef Enarx
+		pthread_mutex_lock(&pf_interact_locker);
+	#endif
     DBG("SAD entry REMOVE: %s",sad_name);
 	  sad_entry_node *node = get_sad_node(sad_name);
     if (node != NULL) {
@@ -614,6 +625,10 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
         rc = SR_ERR_OPERATION_FAILED;
         ERR("Remove SAD, spi not found: %s",sr_strerror(rc));
     }
+	#ifdef Enarx
+		pthread_mutex_unlock(&pf_interact_locker);
+	#endif
+
     show_sad_list();
     return rc;
 
@@ -899,14 +914,21 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 	strcpy(sad_node->name,sad_name);
 	
     rc = readSAD_entry(sess,it,xpath,sad_node);
+
+
     if (rc != SR_ERR_OK) {
         ERR("ADD SAD in getSAD_entry: %s",sr_strerror(rc));
         return rc;
     }
-
+	#ifdef Enarx
+		pthread_mutex_lock(&pf_interact_locker);
+	#endif
     add_sad_node(sad_node);
     rc = pf_addsad(sad_node);
 
+	#ifdef Enarx
+		pthread_mutex_unlock(&pf_interact_locker);
+	#endif
     if (SR_ERR_OK != rc) {
         ERR("ADD SAD in getSAD_entry: %s", sr_strerror(rc));
         return rc;     

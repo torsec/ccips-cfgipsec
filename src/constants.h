@@ -148,7 +148,7 @@
 #define SADB_EALG_DESCBC		2
 #define SADB_EALG_3DESCBC		3 // Hasta 192 
 #define SADB_X_EALG_CASTCBC		6 // key length 128bits
-#define SADB_X_EALG_BLOWFISHCBC		7 // key length 32bits-448
+#define SADB_X_EALG_BLOWFISHCBC	7 // key length 32bits-448
 #define SADB_EALG_NULL			11 
 #define SADB_X_EALG_AESCBC		12 // key length 128/192/256 
 #define SADB_X_EALG_AESCTR		13 // key length 128/192/256 
