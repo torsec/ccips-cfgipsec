@@ -272,9 +272,6 @@ cleanup:
 
 
 // callbackk for sad_register mmessages
-//int
-//rpc_sadb_register_cb(const char *xpath, const sr_val_t *input, const size_t input_cnt,
-// sr_val_t **output, size_t *output_cnt, void *private_ctx) {
 int sadb_register(sr_session_ctx_t *session) {
     
 
@@ -288,7 +285,7 @@ int sadb_register(sr_session_ctx_t *session) {
 }
 
 // callbackk for sad_stats element
-//int sad_state_cb(const char *xpath, sr_val_t **values, size_t *values_cnt, void *private_ctx) {
+// int sad_state_cb(const char *xpath, sr_val_t **values, size_t *values_cnt, void *private_ctx) {
 int sad_state_cb(sr_session_ctx_t *session, const char *module_name, const char *xpath, const char *request_xpath,
         uint32_t request_id, struct lyd_node **parent, void *private_data) {
       
@@ -320,4 +317,4 @@ int sad_verification_process() {
 int close_verification_process() {
 	exit_verification = 1;
 }
-#endif ENARX
+#endif 

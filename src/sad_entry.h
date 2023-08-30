@@ -56,9 +56,20 @@ typedef struct sad_entry_node{
 } sad_entry_node;
 
 
+/// @brief creates an emptu sad_node with all the parameters initialized
+/// @return 
 sad_entry_node* create_sad_node();
+
+
 #ifdef Enarx
+/// @brief serialize a sad_node into a JSON_VALUE
+/// @param sad_node input sad_node to serailize
+/// @return Json value
 JSON_Value *serialize_sad_node(sad_entry_node *sad_node);
+
+/// @brief deserialized a JSON_OBJECT into a sad_node
+/// @param schema json schema that contains a serialized _sad_node
+/// @return sad_entry_node // TODO maybe change this so we pass the sad_entry_node to change
 sad_entry_node *deserialize_sad_node(JSON_Object *schema);
 #endif
 // char *get_sad_hash(sad_entry_node *sad_node);

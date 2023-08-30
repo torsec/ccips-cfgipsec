@@ -63,8 +63,18 @@ typedef struct insert_entry_msg
 
 
 
-
+/// @brief function that decodes a json message
+/// @param msg decoded message // TODO swich inputs
+/// @param schema original schema
+/// @return 
 int decode_default_msg(default_msg* msg, JSON_Object *schema);
+
+
+/// @brief function used to encode a json schema into a message
+/// @param work_id identifier of the work that is been performed
+/// @param code identifier of the type of message
+/// @param data data that is been added into the message
+/// @return encode message using json format
 char *encode_default_msg(int work_id, int code, JSON_Value *data);
 
 
@@ -72,22 +82,77 @@ char *encode_default_msg(int work_id, int code, JSON_Value *data);
 
 
 // Functions called to decode the messages
+
+/// @brief decode a json object into a sad_entry_msg
+/// @param msg return message // TODO switch fields
+/// @param schema json schema passed
+/// @return 
 int decode_sad_entry_msg(sad_entry_msg *msg, JSON_Object *schema);
+
+/// @brief decode a json object into a delete_config_msg
+/// @param msg return message // TODO switch fields
+/// @param schema json schema passed
+/// @return 
 int decode_delete_config_msg(delete_config_msg *msg, JSON_Object *schema);
+
+/// @brief decode a json object into a alert_state_msg
+/// @param msg return message // TODO switch fields
+/// @param schema json schema passed
+/// @return 
 int decode_alert_state_msg(alert_state_msg *msg, JSON_Object *schema);
+
+/// @brief decode a json object into a op_result_msg
+/// @param msg return message // TODO switch fields
+/// @param schema json schema passed
+/// @return 
 int decode_op_result_msg(op_result_msg *msg, JSON_Object *schema);
+
+/// @brief decode a json object into a request_entry_msg
+/// @param msg return message // TODO switch fields
+/// @param schema json schema passed
+/// @return 
 int decode_request_entry_msg(request_entry_msg *msg, JSON_Object *schema);
+
+/// @brief decode a json object into a insert_entry_msg
+/// @param msg return message // TODO switch fields
+/// @param schema json schema passed
+/// @return 
 int decode_insert_entry_msg(insert_entry_msg *msg, JSON_Object *schema);
 
 // Functions to encode the messages
+
+/// @brief encodes a sad_entry_msg into a JSON value
+/// @param msg sad_entry_msg to be encoded
+/// @return JSON_VALUE to be sent
 JSON_Value *encode_sad_entry_msg(sad_entry_msg *msg);
+
+/// @brief encodes a sad_edelete_config_msgntry_msg into a JSON value
+/// @param msg delete_config_msg to be encoded
+/// @return JSON_VALUE to be sent
 JSON_Value *encode_delete_config_msg(delete_config_msg *msg);
+
+/// @brief encodes a alert_state_msg into a JSON value
+/// @param msg alert_state_msg to be encoded
+/// @return JSON_VALUE to be sent
 JSON_Value *encode_alert_state_msg(alert_state_msg *msg);
+
+/// @brief encodes a op_result_msg into a JSON value
+/// @param msg op_result_msg to be encoded
+/// @return JSON_VALUE to be sent
 JSON_Value *encode_op_result_msg(op_result_msg *msg);
+
+/// @brief encodes a request_entry_msg into a JSON value
+/// @param msg request_entry_msg to be encoded
+/// @return JSON_VALUE to be sent
 JSON_Value *encode_request_entry_msg(request_entry_msg *msg);
+
+/// @brief encodes a insert_entry_msg into a JSON value
+/// @param msg insert_entry_msg to be encoded
+/// @return JSON_VALUE to be sent
 JSON_Value *encode_insert_entry_msg(insert_entry_msg *msg);
 
 // Some helpers to remove redundancy
+// TODO remove since it is not used
 JSON_Value *generate_op_message(char* message, int code);
 
 #endif

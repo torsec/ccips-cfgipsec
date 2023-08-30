@@ -57,6 +57,8 @@ typedef struct spd_entry_node {
 
 } spd_entry_node;
 
-
+/// @brief creates an empty spd_entry_node with all the inputs intitilized
+/// @return an empty sad_entry_node
 spd_entry_node* create_spd_node();
+
 #endif

@@ -71,6 +71,8 @@ void remove_colon(char* out, char* str) ;
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j);
 char* stringToBytes(char* str);
 
+
+// THis needs to be replaced by 
 #ifdef TRUSTED_APP
 sad_entry_node *m_get_sad_entry(map_struct m, char *hash);
 int m_set_sad_entry(map_struct m, char *hash, sad_entry_node *map_node);

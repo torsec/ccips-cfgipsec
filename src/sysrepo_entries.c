@@ -466,6 +466,18 @@ void show_sad_list(){
     }
 	pthread_mutex_unlock(&sad_entries_locker);
 }
+
+// This is for the case we we are running the application using Enarx
+// By using keystone the main idea should be the same
+// -- First look for the SAD entries from sysrepo (checking local variables)
+// -- Iterate over each entry:
+// 		-- Ask directly to the PF_KEY managament API to request the information about that entry
+// 		-- If it does not exist continue iterating (it should prompt an error). We can consider this also as en event
+//      -- If the sad entry exists, we extract the information from the SADB_GET message of the PF_KEY socket
+//     		-- Then we send this information to the Trusted application to verify the values
+//			-- The trusted application will compare the stored sad entry and the one from the kernel are the same "compare_sad_entries"
+//			-- It will return the output of this verification.
+// 			-- Then this event needs to be handled by the untrusted side
 #ifdef Enarx
 // For verification of the existing sad_nodes 
 void verify_sad_nodes() {
@@ -474,7 +486,7 @@ void verify_sad_nodes() {
 	while (node != NULL) {
 		sad_entry_node *out_node = create_sad_node();
 		if (pf_getsad(out_node,node) != 0) {
-			ERR("SAD in sysrepo not found in kernel, probably removed");
+			ERR("SAD not found in kernel, probably removed");
 		} else {
 			strcpy(out_node->name,node->name);
 			// Now lets against the trusted app
@@ -493,7 +505,7 @@ void verify_sad_nodes() {
 				ERR("INVALID ANSWER!");
 				break;
 			default:
-				INFO("Correct verification of %s has been done correctly: SPI %d\t REQID: %d",node->name,node->spi,node->req_id);
+				INFO("Correct verification of %s: SPI %d\t REQID: %d",node->name,node->spi,node->req_id);
 				break;
 			}
 		}
@@ -503,6 +515,9 @@ void verify_sad_nodes() {
 	pthread_mutex_unlock(&sad_entries_locker);
 }
 #endif
+
+
+
 
 sad_entry_node *get_sad_node(char *sad_name){
 	pthread_mutex_lock(&sad_entries_locker);
@@ -631,8 +646,6 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
 
     show_sad_list();
     return rc;
-
-
 }
 
 int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_entry_node *sad_node) {

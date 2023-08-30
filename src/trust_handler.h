@@ -8,12 +8,30 @@
 
 
 
-void init_map();
-map_struct get_trusted_map();
+void init_map(); // TODO remove
+map_struct get_trusted_map(); // TODO remove
+
+/// @brief function that handles a message containing a new configuration (SAD entry)
+/// @param data input message
+/// @param out output message
+/// @return 
 int handle_new_conf_message (JSON_Object *data, sad_entry_msg *out);
+
+/// @brief function that handles the verification request
+/// @param data 
+/// @param out 
+/// @return 
 int handle_request_verify_message(JSON_Object *data, alert_state_msg *out);
+
+/// @brief function that handles a message requesting to remove a configuration (SAD entry)
+/// @param data 
+/// @param out 
+/// @return 
 int handle_request_remove(JSON_Object *data, op_result_msg *out);
-int handle_meesage(char *data, char *out);
+
+/// @brief function that handles an incomming message and takes the necessary actions
+/// @param data 
+/// @return 
 extern char *handle_message(char *data);
 
 

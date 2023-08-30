@@ -186,7 +186,7 @@ static void* pf_sadb_esp_register_run(void* register_thread_info){
                     INFO("HARD life expire received for SPI: %d",spi);
                     rc = send_sa_expire_notification(session,spi,false); 
                 	if (SR_ERR_OK == send_delete_SAD_request(spi)) {
-				    	INFO("SADB_ entry deleted in running: %i", spi); 
+				    	INFO("SADB_ entry delesend_delete_SAD_requestted in running: %i", spi); 
 					}
 				} else {
 					// DBG("not remove");
@@ -225,14 +225,14 @@ int pf_exec_register(sr_session_ctx_t *session, int satype){
 	       return rc;	
         }
     } else {
-            rc = SR_ERR_OPERATION_FAILED;
-            ERR("sadb_register error satype invalid: %s", sr_strerror(rc));
-            return rc; 
+        rc = SR_ERR_OPERATION_FAILED;
+        ERR("sadb_register error satype invalid: %s", sr_strerror(rc));
+        return rc; 
     }
 
     int pid = getpid();
     int s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
-        //* Build and write SADB_REGISTER request 
+    //* Build and write SADB_REGISTER request 
     bzero(&msg, sizeof(msg));
     msg.sadb_msg_version =  PF_KEY_V2;
     msg.sadb_msg_type = SADB_REGISTER;
