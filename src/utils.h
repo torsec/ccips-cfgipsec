@@ -29,6 +29,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stddef.h>
 // #include <signal.h>
 #include <inttypes.h>
 #include <string.h>
@@ -42,7 +43,6 @@
 #include "constants.h"
 #include "sad_entry.h"
 #ifdef TRUSTED_APP
-#include "map.h"
 #include "md5.h"
 #endif 
 
@@ -71,15 +71,15 @@ void remove_colon(char* out, char* str) ;
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j);
 char* stringToBytes(char* str);
 
-
-// THis needs to be replaced by 
-#ifdef TRUSTED_APP
-sad_entry_node *m_get_sad_entry(map_struct m, char *hash);
-int m_set_sad_entry(map_struct m, char *hash, sad_entry_node *map_node);
-int m_delete_sad_entry(map_struct m, char *hash);
-void free_map_entry(void* key, size_t ksize, uintptr_t value, void* usr);
-char* hash_to_string(uint8_t *p);
-char* get_sad_hash(sad_entry_node *sad_node);
-#endif
-
+// Mngmt of local sad-entries
+sad_entry_node *get_sad_node(sad_entry_node* main_sad_entry, char *sad_name);
+sad_entry_node *get_sad_node_by_spi(sad_entry_node* main_sad_entry, unsigned long int spi);
+int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name);
+int add_sad_node(sad_entry_node** main_sad_entry, sad_entry_node* new_sad);
+void show_sad_list(sad_entry_node* main_sad_entry);
+// Mngmt of local spd-entries
+// spd_entry_node *get_spd_node(spd_entry_node* main_spd_entry, char *spd_name);
+// spd_entry_node *get_spd_node_by_spi(spd_entry_node* main_spd_entry, unsigned long int spi);
+// int del_spd_node(spd_entry_node* main_spd_entry, unsigned long int spi);
+// int add_spd_node(spd_entry_node* main_spd_entry, spd_entry_node* new_spd);
 

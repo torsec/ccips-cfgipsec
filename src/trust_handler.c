@@ -1,17 +1,8 @@
 #include "trust_handler.h"
-map_struct trusted_map = NULL;
 
-void init_map() {
-    if (trusted_map == NULL) {
-        trusted_map = map_create();
-    } else {
-        // WARN("Map already started %d, %d", trusted_map, &trusted_map);
-    }
-}
+sad_entry_node *trusted_init_sad_node = NULL;
 
-map_struct get_trusted_map() {
-    return trusted_map;
-} 
+
 extern char *handle_message(char *data) {
 
     default_msg *msg = malloc(sizeof(default_msg));
@@ -30,7 +21,6 @@ extern char *handle_message(char *data) {
         // TODO handle error of decode_default
         goto cleanup;
     } 
-    init_map();
 
     switch (msg->code) {
         case NEW_CONFIG_MSG: {
@@ -108,17 +98,24 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     // XOR the key parameters
     // TODO Add this part
     // Store the values
-    char *hash=get_sad_hash(config->sad_entry);
-    if (m_set_sad_entry(trusted_map,hash,entry) != 0) {
-        ERR("Error adding sad_entry to map");
+    
+    if (get_sad_node(trusted_init_sad_node,entry->name) != NULL) {
+        ERR("Error adding sad_entry, it already exists");
         status =  1;
         goto cleanup;
     }
 
-    strcpy(out->entry_id,hash);
+    if (add_sad_node(&trusted_init_sad_node,entry) != 0) {
+        ERR("Error adding sad_entry, it already exists");
+        status =  1;
+        goto cleanup;
+    }
+
+
+    // strcpy(out->entry_id,hash);
     out->sad_entry = entry;
     INFO("\n+++++ Added SAD entry ++++ \n HASH: %s \t SPI: %d \t REQID: %d\n++++++++++++++++++++++++++++++++++",
-    hash,entry->spi,entry->req_id);
+    entry->name,entry->spi,entry->req_id);
 cleanup:
     // Free data
 	free(config);
@@ -135,9 +132,7 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
         ERR("Error decoding the data of the message");
         status = 1;
         goto cleanup;
-    }
-    // Check if the node exists based in the hash
-    char *hash = get_sad_hash(config->sad_entry);
+    };
 
     // Check if hash is equal to entry_id Do no check for this since this needs to be calculated by the trusted app
     // if (sizeof(config->entry_id) != sizeof(hash) && strcmp(config->entry_id,hash) != 0) {
@@ -146,7 +141,7 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
     //     goto cleanup;
     // }
     sad_entry_node *received_entry = config->sad_entry;
-    sad_entry_node *stored_entry = m_get_sad_entry(trusted_map,hash);
+    sad_entry_node *stored_entry = get_sad_node(trusted_init_sad_node,received_entry->name);
     if (stored_entry == NULL) {
         ERR("Entry not found");
         status = 1;
@@ -159,11 +154,11 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
         strcpy(out->message, "entries differ");
         strcpy(out->entry_id,config->entry_id);
         status = 2;
-        ERR("Entry could not be validated: HASH: %s\tSPI: %d\tREQID: %d",hash, stored_entry->spi,stored_entry->req_id);
+        ERR("Entry could not be validated: Name: %s\tSPI: %d\tREQID: %d",stored_entry->name, stored_entry->spi,stored_entry->req_id);
         ERR("\n\tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
         goto cleanup;
     } else {
-        INFO("Entry validated: HASH: %s\tSPI: %d\tREQID: %d",hash, stored_entry->spi,stored_entry->req_id);
+        INFO("Entry validated: Name: %s\tSPI: %d\tREQID: %d",stored_entry->name, stored_entry->spi,stored_entry->req_id);
     }
 cleanup:
 	free(config);
@@ -183,24 +178,24 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out) {
         goto cleanup;
     }
     // Is the hash HASH_MAP_SIZE bytes long
-    if (sizeof(config->entry_id) != HASH_MAP_SIZE) {
-        strcpy(message,"hash size\0");
-        status = 1;
-        goto cleanup;
-    }
+    // if (sizeof(config->entry_id) != HASH_MAP_SIZE) {
+    //     strcpy(message,"hash size\0");
+    //     status = 1;
+    //     goto cleanup;
+    // }
 
     // Does the sad entry exists?
-    sad_entry_node *stored_entry = m_get_sad_entry(trusted_map,config->entry_id);
-    if (stored_entry == 0) {
+    sad_entry_node *stored_entry = get_sad_node(trusted_init_sad_node,config->entry_id);
+    if (stored_entry == NULL) {
         strcpy(message,"do not exist\0");
         status = 1;
         goto cleanup;
     }
     strcpy(message,"deleted\0");
     // Delete the sad entry
-    INFO("\n+++++ Deleted SAD entry ++++ \n HASH: %s \t SPI: %d \t REQID: %d \n++++++++++++++++++++++++++++++++++",
+    INFO("\n+++++ Deleted SAD entry ++++ \n Name: %s \t SPI: %d \t REQID: %d \n++++++++++++++++++++++++++++++++++",
     config->entry_id,stored_entry->spi,stored_entry->req_id);
-    m_delete_sad_entry(trusted_map,config->entry_id);
+    del_sad_node(&trusted_init_sad_node,config->entry_id);
 cleanup:
 	free(config);
     strcpy(out->message, message);

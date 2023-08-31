@@ -1,15 +1,11 @@
 #include "messages.h"
 #include <stdio.h>
 #include "log.h"
-#include "map.h"
 #include "utils.h"
+#include "sad_entry.h"
 #ifndef __TRUST_HANDLER
 #define __TRUST_HANDLER
 
-
-
-void init_map(); // TODO remove
-map_struct get_trusted_map(); // TODO remove
 
 /// @brief function that handles a message containing a new configuration (SAD entry)
 /// @param data input message

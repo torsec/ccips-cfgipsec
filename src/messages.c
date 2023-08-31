@@ -21,7 +21,6 @@ char *encode_default_msg(int work_id, int code, JSON_Value *data) {
 
 
 int decode_sad_entry_msg(sad_entry_msg *msg, JSON_Object *schema) {
-    strcpy(msg->entry_id,json_object_get_string(schema,"entry_id"));
     msg->sad_entry = deserialize_sad_node(json_object_get_object(schema,"sad_entry"));
     return 0;
 }

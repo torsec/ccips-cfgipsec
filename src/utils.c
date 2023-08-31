@@ -399,86 +399,93 @@ int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 	return 0;
 }
 
-#ifdef TRUSTED_APP
-
-char* hash_to_string(uint8_t *p) {
-    char* str = malloc(SAD_ENTRY_SIZE * sizeof(char)); // allocate memory for 32 hexadecimal characters + '\0'
-    if (str == NULL) {
-        // error handling if malloc fails
-        return NULL;
-    }
-    for (unsigned int i = 0; i < 16; ++i) {
-        sprintf(str + 2*i, "%02x", p[i]);
-    }
-    str[32] = '\0'; // add null terminator at the end of the string
-	TRACE("Hash calculated: %s",str);
-    return str;
-}
-
-char* get_sad_hash(sad_entry_node *sad_node) {
-	MD5Context ctx;
-    md5Init(&ctx);
-	TRACE("hashing name: %s",sad_node->name);
-	md5Update(&ctx, sad_node->name,MAX_PATH);
-	md5Finalize(&ctx);
-	return hash_to_string(ctx.digest);
-}
 
 
-
-int found_name(char *path) {
-	int len = strlen(path);
-	const char *last = &path[len-5];
-	if (0 == strcmp("/name",last)) {
-			return 1;
+// Mngmt of local sad-entries
+sad_entry_node *get_sad_node(sad_entry_node* main_sad_entry, char *sad_name) {
+    sad_entry_node *node = main_sad_entry;
+	while (node != NULL) {
+		if (!strcmp(node->name, sad_name)) {
+			return node;
+		} else {
+			node = node->next;
+		}
 	}
-	return 0;
+	return NULL;
 }
 
-// only include the following if we are developing for a trusted application
-// only included in 	
-sad_entry_node *m_get_sad_entry(map_struct m, char *hash) {
-	uint64_t result;
-    // Check first that the value does not exists
-    if (map_contains(m,hash)) {
-		return (sad_entry_node*) map_get(m,hash);
+sad_entry_node *get_sad_node_by_spi(sad_entry_node* main_sad_entry, unsigned long int spi) {
+    sad_entry_node *node = main_sad_entry;
+	while (node != NULL) {
+		if (node->spi == spi) {
+			return node;
+		} else {
+			node = node->next;
+		}
 	}
 	return NULL;
 }
 
 
-int m_set_sad_entry(map_struct m, char *hash, sad_entry_node *map_node) {
-	uint64_t result;
-    // Check first that the value does not exists
-    if (!map_contains(m,hash)) {
-		map_set(m,hash,map_node);
-	
-		return 0;
-    } else {
-		// If the value already exists return error
+
+int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name) {
+	// Do we have initialized the sad_node
+	if (main_sad_entry == NULL) {
+		ERR("There is no SAD_ENTRIES stored");
 		return 1;
+	}
+	// Check that the initial sad_node is not the one we are looking for
+	if(strcmp(sad_name,(*main_sad_entry)->name) == 0) {
+		// This are some helpers variables
+		sad_entry_node *nh = *main_sad_entry;
+		// This is redundant, but just to clarify how this should work
+		if(nh -> next == NULL) {
+			*main_sad_entry = NULL;
+		} else {
+			*main_sad_entry = (*main_sad_entry)->next;
+		}
+		free(nh);
+	} else {
+		sad_entry_node *nc = *main_sad_entry;
+		sad_entry_node *np;
+		while (strcmp(sad_name,nc->name) != 0) {
+				np = nc;
+				nc = nc->next;
+				if (nc == NULL) {
+					ERR("There is no SAD_ENTRIES stored");
+					return 1;
+				} 
+		}
+		// Nc is the current node and we want to delete it
+		// Np in this case is the previous node
+		if (nc == NULL) {
+			np->next = NULL;
+		} else {
+			np->next = nc->next;
+		}
+		free(nc);
+	}
+}
+int add_sad_node(sad_entry_node** main_sad_entry, sad_entry_node* new_sad) {
+    if (*main_sad_entry == NULL) {
+		// Do a copy
+        *main_sad_entry=new_sad;
+        new_sad->next=NULL;
+    } else{
+        sad_entry_node *node = *main_sad_entry;
+        while(node->next != NULL) {
+            node=node->next;
+		}
+        node->next=new_sad;
     }
-    
+	return 0;
 }
 
-
-int m_delete_sad_entry(map_struct m, char *hash) {
-	uint64_t result;
-    // Check first that the value does not exists
-    if (!map_contains(m,hash)) {
-		// Value does not exists
-		return 1;
-    } else {
-		// If the value already exists return error
-		
-		free((sad_entry_node*) map_remove(m,hash));
-		return 0;
+void show_sad_list(sad_entry_node* main_sad_entry) {
+    sad_entry_node *node = main_sad_entry;
+    INFO("Name -- SPI -- SRC --- DST --- MODE --- ");
+    while (node != NULL){
+        INFO("%s --- %d --- %s --- %s --- %d --- ", node->name, node->spi, node->local_subnet, node->remote_subnet, node->ipsec_mode);
+        node=node->next;
     }
-    
 }
-
-void free_map_entry(void* key, size_t ksize, uintptr_t value, void* usr)
-{
-	free((sad_entry_node*)value);
-}
-#endif
