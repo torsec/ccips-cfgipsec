@@ -16,7 +16,7 @@
 #ifdef Enarx
 #include "trust_client.h"
 #include "messages.h"
-#endif Enarx
+#endif
 
 
 // TODO move this to another module so it can be used without importing the sysrepo_entries.h
@@ -83,9 +83,6 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it, char *xpath,ch
 int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_entry_node *sad_node);
 
 
-// TODO remove since it is not used
-int get_sad_state(sr_session_ctx_t *session, const char *module_name, const char *xpath, const char *request_xpath,
-        uint32_t request_id, struct lyd_node **parent, void *private_data);
 
 /// @brief Function that generates a netconf notification so it can alert all the subscribed stakeholders through sysrepo
 /// @param session 
@@ -102,6 +99,6 @@ int send_delete_SAD_request(unsigned long int spi);
 
 #ifdef Enarx
 void verify_sad_nodes();
-#endif Enarx
+#endif 
 
 #endif

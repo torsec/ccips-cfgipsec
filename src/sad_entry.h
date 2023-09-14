@@ -9,6 +9,7 @@
 #include "parson.h"
 #endif
 #include <crypt.h>
+
 #define SAD_ENTRY_SIZE 33
 
 typedef char sad_entry_id[SAD_ENTRY_SIZE];

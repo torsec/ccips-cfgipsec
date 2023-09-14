@@ -284,22 +284,6 @@ int sadb_register(sr_session_ctx_t *session) {
     return SR_ERR_OK;
 }
 
-// callbackk for sad_stats element
-// int sad_state_cb(const char *xpath, sr_val_t **values, size_t *values_cnt, void *private_ctx) {
-int sad_state_cb(sr_session_ctx_t *session, const char *module_name, const char *xpath, const char *request_xpath,
-        uint32_t request_id, struct lyd_node **parent, void *private_data) {
-      
-	  int rc;
-    
-	  //rc = get_sad_state(xpath, values, values_cnt, private_ctx);
-	  rc = get_sad_state(session, module_name, xpath, request_xpath, request_id, parent, private_data);
-	  if (SR_ERR_OK != rc) {
-	      ERR("sad_lifetime_current_cb: %s", sr_strerror(rc));
-	      return rc;
-	  }
-	  return SR_ERR_OK;
-
-}
 
 int exit_verification = 0;
 #ifdef Enarx

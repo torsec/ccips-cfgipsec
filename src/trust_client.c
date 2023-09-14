@@ -47,10 +47,6 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
     char *serialized_msg = encode_default_msg(10,NEW_CONFIG_MSG,new_conf_msg);
     int result = 1;
 
-
-
-
-
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
         free(message);
@@ -88,7 +84,6 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
             }
             // new_sad = entry_msg->sad_entry;
             memcpy(new_sad,entry_msg->sad_entry,sizeof(sad_entry_node));
-            strcpy(new_sad->entry_id,entry_msg->entry_id);
             break;
         }
         case OP_RESULT_MSG: {

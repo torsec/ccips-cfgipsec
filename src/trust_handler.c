@@ -114,7 +114,7 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
 
     // strcpy(out->entry_id,hash);
     out->sad_entry = entry;
-    INFO("\n+++++ Added SAD entry ++++ \n HASH: %s \t SPI: %d \t REQID: %d\n++++++++++++++++++++++++++++++++++",
+    INFO("Added SAD entry: HASH: %s \t SPI: %d \t REQID: %d",
     entry->name,entry->spi,entry->req_id);
 cleanup:
     // Free data
@@ -152,7 +152,7 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
     if (compare_sad_entries(config->sad_entry,stored_entry) != 0) {
         // Generate out message
         strcpy(out->message, "entries differ");
-        strcpy(out->entry_id,config->entry_id);
+        strcpy(out->entry_id,config->sad_entry->name);
         status = 2;
         ERR("Entry could not be validated: Name: %s\tSPI: %d\tREQID: %d",stored_entry->name, stored_entry->spi,stored_entry->req_id);
         ERR("\n\tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
@@ -177,12 +177,6 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out) {
         status = 1;
         goto cleanup;
     }
-    // Is the hash HASH_MAP_SIZE bytes long
-    // if (sizeof(config->entry_id) != HASH_MAP_SIZE) {
-    //     strcpy(message,"hash size\0");
-    //     status = 1;
-    //     goto cleanup;
-    // }
 
     // Does the sad entry exists?
     sad_entry_node *stored_entry = get_sad_node(trusted_init_sad_node,config->entry_id);
@@ -193,8 +187,7 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out) {
     }
     strcpy(message,"deleted\0");
     // Delete the sad entry
-    INFO("\n+++++ Deleted SAD entry ++++ \n Name: %s \t SPI: %d \t REQID: %d \n++++++++++++++++++++++++++++++++++",
-    config->entry_id,stored_entry->spi,stored_entry->req_id);
+    INFO("Deleted SAD entry: Name: %s \t SPI: %d \t REQID: %d", config->entry_id,stored_entry->spi,stored_entry->req_id);
     del_sad_node(&trusted_init_sad_node,config->entry_id);
 cleanup:
 	free(config);

@@ -28,12 +28,14 @@ typedef struct default_msg {
 } default_msg;
 
 // sad_entry_msg Message used to share the new spa_entry to the trusted part
+
+/// @brief Structure used to share sad_entries between the trusted and the untrusted part
 typedef struct sad_entry_msg {
-    sad_entry_id entry_id;
     sad_entry_node *sad_entry;
 } sad_entry_msg;
 
-// delet_config_msg Message used to delete a set of entry from the trusted part.
+
+/// @brief Message used to delete a set of entry from the trusted part.
 typedef struct delete_config_msg {
     sad_entry_id entry_id;
 } delete_config_msg;
@@ -45,19 +47,18 @@ typedef struct alert_state_msg {
 } alert_state_msg;
 
 // op_result_mgs;
+
+
+/// @brief It represents the result of the an operation (0 is success / 1 Failt), along a message with the information.
 typedef struct op_result_msg {
     int success; // 0 Success / 1 Fail
     char message[HASH_MAP_SIZE];
 } op_result_msg;
 
-// request_entry_msg
-typedef struct request_entry_msg {
-    sad_entry_id entry_id;
-} request_entry_msg;
+
 
 typedef struct insert_entry_msg 
 {
-    sad_entry_id entry_id;
     sad_entry_node *sad_entry;
 } insert_entry_msg;
 
@@ -107,11 +108,6 @@ int decode_alert_state_msg(alert_state_msg *msg, JSON_Object *schema);
 /// @return 
 int decode_op_result_msg(op_result_msg *msg, JSON_Object *schema);
 
-/// @brief decode a json object into a request_entry_msg
-/// @param msg return message // TODO switch fields
-/// @param schema json schema passed
-/// @return 
-int decode_request_entry_msg(request_entry_msg *msg, JSON_Object *schema);
 
 /// @brief decode a json object into a insert_entry_msg
 /// @param msg return message // TODO switch fields
@@ -141,10 +137,6 @@ JSON_Value *encode_alert_state_msg(alert_state_msg *msg);
 /// @return JSON_VALUE to be sent
 JSON_Value *encode_op_result_msg(op_result_msg *msg);
 
-/// @brief encodes a request_entry_msg into a JSON value
-/// @param msg request_entry_msg to be encoded
-/// @return JSON_VALUE to be sent
-JSON_Value *encode_request_entry_msg(request_entry_msg *msg);
 
 /// @brief encodes a insert_entry_msg into a JSON value
 /// @param msg insert_entry_msg to be encoded

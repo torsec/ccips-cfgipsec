@@ -28,7 +28,6 @@ int decode_sad_entry_msg(sad_entry_msg *msg, JSON_Object *schema) {
 JSON_Value *encode_sad_entry_msg(sad_entry_msg *msg) {
     JSON_Value *root_value = json_value_init_object();
     JSON_Object *root_object = json_value_get_object(root_value);
-    json_object_set_string(root_object,"entry_id",msg->entry_id);
     json_object_set_value(root_object, "sad_entry", serialize_sad_node(msg->sad_entry));
     return root_value;
 }
@@ -71,18 +70,6 @@ JSON_Value *encode_op_result_msg(op_result_msg *msg) {
     JSON_Object *root_object = json_value_get_object(root_value);
     json_object_set_number(root_object,"success",msg->success);
     json_object_set_string(root_object,"message",msg->message);
-    return root_value;
-}
-
-int decode_request_entry_msg(request_entry_msg *msg, JSON_Object *schema) {
-    strcpy(msg->entry_id,json_object_get_string(schema,"entry_id"));
-    return 0;
-}
-
-JSON_Value *encode_request_entry_msg(request_entry_msg *msg) {
-    JSON_Value *root_value = json_value_init_object();
-    JSON_Object *root_object = json_value_get_object(root_value);
-    json_object_set_string(root_object,"entry_id",msg->entry_id);
     return root_value;
 }
 
