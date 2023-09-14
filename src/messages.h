@@ -68,7 +68,7 @@ typedef struct insert_entry_msg
 /// @param msg decoded message // TODO swich inputs
 /// @param schema original schema
 /// @return 
-int decode_default_msg(default_msg* msg, JSON_Object *schema);
+int decode_default_msg(JSON_Object *schema, default_msg* msg);
 
 
 /// @brief function used to encode a json schema into a message
@@ -78,42 +78,33 @@ int decode_default_msg(default_msg* msg, JSON_Object *schema);
 /// @return encode message using json format
 char *encode_default_msg(int work_id, int code, JSON_Value *data);
 
-
-
-
-
 // Functions called to decode the messages
 
 /// @brief decode a json object into a sad_entry_msg
 /// @param msg return message // TODO switch fields
 /// @param schema json schema passed
 /// @return 
-int decode_sad_entry_msg(sad_entry_msg *msg, JSON_Object *schema);
+int decode_sad_entry_msg(JSON_Object *schema, sad_entry_msg *msg);
 
 /// @brief decode a json object into a delete_config_msg
 /// @param msg return message // TODO switch fields
 /// @param schema json schema passed
 /// @return 
-int decode_delete_config_msg(delete_config_msg *msg, JSON_Object *schema);
+int decode_delete_config_msg(JSON_Object *schema, delete_config_msg *msg);
 
 /// @brief decode a json object into a alert_state_msg
 /// @param msg return message // TODO switch fields
 /// @param schema json schema passed
 /// @return 
-int decode_alert_state_msg(alert_state_msg *msg, JSON_Object *schema);
+int decode_alert_state_msg(JSON_Object *schema, alert_state_msg *msg);
 
 /// @brief decode a json object into a op_result_msg
 /// @param msg return message // TODO switch fields
 /// @param schema json schema passed
 /// @return 
-int decode_op_result_msg(op_result_msg *msg, JSON_Object *schema);
+int decode_op_result_msg(JSON_Object *schema, op_result_msg *msg);
 
 
-/// @brief decode a json object into a insert_entry_msg
-/// @param msg return message // TODO switch fields
-/// @param schema json schema passed
-/// @return 
-int decode_insert_entry_msg(insert_entry_msg *msg, JSON_Object *schema);
 
 // Functions to encode the messages
 

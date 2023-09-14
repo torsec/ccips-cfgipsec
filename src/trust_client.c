@@ -70,7 +70,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
         goto cleanup;
     }
 
-    if (schema == NULL || decode_default_msg(msg, schema) != 0) {
+    if (schema == NULL || decode_default_msg(schema, msg) != 0) {
         // TODO handle error of decode_default
         goto cleanup;
     }
@@ -79,7 +79,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
     switch (msg->code) {
         case INSERT_ENTRY_MSG: {
             sad_entry_msg *entry_msg = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
-            if ((result = decode_sad_entry_msg(entry_msg,msg->data)), result != 0) {
+            if ((result = decode_sad_entry_msg(msg->data,entry_msg)), result != 0) {
                 goto cleanup;
             }
             // new_sad = entry_msg->sad_entry;
@@ -88,7 +88,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
         }
         case OP_RESULT_MSG: {
             op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result_msg)); 
-            if (decode_op_result_msg(op_result,msg->data) != 0) {
+            if (decode_op_result_msg(msg->data, op_result) != 0) {
                 goto cleanup;
             }
             if (op_result->success != 0) {
@@ -138,14 +138,14 @@ int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
         goto cleanup;
     }
 
-    if (schema == NULL || decode_default_msg(msg, schema) != 0) {
+    if (schema == NULL || decode_default_msg(schema, msg) != 0) {
         // TODO handle error of decode_default
         goto cleanup;
     }
     switch (msg->code) {
         case ALERT_STATE_MSG: {
             alert_state_msg *alert_msg = (alert_state_msg*) malloc(sizeof(alert_state_msg)); 
-            if ((result = decode_alert_state_msg(alert_msg,msg->data)), result == 0) {
+            if ((result = decode_alert_state_msg(msg->data, alert_msg)), result == 0) {
                 strcpy(alert, alert_msg->message);
                 result = 2;
             }
@@ -154,7 +154,7 @@ int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
         }
         case OP_RESULT_MSG: {
             op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result_msg)); 
-            if (decode_op_result_msg(op_result,msg->data) != 0) {
+            if (decode_op_result_msg(msg->data, op_result) != 0) {
                 goto cleanup;
             }
             if (op_result->success != 0) {
@@ -218,7 +218,7 @@ int del_trusted_sad_entry(sad_entry_node *sad_node) {
         goto cleanup;
     }
 
-    if (schema == NULL || decode_default_msg(msg, schema) != 0) {
+    if (schema == NULL || decode_default_msg(schema, msg) != 0) {
         // TODO handle error of decode_default
         goto cleanup;
     }
@@ -230,7 +230,7 @@ int del_trusted_sad_entry(sad_entry_node *sad_node) {
     }
 
     // Check that we can decode the message
-    if ((result = decode_op_result_msg(op_result,msg->data)), result != 0) {
+    if ((result = decode_op_result_msg(msg->data, op_result)), result != 0) {
         goto cleanup;
     }
 

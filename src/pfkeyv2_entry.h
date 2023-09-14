@@ -63,7 +63,7 @@ typedef struct sockaddr_unknown {
      uint32_t pad2;
      char *address;
      char *port;
-};
+} sockaddr_unknown;
 
 typedef union sockaddr_t {
      struct sockaddr sa;
