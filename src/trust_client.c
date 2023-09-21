@@ -108,7 +108,8 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
         free(message);
         free(msg);
         free(serialized_msg);
-        json_value_free(schema);
+        json_object_clear(schema);
+        free(schema);
         json_value_free(new_conf_msg);
         return result;
 }
@@ -179,14 +180,16 @@ int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
         free(message);
         free(msg);
         free(serialized_msg);
-        json_value_free(schema);
+        json_object_clear(schema);
+        free(schema);
         json_value_free(verify_entry);
         return result;
 }
 
-int del_trusted_sad_entry(sad_entry_node *sad_node) {
+int del_trusted_sad_entry(sad_entry_node *
+sad_node) {
     delete_config_msg *message = (delete_config_msg*) malloc(sizeof(delete_config_msg)); 
-    strcpy(message->entry_id,sad_node->entry_id);
+    strcpy(message->entry_id,sad_node->name);
     int result = 1;
     JSON_Value *delete_msg =  encode_delete_config_msg(message);
     char *serialized_msg = encode_default_msg(10,DELETE_CONFIG_MSG,delete_msg);
@@ -246,8 +249,9 @@ int del_trusted_sad_entry(sad_entry_node *sad_node) {
         free(msg);
         free(op_result);
         free(serialized_msg);
-        json_value_free(schema);
-        json_value_free(delete_msg);
+        json_object_clear(schema);
+        free(schema);
+        // free(delete_msg);
         return result;
 }
 

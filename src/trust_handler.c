@@ -181,10 +181,12 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out) {
     // Does the sad entry exists?
     sad_entry_node *stored_entry = get_sad_node(trusted_init_sad_node,config->entry_id);
     if (stored_entry == NULL) {
+        ERR("SAD entry with id %s does not exists",config->entry_id);
         strcpy(message,"do not exist\0");
         status = 1;
         goto cleanup;
     }
+    
     strcpy(message,"deleted\0");
     // Delete the sad entry
     INFO("Deleted SAD entry: Name: %s \t SPI: %d \t REQID: %d", config->entry_id,stored_entry->spi,stored_entry->req_id);

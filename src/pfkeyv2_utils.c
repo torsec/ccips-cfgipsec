@@ -109,7 +109,7 @@ void lifetime_print(struct sadb_ext *ext) {
 		life->sadb_lifetime_bytes);
 	if (life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_CURRENT) {
 		time_t t;
-		struct tmp *tm;
+		struct m *tm;
 		char buf[100];
 
 		/* absolute times */

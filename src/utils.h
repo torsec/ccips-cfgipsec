@@ -43,7 +43,6 @@
 #include "constants.h"
 #include "sad_entry.h"
 #ifdef TRUSTED_APP
-#include "md5.h"
 #endif 
 
 

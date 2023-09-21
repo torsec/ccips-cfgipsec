@@ -647,7 +647,7 @@ int pf_addsad(sad_entry_node *sad_node) {
                 keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_GCM_ICV16_KEY_BITS/8) + 7) / 8;
                 keyext->sadb_key_bits = EAL_AES_GCM_ICV16_KEY_BITS;
             }
-            INFO("-----------Key length %d",keyext->sadb_key_len); 
+            // INFO("-----------Key length %d",keyext->sadb_key_len); 
             memcpy(keyext + 1, sad_node->encryption_key, strlen(sad_node->encryption_key));
             len += keyext->sadb_key_len * 8;
             p += keyext->sadb_key_len * 8;
@@ -817,15 +817,16 @@ int pf_getsad(sad_entry_node *out_node, sad_entry_node *sad_node) {
             case SADB_EXT_KEY_ENCRYPT:{
                 TRACE("Parsing ENC KEY");
                 struct  sadb_key *keyext = (struct sadb_key *) ext;
-                out_node->encryption_key = malloc(keyext->sadb_key_bits / 8);
+                // out_node->encryption_key = malloc(keyext->sadb_key_bits / 8);
                 memcpy(out_node->encryption_key, (char *) (keyext + 1), keyext->sadb_key_bits / 8);
                 break;
             }
             case SADB_EXT_KEY_AUTH: {
                 TRACE("Parsing INT KEY");
                 struct  sadb_key *keyext = (struct sadb_key *) ext;
-                out_node->integrity_key = malloc(keyext->sadb_key_bits / 8);
+                // out_node->integrity_key = malloc(keyext->sadb_key_bits / 8);
                 memcpy(out_node->integrity_key, (char *) (keyext + 1), keyext->sadb_key_bits / 8);
+                INFO("Key extracted from the auth key: %s",stringToBytes(out_node->integrity_key));
                 break;
             }
             case SADB_EXT_SA: {
