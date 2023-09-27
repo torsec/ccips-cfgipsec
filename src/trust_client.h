@@ -29,7 +29,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad);
 /// @brief function that deletes a sad entry 
 /// @param sad_node 
 /// @return 
-int del_trusted_sad_entry(sad_entry_node *sad_node);
+int del_trusted_sad_entry(char *sad_name);
 
 
 /// @brief function that verifies a SAD entry

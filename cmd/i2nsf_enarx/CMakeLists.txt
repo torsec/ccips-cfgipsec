@@ -18,8 +18,6 @@ add_library(i2nsf STATIC
         "${SRC_DIRECTORY}/spd_entry.h"
         "${SRC_DIRECTORY}/utils.c" 
         "${SRC_DIRECTORY}/utils.h" 
-        "${SRC_DIRECTORY}/map.c"
-        "${SRC_DIRECTORY}/map.h"
         "${SRC_DIRECTORY}/messages.c"
         "${SRC_DIRECTORY}/messages.h"
         "${SRC_DIRECTORY}/trust_handler.c"
@@ -41,15 +39,6 @@ add_library(md5 STATIC "${PROJECT_SOURCE_DIR}/md5-c/md5.c")
 include_directories("${PROJECT_SOURCE_DIR}/md5-c")
 include_directories("${SRC_DIRECTORY}")
 
-# add_executable(${PROJECT_NAME} 
-#     "wrapper.c"
-#     "${SRC_DIRECTORY}/constants.h"
-# )
-
-# target_link_libraries(${PROJECT_NAME} PRIVATE 
-# i2nsf
-# parson     
-# )
 
 install(TARGETS i2nsf
         EXPORT i2nsf-config
@@ -66,7 +55,6 @@ install(FILES
 "${SRC_DIRECTORY}/sad_entry.h"
 "${SRC_DIRECTORY}/spd_entry.h"
 "${SRC_DIRECTORY}/utils.h" 
-"${SRC_DIRECTORY}/map.h"
 "${SRC_DIRECTORY}/messages.h"
 "${SRC_DIRECTORY}/log.h"
 "${PROJECT_SOURCE_DIR}/parson/parson.h"

@@ -71,8 +71,8 @@ int compare_sad_entries(sad_entry_node *i, sad_entry_node *j);
 char* stringToBytes(char* str);
 
 // Mngmt of local sad-entries
-sad_entry_node *get_sad_node(sad_entry_node* main_sad_entry, char *sad_name);
-sad_entry_node *get_sad_node_by_spi(sad_entry_node* main_sad_entry, unsigned long int spi);
+sad_entry_node *get_sad_node(sad_entry_node** main_sad_entry, char *sad_name);
+sad_entry_node *get_sad_node_by_spi(sad_entry_node** main_sad_entry, unsigned long int spi);
 int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name);
 int add_sad_node(sad_entry_node** main_sad_entry, sad_entry_node* new_sad);
 void show_sad_list(sad_entry_node* main_sad_entry);

@@ -37,7 +37,8 @@ extern char *handle_message(char *data) {
             break;
         }
         case REQUEST_VERIFY_MSG: {
-            alert_state_msg *alert_msg = (alert_state_msg*) malloc(sizeof(alert_state_msg));    
+            alert_state_msg *alert_msg = (alert_state_msg*) malloc(sizeof(alert_state_msg));
+            alert_msg->entry_id = (char *) malloc(sizeof(char) * MAX_PATH); 
             if (result = handle_request_verify_message(msg->data,alert_msg), result == 0) {
                 // The confirmation has been succesfull
                 data_value = generate_op_message("SAD_ENTRY is valid",0);
@@ -141,7 +142,7 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
     //     goto cleanup;
     // }
     sad_entry_node *received_entry = config->sad_entry;
-    sad_entry_node *stored_entry = get_sad_node(trusted_init_sad_node,received_entry->name);
+    sad_entry_node *stored_entry = get_sad_node(&trusted_init_sad_node,received_entry->name);
     if (stored_entry == NULL) {
         ERR("Entry not found");
         status = 1;
@@ -179,7 +180,7 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out) {
     }
 
     // Does the sad entry exists?
-    sad_entry_node *stored_entry = get_sad_node(trusted_init_sad_node,config->entry_id);
+    sad_entry_node *stored_entry = get_sad_node(&trusted_init_sad_node,config->entry_id);
     if (stored_entry == NULL) {
         ERR("SAD entry with id %s does not exists",config->entry_id);
         strcpy(message,"do not exist\0");

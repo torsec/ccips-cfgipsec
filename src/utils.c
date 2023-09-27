@@ -402,8 +402,8 @@ int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 
 
 // Mngmt of local sad-entries
-sad_entry_node *get_sad_node(sad_entry_node* main_sad_entry, char *sad_name) {
-    sad_entry_node *node = main_sad_entry;
+sad_entry_node *get_sad_node(sad_entry_node** main_sad_entry, char *sad_name) {
+    sad_entry_node *node = *main_sad_entry;
 	while (node != NULL) {
 		if (!strcmp(node->name, sad_name)) {
 			return node;
@@ -414,8 +414,8 @@ sad_entry_node *get_sad_node(sad_entry_node* main_sad_entry, char *sad_name) {
 	return NULL;
 }
 
-sad_entry_node *get_sad_node_by_spi(sad_entry_node* main_sad_entry, unsigned long int spi) {
-    sad_entry_node *node = main_sad_entry;
+sad_entry_node *get_sad_node_by_spi(sad_entry_node** main_sad_entry, unsigned long int spi) {
+    sad_entry_node *node = *main_sad_entry;
 	while (node != NULL) {
 		if (node->spi == spi) {
 			return node;

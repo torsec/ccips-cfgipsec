@@ -19,6 +19,7 @@
 #include "sysrepo_utils.h"
 
 
+pthread_mutex_t locker =PTHREAD_MUTEX_INITIALIZER;
 
 // TODO make this as default option...
 int feature_case_value = 2;
@@ -167,7 +168,6 @@ cleanup:
     return SR_ERR_OK;
 }
 
-// pthread_mutex_t sad_entry_change_lock =  PTHREAD_MUTEX_INITIALIZER;
 
 int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char *module_name, const char *xpath, 
 	sr_event_t event, uint32_t request_id, void *private_data)
@@ -184,6 +184,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 	(void)private_data;
 	
     char *sad_name = NULL;
+	// TODO need to free this?
 	char *new_xpath = NULL; 
 
 
@@ -208,14 +209,15 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 				case SR_OP_CREATED:
 					if (new_entry(oper,old_value, new_value)) {
 						sad_name = new_value->data.string_val;   
-						INFO("Add sad-entry found %s ", sad_name); 
+						// INFO("Add sad-entry found %s ", sad_name); 
 						INFO("Add sad-entry found xpath %s ", new_value->xpath); 
 					
 						new_xpath = get_new_xpath(new_value->xpath);	
 
 	                	// In case 2, the SPD configuration values are applied into the kernel by means of pfkey_v2 or xfrm
+						pthread_mutex_lock(&locker);
 		                rc = addSAD_entry(session,it,new_xpath,sad_name);
-	           		 	free(new_xpath);
+						pthread_mutex_unlock(&locker);
 						if (SR_ERR_OK == rc) {
 	                    	// DBG("sad-entry ");
 	               	 	}
@@ -230,21 +232,17 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 	        	case SR_OP_DELETED:                   
 					if (new_entry(oper,old_value, new_value)) {
 						sad_name = old_value->data.string_val;   
-						INFO("Delete sad-entry found %s ", sad_name); 
+						// INFO("Delete sad-entry found %s ", sad_name); 
 						INFO("Delete sad-entry found xpath %s ", old_value->xpath); 
-					
 						new_xpath = get_new_xpath(old_value->xpath);
-					
 	                	// In case 2, the SPD configuration values are applied into the kernel by means of pfkey_v2 or xfrm
 						rc = removeSAD_entry(session,it,new_xpath,sad_name);
-	                	free(new_xpath);
 						if (SR_ERR_OK == rc) {
 	                    	INFO("sad-entry deleted");
 	               	 	}
 	                	else {
 	                    	ERR("Deleting sad-entry: %s",sr_strerror(rc));
 	                    	sr_free_change_iter(it);
-							// pthread_mutex_unlock(&sad_entry_change_lock);
 							return SR_ERR_OPERATION_FAILED;                             
 	                	} 
 					}
@@ -265,7 +263,6 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 	}
 	
 cleanup:
-	// pthread_mutex_unlock(&sad_entry_change_lock);
     sr_free_change_iter(it);
     return SR_ERR_OK;	
 }

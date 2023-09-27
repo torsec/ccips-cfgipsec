@@ -37,12 +37,12 @@ typedef struct sad_entry_msg {
 
 /// @brief Message used to delete a set of entry from the trusted part.
 typedef struct delete_config_msg {
-    sad_entry_id entry_id;
+  char*  entry_id;
 } delete_config_msg;
 
 // alert_state_msg
 typedef struct alert_state_msg {
-    sad_entry_id entry_id;
+    char* entry_id;
     char message[32];
 } alert_state_msg;
 

@@ -6,17 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef Enarx
-#include "parson.h"
+	#include "parson.h"
 #endif
 #include <crypt.h>
 
-#define SAD_ENTRY_SIZE 33
-
-typedef char sad_entry_id[SAD_ENTRY_SIZE];
 
 typedef struct sad_entry_node{
 	char *name;
-	sad_entry_id entry_id;
 	unsigned long long int req_id;
 	unsigned long int spi;
 	bool ext_seq_num;

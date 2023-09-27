@@ -146,6 +146,7 @@ int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
     switch (msg->code) {
         case ALERT_STATE_MSG: {
             alert_state_msg *alert_msg = (alert_state_msg*) malloc(sizeof(alert_state_msg)); 
+            alert_msg->entry_id = (char *) malloc(sizeof(char) * MAX_PATH);
             if ((result = decode_alert_state_msg(msg->data, alert_msg)), result == 0) {
                 strcpy(alert, alert_msg->message);
                 result = 2;
@@ -186,10 +187,10 @@ int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
         return result;
 }
 
-int del_trusted_sad_entry(sad_entry_node *
-sad_node) {
-    delete_config_msg *message = (delete_config_msg*) malloc(sizeof(delete_config_msg)); 
-    strcpy(message->entry_id,sad_node->name);
+int del_trusted_sad_entry(char *sad_name) {
+    delete_config_msg *message = (delete_config_msg*) malloc(sizeof(delete_config_msg));
+    message->entry_id = (char *) malloc(sizeof(char) * MAX_PATH);
+    strcpy(message->entry_id,sad_name);
     int result = 1;
     JSON_Value *delete_msg =  encode_delete_config_msg(message);
     char *serialized_msg = encode_default_msg(10,DELETE_CONFIG_MSG,delete_msg);
@@ -238,7 +239,7 @@ sad_node) {
     }
 
     if (op_result->success != 0) {
-        ERR("Error when deleting the sad entry: %s\n",op_result->message);
+        ERR("Error when deleting the sad entry %s : %s\n",message->entry_id, op_result->message);
         // free(op_result);
         goto cleanup;
     }

@@ -826,7 +826,6 @@ int pf_getsad(sad_entry_node *out_node, sad_entry_node *sad_node) {
                 struct  sadb_key *keyext = (struct sadb_key *) ext;
                 // out_node->integrity_key = malloc(keyext->sadb_key_bits / 8);
                 memcpy(out_node->integrity_key, (char *) (keyext + 1), keyext->sadb_key_bits / 8);
-                INFO("Key extracted from the auth key: %s",stringToBytes(out_node->integrity_key));
                 break;
             }
             case SADB_EXT_SA: {
