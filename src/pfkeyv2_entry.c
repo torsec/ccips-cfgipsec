@@ -731,7 +731,7 @@ int pf_delsad(sad_entry_node *sad_node) {
 }
 
 
-int pf_getsad(sad_entry_node *out_node, sad_entry_node *sad_node) {
+int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node) {
     struct sadb_msg *msg;
     struct sadb_x_policy *policyext;
     int s, len, spi;
@@ -909,7 +909,7 @@ char * pf_get_alg_enum_name(struct sadb_alg * alg, struct sadb_supported *sup) {
     
 }
 
-int pf_dump_sads(sad_entry_node *node) {
+int pf_dump_sads(sad_entry_node *sad_node) {
     struct sadb_ext *ext;
     int i = 0;
     int s;
@@ -965,24 +965,24 @@ int pf_dump_sads(sad_entry_node *node) {
             switch (ext->sadb_ext_type) {
                 case SADB_EXT_SA: 
                     sa = (struct sadb_sa *)ext;
-                    if (ntohl(sa->sadb_sa_spi) == node->spi) {
-                        DBG("SA %i found",node->spi);
+                    if (ntohl(sa->sadb_sa_spi) == sad_node->spi) {
+                        DBG("SA %i found",sad_node->spi);
                         i = 1;
                     }  
                     break;
                     
                 case SADB_EXT_LIFETIME_CURRENT:
                     life = (struct sadb_lifetime *)ext;
-                    node->lft_packets_current = life->sadb_lifetime_allocations;
-                    node->lft_bytes_current = life->sadb_lifetime_bytes;
+                    sad_node->lft_packets_current = life->sadb_lifetime_allocations;
+                    sad_node->lft_bytes_current = life->sadb_lifetime_bytes;
                     time_t a = life->sadb_lifetime_addtime;
-                    node->lft_time_current = (uint64_t)a;
+                    sad_node->lft_time_current = (uint64_t)a;
                     if (life->sadb_lifetime_usetime == 0) {
                         //DBG("never used");
-                        node->lft_idle_current = 0;
+                        sad_node->lft_idle_current = 0;
                     } else {
                         time_t u = life->sadb_lifetime_usetime;
-                        node->lft_idle_current = (uint64_t)u;
+                        sad_node->lft_idle_current = (uint64_t)u;
                     }
                     break;
                 //default: DBG("ext type: %i", ext->sadb_ext_type);

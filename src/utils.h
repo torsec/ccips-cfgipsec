@@ -71,11 +71,35 @@ int compare_sad_entries(sad_entry_node *i, sad_entry_node *j);
 char* stringToBytes(char* str);
 
 // Mngmt of local sad-entries
+
+/// @brief Get sad_entry from the local database 
+/// @param main_sad_entry local sad_entry database
+/// @param sad_name sad_entry name identifier
+/// @return local sad_enrtry (if NULL it does not exists)
 sad_entry_node *get_sad_node(sad_entry_node** main_sad_entry, char *sad_name);
+/// @brief Returns a sad_entry if the SPI exists in the local_database
+/// @param main_sad_entry local sad_entry database
+/// @param spi SPI of the entry to be found
+/// @return local sad_enrtry (if NULL it does not exists)
 sad_entry_node *get_sad_node_by_spi(sad_entry_node** main_sad_entry, unsigned long int spi);
-int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name);
+/// @brief Deletes a sad_entry (identified by their name) from the local_database
+/// @param main_sad_entry Local sad_entry database
+/// @param sad_name Name of the 
+/// @return 
+int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name)
+/// @brief Add a sad_entry into the local database 
+/// @param main_sad_entry local sad_entry database
+/// @param sad_name new sad_entry
+/// @return 
 int add_sad_node(sad_entry_node** main_sad_entry, sad_entry_node* new_sad);
+
+
+/// @brief Prints current values of the local sad_entry database
+/// @param main_sad_entry local sad_entry database
 void show_sad_list(sad_entry_node* main_sad_entry);
+
+
+// TODO: Do the same thing but with the spd_entries.
 // Mngmt of local spd-entries
 // spd_entry_node *get_spd_node(spd_entry_node* main_spd_entry, char *spd_name);
 // spd_entry_node *get_spd_node_by_spi(spd_entry_node* main_spd_entry, unsigned long int spi);

@@ -460,7 +460,7 @@ void verify_sad_nodes() {
 	sad_entry_node *node = init_sad_node;
 	while (node != NULL) {
 		sad_entry_node *out_node = create_sad_node();
-		if (pf_getsad(out_node,node) != 0) {
+		if (pf_getsad(node,out_node) != 0) {
 			ERR("SAD not found in kernel, probably removed");
 		} else {
 			strcpy(out_node->name,node->name);

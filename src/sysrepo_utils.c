@@ -270,14 +270,11 @@ cleanup:
 
 // callbackk for sad_register mmessages
 int sadb_register(sr_session_ctx_t *session) {
-    
-
     //INFO("SADB REGISTER RECEIVED")
     if (pf_exec_register(session, SADB_SATYPE_ESP)) {
         ERR("sadb_register in exec_register: %s",sr_strerror(SR_ERR_INTERNAL));
         return SR_ERR_INTERNAL;
     }
-	    
     return SR_ERR_OK;
 }
 
@@ -285,6 +282,7 @@ int sadb_register(sr_session_ctx_t *session) {
 int exit_verification = 0;
 #ifdef Enarx
 int sad_verification_process() {
+	// TODO perform also verifications after installing new entries. 
 	while(exit_verification == 0) {
 		// DBG("====== Starting sad_entries verification process ======");
 		verify_sad_nodes();
@@ -293,8 +291,6 @@ int sad_verification_process() {
 	}
 
 }
-
-
 int close_verification_process() {
 	exit_verification = 1;
 }

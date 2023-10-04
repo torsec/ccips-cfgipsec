@@ -46,15 +46,47 @@ typedef struct{
 	sr_session_ctx_t *session;
 } register_thread;
 
+/// @brief Install a sad_entry into the kernel
+/// @param sad_node 
+/// @return 
+
 int pf_addsad(sad_entry_node *sad_node);
+/// @brief 
+/// @param session 
+/// @param satype 
+/// @return 
 int pf_exec_register(sr_session_ctx_t *session,int satype);
-int pf_getsad(sad_entry_node *out_node, sad_entry_node *sad_node);
+
+/// @brief Gets the information about a sad entry that is already installed in the kernel. 
+/// @param sad_node SAD_ENTRY with the same SRC/DST addresses and the same SPI to the one installed in the kernel.
+/// @param out_node returned SAD_Entry with only the SRC-DST addresses and the cryptographic material. Some more values could be parsed from the SADB message
+/// @return 
+int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node);
+/// @brief Delete a SAD_ENTRY from the kernel
+/// @param sad_node SAD_ENTRY with the same SRC/DST addresses and the same SPI to the one installed in the kernel.
+/// @return 
 int pf_delsad(sad_entry_node *sad_node);
+/// @brief Add SPD_ENTRY into the kernel
+/// @param spd_node 
+/// @return 
 int pf_addpolicy(spd_entry_node *spd_node);
+/// @brief Delete a SPD_ENTRY from the kernel
+/// @param spd_node SPD_ENTRY with the same SRC/DST addresses, SPI, policy_dir and action to the one installed in the kernel.
+/// @return 
 int pf_delpolicy(spd_entry_node *spd_node);
+/// @brief Gets the current lifetime of a SAD_ENTRY installed in the kernel
+/// @param sad_node SAD_ENTRY with the same SRC/DST addresses and the same SPI to the one installed in the kernel.
+/// @return Remaining lifetime in seconds of the entry
 int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node);
-int pf_dump_sads(sad_entry_node *node);
-// int pf_getsad(sad_entry_node *sad_node);
+/// @brief Gets the current lifetime of a SAD_ENTRY installed in the kernel
+/// @param sad_node SAD_ENTRY with the same SRC/DST addresses and the same SPI to the one installed in the kernel.
+/// @return Remaining lifetime in seconds of the entry
+
+/// @brief Similar to pf_getsad but it uses a different way to get an specific SAD_ENTRY from the kernel
+/// @param sad_node SAD_ENTRY with the same SRC/DST addresses and the same SPI to the one installed in the kernel.
+/// @return 
+int pf_dump_sads(sad_entry_node *sad_node);
+
 
 // https://fossies.org/dox/tinc-1.0.36/net_8h_source.html
 typedef struct sockaddr_unknown {
