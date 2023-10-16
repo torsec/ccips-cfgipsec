@@ -20,6 +20,7 @@ sysrepoctl -i yang/ietf-yang-types.yang  --permissions=666 -v3 && \
 sysrepoctl -i yang/ietf-i2nsf-ikec.yang  --permissions=666 -v3 && \
 sysrepoctl -i yang/ietf-i2nsf-ikeless.yang  --permissions=666 -v3
 
+# Enable ike-less case
 RUN sysrepoctl -c ietf-i2nsf-ikeless -e ikeless-notification  -v3
 
 RUN rm -rf parson && git clone https://github.com/kgabis/parson

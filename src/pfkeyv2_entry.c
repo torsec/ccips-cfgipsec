@@ -93,6 +93,7 @@ static void add_addr_ext(struct sadb_msg *msg, sad_entry_node *sad_node, uint16_
 	PFKEY_EXT_ADD(msg, addr);
 }
 
+
 static void* pf_sadb_esp_register_run(void* register_thread_info){
 
     char buf[4096];
@@ -529,7 +530,7 @@ int pf_addsad(sad_entry_node *sad_node) {
     p = buf;
     msg = (struct sadb_msg *) p;
     msg->sadb_msg_version = PF_KEY_V2;
-    msg->sadb_msg_type = SADB_ADD;
+    msg->sadb_msg_type = SADB_ADD; // https://datatracker.ietf.org/doc/html/rfc2367#section-3.1.3
 	if (sad_node->protocol_parameters == IPPROTO_ESP)
     	msg->sadb_msg_satype = SADB_SATYPE_ESP;
     msg->sadb_msg_pid = getpid();
@@ -579,7 +580,7 @@ int pf_addsad(sad_entry_node *sad_node) {
     len += lifetime->sadb_lifetime_len * 8;
     p += lifetime->sadb_lifetime_len * 8;
 
-
+    // Mode tunnel
     if(sad_node->ipsec_mode == IPSEC_MODE_TUNNEL){
     
         int src_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, 32, sad_node->srcport, sad_node->tunnel_local);
@@ -588,7 +589,7 @@ int pf_addsad(sad_entry_node *sad_node) {
         len += dst_len; p += dst_len;
     
     } else {
-
+    // Mode transport
         int src_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, get_mask(sad_node->local_subnet), sad_node->srcport, get_ip(sad_node->local_subnet));
         p += src_len; len += src_len;    
         int dst_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, get_mask(sad_node->remote_subnet), sad_node->dstport, get_ip(sad_node->remote_subnet));
@@ -697,10 +698,11 @@ int pf_delsad(sad_entry_node *sad_node) {
 
     // Build and write SADB_ADD request 
     bzero(&buf, sizeof(buf));
+    // Construct PF_KEY management message
     p = buf;
     msg = (struct sadb_msg *) p;
     msg->sadb_msg_version = PF_KEY_V2;
-    msg->sadb_msg_type = SADB_DELETE;
+    msg->sadb_msg_type = SADB_DELETE; // https://datatracker.ietf.org/doc/html/rfc2367#section-3.1.4
     msg->sadb_msg_satype = proto2satype(sad_node->protocol_parameters);
     msg->sadb_msg_pid = getpid();
     len = sizeof(*msg);
@@ -745,12 +747,12 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node) {
     s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
     mypid = getpid();
 
-    // Build and write SADB_ADD request 
+    // Build and write SADB_ request 
     bzero(&buf, sizeof(buf));
     p = buf;
     msg = (struct sadb_msg *) p;
     msg->sadb_msg_version = PF_KEY_V2;
-    msg->sadb_msg_type = SADB_GET;
+    msg->sadb_msg_type = SADB_GET; // https://datatracker.ietf.org/doc/html/rfc2367#section-3.1.5
 	if (sad_node->protocol_parameters == IPPROTO_ESP)
     	msg->sadb_msg_satype = SADB_SATYPE_ESP;
     msg->sadb_msg_pid = getpid();
@@ -810,8 +812,8 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node) {
     char ipDst[MAX_IP], ipSrc[MAX_IP];
     int mode;
     int reqid;
-    // TODO extract more information
-    // for the moment, in first demo we can check only this values.
+    // This part is used to extract the information of a 
+    // TODO extract more information if needed
     while (msglen > 0) {
         switch (ext->sadb_ext_type) {
             case SADB_EXT_KEY_ENCRYPT:{
@@ -862,8 +864,6 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node) {
                 prefixLenDst = addrext->sadb_address_prefixlen;
                 break;
             }
-            
-            //default: DBG("ext type: %i", ext->sadb_ext_type);
         }
         msglen -= ext->sadb_ext_len << 3;
         ext = (struct sadb_ext*) ((char *)ext + (ext->sadb_ext_len << 3));
@@ -1079,7 +1079,6 @@ int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node)
                         node->lft_idle_current = (uint64_t)u;
                     }
                     break;
-                //default: DBG("ext type: %i", ext->sadb_ext_type);
             }
             msglen -= ext->sadb_ext_len << 3;
             ext = (struct sadb_ext*) ((char *)ext + (ext->sadb_ext_len << 3));

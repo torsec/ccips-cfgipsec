@@ -18,7 +18,6 @@
  */
 
 #include "utils.h"
-#include <inttypes.h>
 
 char * get_ip(char * ip_mask) {
 
@@ -426,8 +425,6 @@ sad_entry_node *get_sad_node_by_spi(sad_entry_node** main_sad_entry, unsigned lo
 	return NULL;
 }
 
-
-
 int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name) {
 	// Do we have initialized the sad_node
 	if (main_sad_entry == NULL) {
@@ -466,6 +463,7 @@ int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name) {
 		free(nc);
 	}
 }
+
 int add_sad_node(sad_entry_node** main_sad_entry, sad_entry_node* new_sad) {
     if (*main_sad_entry == NULL) {
 		// Do a copy

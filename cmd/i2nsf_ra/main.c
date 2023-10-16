@@ -22,12 +22,22 @@
 #include "utils.h"
 #include "log.h"
 #include "sysrepo_print.h"
-#include "sysrepo_utils.h"
+#include "sysrepo_handler.h"
 #include "sysrepo_entries.h"
 #include "pfkeyv2_entry.h"
 #include "pfkeyv2_utils.h"
 #include "trust_client.h"
 #define VERSION "2"
+
+// Process of starting the application
+// 1º Stablish session with sysrepo
+// 2º Subscribe for the changes in running config datastore
+//    -- /ietf-i2nsf-ikeless:ipsec-ikeless/spd/spd-entry: Changes related with spd-entries (Add/Modify (not supported)/Delete)
+//    -- /ietf-i2nsf-ikeless:ipsec-ikeless/sad/sad-entry: Changes related with sad-entries (Add/Modify (not supported)/Delete)
+// 
+
+
+
 
 int exit_application = 0;
 
@@ -38,6 +48,8 @@ static void sigint_handler(int signum)
     exit_application = 1;
 }
 
+
+
 int main(int argc, char **argv)
 {
 
@@ -45,8 +57,6 @@ int main(int argc, char **argv)
         fprintf ( stderr, "Must be root in order to execute cfgipsec2. You are UID=%u, EUID=%u\n", getuid(), geteuid() );
         return 1;
     }
-    
-
 
     // Get options
     int foreground = false;
@@ -70,7 +80,7 @@ int main(int argc, char **argv)
             case 'h': {
                 fprintf(stderr, "cfgipsec2 version %s \n", VERSION);
                 fprintf(stderr, "Usage:\n" );
-                fprintf(stderr, "       %s [-c case] [-v verbose_level]\n",argv[0]);
+                fprintf(stderr, "       %s [-v verbose_level]\n",argv[0]);
                 fprintf(stderr, "\n" );
                 fprintf(stderr, "Where:\n" );
                 fprintf(stderr, "       - case is `case1` (IKE case) or `case2` (IKE-less case, default)\n" );
@@ -79,12 +89,15 @@ int main(int argc, char **argv)
                 return 0;
             }
             default: {
-                fprintf(stderr, "Usage: %s [-c case] [-v verbose_level]\n", argv[0]);
+                fprintf(stderr, "Usage: %s [-v verbose_level]\n", argv[0]);
                 exit(EXIT_FAILURE);
             }
         }
     }
-    INFO("LOG level set to: %d",l);
+
+INFO("LOG level set to: %d",l);
+
+
 #ifdef Enarx
     INFO("Enarx CCIPs version");
     // Enable connectivity with enarx client
@@ -93,13 +106,13 @@ int main(int argc, char **argv)
         exit(1);
     }
 #endif
+
     //// connect to sysrepo
     sr_conn_ctx_t *connection = NULL;
     sr_session_ctx_t *session = NULL;
     sr_subscription_ctx_t *subscription_spd  = NULL; 
     sr_subscription_ctx_t *subscription_sad  = NULL; 
 	const char *mod_name, *xpath = NULL;
-
 
     int rc = SR_ERR_OK;
 	//char *module_name = NULL;
@@ -112,9 +125,6 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-
-
-
     /* start session */
     rc = sr_session_start(connection, SR_DS_RUNNING, &session);
     if (SR_ERR_OK != rc) {
@@ -126,7 +136,6 @@ int main(int argc, char **argv)
     DBG("========== READING RUNNING CONFIG: ==========");
     print_current_config(session, mod_name);
     DBG("========== END RUNNING CONFIG: ==========");
-
 
 
     DBG("Subscribing to entries");
@@ -147,31 +156,39 @@ int main(int argc, char **argv)
         goto cleanup;
     }
         
+    
+    // Why we need this? 
+    // TODO Recheck the purpose of this...
     rc = sadb_register(session);
     if (SR_ERR_OK != rc) {
         ERR( "sadb_register: %s", sr_strerror(rc));
         goto cleanup;
     }
-
-
     signal(SIGINT, sigint_handler);
     signal(SIGPIPE, SIG_IGN);
+
+// When using enarx we need to stablish the socket with the enarx exposed socket.
 #ifdef Enarx
+    // TODO: For the moment this runs only using a tcp socket (not-encrypted)
     pthread_t verificationThread;
+    // We create the verification thread, which will periodically check if what it is stored in the TA database, 
+    // is the same as what it is installed in the kernel
     pthread_create(&verificationThread, NULL, sad_verification_process,NULL);
 #endif
+
+
     while (!exit_application) {
         sleep(1000);  /* or do some more useful work... */
     }
-
-    
-
     INFO("Application exit requested, exiting.");
 
 cleanup:
 #ifdef Enarx
     close_verification_process();
 #endif
-	sr_disconnect(connection);
-    return rc ? EXIT_FAILURE : EXIT_SUCCESS;
+
+    if (connection != NULL) {
+	    sr_disconnect(connection);
+        return rc ? EXIT_FAILURE : EXIT_SUCCESS;
+    }
 }

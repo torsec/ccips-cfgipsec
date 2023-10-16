@@ -13,7 +13,7 @@
 #include "log.h"
 #include <pthread.h>
 
-#ifdef Enarx
+#ifdef Trusted
 #include "trust_client.h"
 #include "messages.h"
 #endif
@@ -82,22 +82,13 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it, char *xpath,ch
 /// @return 
 int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_entry_node *sad_node);
 
-
-
-/// @brief Function that generates a netconf notification so it can alert all the subscribed stakeholders through sysrepo
-/// @param session 
-/// @param spi SPI value associated with the SAD entry to be removed
-/// @param soft If the expire is a soft-expire (Entry not removed from kernel) or hard (the entry has been removed)
-/// @return 
-int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi, bool soft);
-
-/// @brief Function that removes a SAD entry from sysrepo. Only used after receiving a HARD expire
-/// @param spi SPI of the entry that has been removed
+/// @brief Request the deletion of a SAD entry from the sysrepo datastore
+/// @param spi SPI identifier used to delete the entry
 /// @return 
 int send_delete_SAD_request(unsigned long int spi);
 
 
-#ifdef Enarx
+#ifdef Trusted
 void verify_sad_nodes();
 #endif 
 

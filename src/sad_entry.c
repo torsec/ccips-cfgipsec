@@ -51,7 +51,8 @@ sad_entry_node* create_sad_node(){
 
 }
 
-#ifdef Enarx
+
+#ifdef Trusted
 
 // https://github.com/kgabis/parson
 JSON_Value *serialize_sad_node(sad_entry_node *sad_node) {

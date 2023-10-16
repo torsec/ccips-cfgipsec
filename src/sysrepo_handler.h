@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __SYSREPO_UTILS
-#define __SYSREPO_UTILS
+#ifndef __SYSREPO_HANDLER
+#define __SYSREPO_HANDLER
 #include <string.h>
 #include <sys/socket.h>
 #include <linux/pfkeyv2.h>
@@ -70,13 +70,14 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
     Function used to setup a sysrepo session that late will be accessible by other modules
 */
 
-/// @brief Register a socket to the PF_KEY Management API, giving direct access to the sysrepo session
+/// @brief Register a socket to the PF_KEY Management API, giving direct access to the sysrepo session. This allows a direct interaction, so a YANG notification can be sent or a SAD entry deleted if needed.
 /// @param session 
 /// @return 
 int sadb_register(sr_session_ctx_t *session);
 
 // TODO make this imports only when using the trusted part of the application
 
+#ifdef Trusted
 /// @brief When using a trusted application, this process may run in the background so it can verify 
 /// @return 
 int sad_verification_process();
@@ -88,3 +89,4 @@ int close_verification_process();
 #endif
 
 
+#endif

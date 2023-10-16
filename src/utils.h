@@ -38,12 +38,11 @@
 #include <crypt.h>
 
 
+
 // #include "pfkeyv2_utils.h"
 #include "log.h"
 #include "constants.h"
 #include "sad_entry.h"
-#ifdef TRUSTED_APP
-#endif 
 
 
 char * get_ip(char * ip_mask);
@@ -86,7 +85,7 @@ sad_entry_node *get_sad_node_by_spi(sad_entry_node** main_sad_entry, unsigned lo
 /// @param main_sad_entry Local sad_entry database
 /// @param sad_name Name of the 
 /// @return 
-int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name)
+int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name);
 /// @brief Add a sad_entry into the local database 
 /// @param main_sad_entry local sad_entry database
 /// @param sad_name new sad_entry

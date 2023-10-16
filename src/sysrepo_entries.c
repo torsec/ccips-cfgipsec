@@ -490,9 +490,6 @@ void verify_sad_nodes() {
 }
 #endif
 
-	
-	
-
 void free_sad_node(sad_entry_node * n) {
     if (n != NULL) {  
         free (n);
@@ -774,6 +771,7 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 	sad_entry_node *sad_node = create_sad_node();
 	strcpy(sad_node->name,sad_name);
 	pthread_mutex_lock(&sad_entries_locker);
+	// Extract the SAD entry that has been added in sysrepo
     rc = readSAD_entry(sess,it,xpath,sad_node);
     if (rc != SR_ERR_OK) {
         ERR("ADD SAD in getSAD_entry: %s",sr_strerror(rc));
@@ -891,8 +889,8 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
             } else rc = SR_ERR_OK;
 
 			#ifdef Enarx
-				del_sad_node_enarx(sad_name);
-				// TODO Atm we skip this error, but it should be returned
+			// TODO Atm we skip this error check, but it should be handled or returned
+			del_sad_node_enarx(sad_name);
 			#endif
         }
 
