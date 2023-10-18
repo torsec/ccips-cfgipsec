@@ -65,7 +65,10 @@ extern char *handle_message(char *data) {
             }
             data_value = encode_op_result_msg(op_msg);
             code = OP_RESULT_MSG;
-            free(op_msg);
+            // TODO revise this free, since sometimes we get some errors with wasm and the application crashes
+            // only when forcing the delete from the controller. When removing through the rekey phase it works without any issue
+            // free(op_msg);
+            // INFO("FEE_OP_MSG");
             break;
         }
     }
@@ -100,11 +103,13 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     // TODO Add this part
     // Store the values
     
-    if (get_sad_node(trusted_init_sad_node,entry->name) != NULL) {
+    if (get_sad_node(&trusted_init_sad_node,entry->name) != NULL) {
         ERR("Error adding sad_entry, it already exists");
         status =  1;
         goto cleanup;
     }
+
+    // TODO Proceed with the decryption of the entry
 
     if (add_sad_node(&trusted_init_sad_node,entry) != 0) {
         ERR("Error adding sad_entry, it already exists");

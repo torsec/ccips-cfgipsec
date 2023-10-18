@@ -62,7 +62,7 @@ void  sa_print(struct sadb_ext *ext) {
 	// return;
 	struct sadb_sa *sa = (struct sadb_sa *)ext;
 	TRACE(" SA: SPI=%d Replay Window=%d State=%s",
-		sa->sadb_sa_spi, sa->sadb_sa_replay,
+		ntohl(sa->sadb_sa_spi), sa->sadb_sa_replay,
 		get_sa_state(sa->sadb_sa_state));
 	TRACE(" Authentication Algorithm: %s",
 		get_auth_alg(sa->sadb_sa_auth));

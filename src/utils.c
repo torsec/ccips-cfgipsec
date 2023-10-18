@@ -462,6 +462,7 @@ int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name) {
 		}
 		free(nc);
 	}
+	return 0;
 }
 
 int add_sad_node(sad_entry_node** main_sad_entry, sad_entry_node* new_sad) {

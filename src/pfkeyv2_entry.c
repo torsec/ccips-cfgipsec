@@ -716,10 +716,19 @@ int pf_delsad(sad_entry_node *sad_node) {
     p += saext->sadb_sa_len * 8;
 
 
-    int src_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, get_mask(sad_node->local_subnet), sad_node->srcport, get_ip(sad_node->local_subnet));
-    p += src_len; len += src_len;
-    int dst_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, get_mask(sad_node->remote_subnet), sad_node->dstport, get_ip(sad_node->remote_subnet));
-    len += dst_len; p += dst_len;
+    if(sad_node->ipsec_mode == IPSEC_MODE_TUNNEL){
+        int src_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, 32, sad_node->srcport, sad_node->tunnel_local);
+        p += src_len; len += src_len;
+        int dst_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, 32, sad_node->dstport, sad_node->tunnel_remote);
+        len += dst_len; p += dst_len;
+    
+    } else {
+    // Mode transport
+        int src_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, get_mask(sad_node->local_subnet), sad_node->srcport, get_ip(sad_node->local_subnet));
+        p += src_len; len += src_len;    
+        int dst_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, get_mask(sad_node->remote_subnet), sad_node->dstport, get_ip(sad_node->remote_subnet));
+        len += dst_len; p += dst_len;
+    }
 
 
     msg->sadb_msg_len = len / 8;

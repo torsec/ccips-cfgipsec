@@ -156,8 +156,6 @@ INFO("LOG level set to: %d",l);
         goto cleanup;
     }
         
-    
-    // Why we need this? 
     // TODO Recheck the purpose of this...
     rc = sadb_register(session);
     if (SR_ERR_OK != rc) {
