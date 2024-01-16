@@ -1,4 +1,4 @@
-/build
+/build*
 /libs
 /target
 cmd/i2nsf_enarx/enarx/target/
