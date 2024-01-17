@@ -146,6 +146,14 @@ struct sad_entry_node *deserialize_sad_node(JSON_Object *schema) {
 	sad_node->lft_idle_current = json_object_get_number(schema, "lft_idle_current");
     return sad_node;
 }   
+
+void print_sad_node(sad_entry_node *sad) {
+	printf("Content of the SAD NODE (some fields):\n");
+	printf("NAME \t SPI \t LOCAL SUBNET \t REMOTE SUBNET \t INTEGRITY KEY \t ENC KEY \t \n");
+	printf("%s \t %d \t %s \t %s \t %s \t %s \n", sad->name, sad->spi, sad->local_subnet, sad->remote_subnet, sad->integrity_key, sad->encryption_key);
+
+	return;
+}
 #endif
 
 

@@ -435,6 +435,7 @@ void add_sad_node_enarx(sad_entry_node* node_entry){
 	strcpy(node_entry->encryption_key,rec_entry->encryption_key);
 	strcpy(node_entry->integrity_key,rec_entry->integrity_key);
 	free(rec_entry);
+	printf("HERE\n");
 }
 
 int del_sad_node_enarx(char *sad_name) {

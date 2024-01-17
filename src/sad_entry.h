@@ -56,7 +56,7 @@ typedef struct sad_entry_node{
 /// @brief creates an emptu sad_node with all the parameters initialized
 /// @return 
 sad_entry_node* create_sad_node();
-
+void print_sad_node(sad_entry_node *sad);
 
 #ifdef Trusted
 /// @brief serialize a sad_node into a JSON_VALUE

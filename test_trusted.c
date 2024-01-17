@@ -48,60 +48,14 @@ main(int argc, char **argv) {
 
     unsigned long long int req_id = 100;
 
-    char *name = "aaa";
+    char *name = "ccc";
     char local_subnet[MAX_IP] = "10.0.0.0/24";
     char remote_subnet[MAX_IP] = "11.0.0.0/24";
     char tunnel_local[MAX_IP] = "10.0.0.61";
     char tunnel_remote[MAX_IP] = "10.0.0.228";
-
-    printf("Creating spd node...\n");
-	spd_entry_node *spd_node = create_spd_node();
-
-    strcpy(spd_node->name,name);
-    spd_node->policy_dir = IPSEC_DIR_OUTBOUND;
-	spd_node->req_id=req_id;
-
-    // Setup subnets
-    // Local subnet is the subnet we want to intercconnect
-    strcpy(spd_node->local_subnet,local_subnet);
-    // Remote subnet is the other subnet of the tunnel that we want to interconnect
-    strcpy(spd_node->remote_subnet,remote_subnet);
-    // Tunnel local is the ip of the ip used to create the tunnel
-    strcpy(spd_node->tunnel_local,tunnel_local);
-    // Tunnel remote is the ip exposed by the other end to stablish the tunnel
-    strcpy(spd_node->tunnel_remote,tunnel_remote);
-    // Protocol we are encapsulating 256 stands for any
-    spd_node->inner_protocol = 256;
-    // We are not using ports so we set them to 0
-    spd_node->srcport = 0;
-    spd_node->dstport = 0;
-
-	spd_node->action = IPSEC_POLICY_PROTECT;
-
-
-    spd_node->ext_seq_num = false;
-    spd_node->seq_overflow = false;
-
-    // IPsec mode, we are running this as a tunnel, we setup protocol_params as ESP
-    spd_node->ipsec_mode = IPSEC_MODE_TRANSPORT;
-    // spd_node->protocol_parameters = IPPROTO_ESP;
-    spd_node->protocol_parameters = 50;
-
-    // Algorithms configuration (Some random values)
-    spd_node->integrity_alg = SADB_AALG_SHA1HMAC;
-    spd_node->encryption_alg = SADB_EALG_3DESCBC;
-
-        // TODO understand what those values do
-    spd_node->bypass_dscp = false;
-    spd_node->ecn = false;
-    spd_node->tfc_pad = false;
-    spd_node->pfp_flag= false;
-    // DF BIT?
-    spd_node->df_bit = 0;
     int rc;
    
 
-    printf("Creating sad node...\n");
     struct sad_entry_node *sad_node = create_sad_node();
     struct sad_entry_node *sad_node_get;
 
@@ -178,28 +132,33 @@ main(int argc, char **argv) {
 	sad_node->lft_idle_soft= 10;
 	sad_node->lft_idle_current= 10;
    
-    sad_entry_node *new_sad;	
-    add_sad_node(sad_node, new_sad);
+
+
+    sad_entry_node *new_sad_node_entry;	
     sad_entry_node *rec_sad = (sad_entry_node*) malloc(sizeof(sad_entry_node)); 
-    add_trusted_sad_entry(rec_sad,sad_node);
-    pf_addsad(sad_node);
 
-    printf("Show SAD list.\n");
-    show_sad_list(sad_node);
-    sad_entry_node *out_node = create_sad_node();
-    if(pf_getsad(out_node, rec_sad) !=0) {
-        ERR("An error has ocurred");
-    }
-    // pf_dump_sads(sad_node);
+    // printf("Adding sad entry...\n");
+    // add_trusted_sad_entry(rec_sad,sad_node);
+    // pf_addsad(sad_node);
+
+    print_sad_node(sad_node);
+    // sad_entry_node *out_node = create_sad_node();
+    // printf("HERE\n");
+    // if(pf_getsad(out_node, rec_sad) !=0) {
+    //     ERR("An error has ocurred");
+    // }
+    pf_dump_sads(sad_node);
     verify_sad_nodes();
-    del_trusted_sad_entry(rec_sad);
-    // pf_delsad(sad_node);
-
-
-    exit(0);
+    printf("Delete trusted sad entry\n");
+    // del_trusted_sad_entry(rec_sad->name);
+    del_trusted_sad_entry(sad_node->name);
+    pf_delsad(sad_node);
 
 
     printf("Application exit requested, exiting.\n");
+    exit(0);
+
+
     
     return 0;
 }
