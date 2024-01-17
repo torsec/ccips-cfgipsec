@@ -510,6 +510,11 @@ int pf_delpolicy(spd_entry_node *spd_node) {
 
 
 // TODO Parser the structure that has been received from what it has been defined by UMU
+
+// function that installs the sad_entry_node in the kernel
+// This process starts by generating a SADB_ADD Message using the values
+// of the sad_entry_node, and then it will be directly passed to the kernel
+// through the PF_KEY managament API.
 int pf_addsad(sad_entry_node *sad_node) {
     int s;
     char buf[4096], *p;

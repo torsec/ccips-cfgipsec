@@ -20,7 +20,7 @@ void add_spd_node(spd_entry_node* node_entry){
 }
 
 // for case 1
-void show_spd_list(){
+void spd_list(){
 	
 	spd_entry_node *node = init_spd_node;
 	INFO("NAME --- INDEX --- REQ_ID --- SRC --- DST --- DIRECTION --- PROTOCOL --- MODE");
@@ -357,7 +357,7 @@ int addSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 	}
     
     INFO("SPD entry added: REQID %d",spd_node->req_id);
-    show_spd_list();
+    // show_spd_list();
 	
 
     return SR_ERR_OK;
@@ -412,7 +412,7 @@ int removeSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
             ERR("Remove SPD, policy not found: %s",sr_strerror(rc));
         }		
 	}
-    show_spd_list();
+    // show_spd_list();
 	
 	return rc;
 
@@ -420,6 +420,7 @@ int removeSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
 
 #ifdef Enarx
 // From sad_entry.c
+
 void add_sad_node_enarx(sad_entry_node* node_entry){
 
 	// We need to add the node_entry into the enarx client
@@ -764,6 +765,11 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 	    return SR_ERR_OK;
 }
 
+// When the method addSAD_entry is called, it first request to 
+// SYSREPO using the entire XPATH all the information by calling the method
+//  readSAD_entry. The lattest whill request the information of the specific
+//  XPATH and will parse the information to fill the information of
+//  a sad_entry_node.
 int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *sad_name) {
     int rc = SR_ERR_OK;
     //spi = atoi(spi_number);

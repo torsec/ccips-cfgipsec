@@ -465,6 +465,7 @@ int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name) {
 	return 0;
 }
 
+// store the sad_entry_node in a local db which is pointed as the init_sad_node
 int add_sad_node(sad_entry_node** main_sad_entry, sad_entry_node* new_sad) {
     if (*main_sad_entry == NULL) {
 		// Do a copy

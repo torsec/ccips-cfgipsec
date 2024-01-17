@@ -73,9 +73,9 @@ endif()
 include_directories("${SRC_DIRECTORY}")
 # add the executable
 add_executable(${PROJECT_NAME} 
-    "${PROJECT_SOURCE_DIR}/cmd/i2nsf_ra/main.c"
+    # "${PROJECT_SOURCE_DIR}/cmd/i2nsf_ra/main.c"
     # "${PROJECT_SOURCE_DIR}/cmd/i2nsf_ra/test.c"
-    # "${PROJECT_SOURCE_DIR}/cmd/i2nsf_enarx/main_test.c"
+    #"${PROJECT_SOURCE_DIR}/cmd/i2nsf_enarx/main_test.c"
     "${PROJECT_SOURCE_DIR}/test_trusted.c"
     "${SRC_DIRECTORY}/constants.h"
     "${SRC_DIRECTORY}/host.h"

@@ -43,38 +43,9 @@ sigint_handler(int signum)
 int 
 main(int argc, char **argv) {
 
+    printf("Connecting to the Enarx Trusted Application...\n");
+    connect_ta();
 
- connect_ta();
-//  disconnect_ta();
-
-//  int sock = socket(AF_INET, SOCK_STREAM, 0);
-//     if (sock < 0) {
-//         perror("socket failed");
-//         exit(EXIT_FAILURE);
-//     }
-
-//     struct sockaddr_in server_addr;
-//     server_addr.sin_family = AF_INET;
-//     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-//     server_addr.sin_port = htons(10000);
-
-//     if (connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-//         perror("connect failed");
-//         exit(EXIT_FAILURE);
-//     }
-
-
-//     char buffer[2048] = {0};
-//     if (recv(sock, buffer, 2048, 0) < 0) {
-//         perror("recv failed");
-//         exit(EXIT_FAILURE);
-//     }
-
-//     printf("Received response from server: %s\n", buffer);
-
-
-
-    // pf_exec_register(SADB_SATYPE_ESP);    
     unsigned long long int req_id = 100;
 
     char *name = "aaa";
@@ -83,6 +54,7 @@ main(int argc, char **argv) {
     char tunnel_local[MAX_IP] = "10.0.0.61";
     char tunnel_remote[MAX_IP] = "10.0.0.228";
 
+    printf("Creating spd node...\n");
 	spd_entry_node *spd_node = create_spd_node();
 
     strcpy(spd_node->name,name);
@@ -129,7 +101,7 @@ main(int argc, char **argv) {
     int rc;
    
 
-
+    printf("Creating sad node...\n");
     struct sad_entry_node *sad_node = create_sad_node();
     struct sad_entry_node *sad_node_get;
 
@@ -205,20 +177,15 @@ main(int argc, char **argv) {
 	sad_node->lft_idle_hard= 60;
 	sad_node->lft_idle_soft= 10;
 	sad_node->lft_idle_current= 10;
-    char *out_hash = get_sad_hash(sad_node);
-    // // if (!cser_raw_store_struct_spd_entry_node(spd_node,))  
-    // sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
-    // message->sad_entry =  sad_node;
-
-    // JSON_Value *new_conf_msg = encode_sad_entry_msg(message);
-    // char *serialized_msg = encode_default_msg(10,NEW_CONFIG_MSG,new_conf_msg);
-
-    
-    add_sad_node(sad_node);
+   
+    sad_entry_node *new_sad;	
+    add_sad_node(sad_node, new_sad);
     sad_entry_node *rec_sad = (sad_entry_node*) malloc(sizeof(sad_entry_node)); 
     add_trusted_sad_entry(rec_sad,sad_node);
     pf_addsad(sad_node);
 
+    printf("Show SAD list.\n");
+    show_sad_list(sad_node);
     sad_entry_node *out_node = create_sad_node();
     if(pf_getsad(out_node, rec_sad) !=0) {
         ERR("An error has ocurred");
