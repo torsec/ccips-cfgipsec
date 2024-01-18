@@ -512,10 +512,12 @@ int pf_delpolicy(spd_entry_node *spd_node) {
 // TODO Parser the structure that has been received from what it has been defined by UMU
 
 // function that installs the sad_entry_node in the kernel
-// This process starts by generating a SADB_ADD Message using the values
+// This proess starts by generating a SADB_ADD Message using the values
 // of the sad_entry_node, and then it will be directly passed to the kernel
 // through the PF_KEY managament API.
 int pf_addsad(sad_entry_node *sad_node) {
+
+    printf("pf_addsad function called. This function installs the sad_entry_node in the kernel\n");
     int s;
     char buf[4096], *p;
     struct sadb_msg *msg;
@@ -606,7 +608,7 @@ int pf_addsad(sad_entry_node *sad_node) {
             keyext = (struct sadb_key *) p;
             keyext->sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
             keyext->sadb_key_reserved = 0;
-            // INFO("-----------KeyExt size %d",sizeof(*keyext)); 
+            INFO("-----------KeyExt size %d",sizeof(*keyext)); 
             if(sad_node->encryption_alg == SADB_EALG_DESCBC){
                 DBG("selected SADB_EALG_DESCBC");
                     keyext->sadb_key_len = (sizeof(*keyext) + (EALG_DESCBC_KEY_BITS/8) + 7) / 8;
@@ -653,7 +655,7 @@ int pf_addsad(sad_entry_node *sad_node) {
                 keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_GCM_ICV16_KEY_BITS/8) + 7) / 8;
                 keyext->sadb_key_bits = EAL_AES_GCM_ICV16_KEY_BITS;
             }
-            // INFO("-----------Key length %d",keyext->sadb_key_len); 
+            INFO("-----------Key length %d",keyext->sadb_key_len); 
             memcpy(keyext + 1, sad_node->encryption_key, strlen(sad_node->encryption_key));
             len += keyext->sadb_key_len * 8;
             p += keyext->sadb_key_len * 8;

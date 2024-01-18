@@ -32,7 +32,7 @@ extern char *handle_message(char *data) {
             } else {
                 data_value = encode_sad_entry_msg(entry_msg);
                 code = INSERT_ENTRY_MSG;
-                // INFO("NEW CONFIG MANAGED SUCCESFUL");
+                INFO("NEW CONFIG MANAGED SUCCESFUL");
             }
             break;
         }
@@ -85,6 +85,8 @@ cleanup:
 
 // TODO change order of input parameters
 int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
+
+    printf("handle_new_conf_message function (trust_handler.c) called.\n");
     int status = 0;
     // Decode the data of the message
     sad_entry_msg *config = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
@@ -110,6 +112,8 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     }
 
     // TODO Proceed with the decryption of the entry
+
+    printf("Adding sad_node in trusted sad db.\n");
 
     if (add_sad_node(&trusted_init_sad_node,entry) != 0) {
         ERR("Error adding sad_entry, it already exists");

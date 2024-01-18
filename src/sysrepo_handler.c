@@ -186,7 +186,8 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 	// TODO need to free this?
 	char *new_xpath = NULL; 
 
-
+	printf("sad_entry_change_cb function called.\n");
+	
 	// pthread_mutex_lock(&sad_entry_change_lock);
 	if (SR_EV_CHANGE == event) {
 

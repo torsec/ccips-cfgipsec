@@ -423,6 +423,7 @@ int removeSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
 
 void add_sad_node_enarx(sad_entry_node* node_entry){
 
+	INFO("add_sad_node_enarx function called");
 	// We need to add the node_entry into the enarx client
 	// It will return a new sad_entry_node whith the decrypted contents and an entryid
 	sad_entry_node* rec_entry = create_sad_node();
@@ -791,6 +792,9 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 		// TODO change this to make a copy of the node_entry so we dont store in the Untrusted Part of the application
 		// they original keys. 
 		add_sad_node_enarx(sad_node);
+
+		// TODO polito
+		// add_sad_node_keystone(sad_node);
 	#endif
     rc = pf_addsad(sad_node);
     if (SR_ERR_OK != rc) {

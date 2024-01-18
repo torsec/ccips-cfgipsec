@@ -44,12 +44,17 @@ int disconnect_ta() {
 }
 
 int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
+    printf("Called add_trusted_sad_entry function.\n");
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     message->sad_entry =  old_sad;
+    printf("Encoding sad_entry message in JSON format (sad_entry_msg is used to share sad_entries between trusted and untrusted)\n");
     JSON_Value *new_conf_msg = encode_sad_entry_msg(message);
     char *serialized_msg = encode_default_msg(10,NEW_CONFIG_MSG,new_conf_msg);
     int result = 1;
 
+    printf("SERIALIZED MESSAGE:\n");
+    printf("n\n%sn\n", serialized_msg);
+    printf("sending sad to enarx socket.\n");
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
         free(message);
