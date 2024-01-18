@@ -61,6 +61,7 @@ main(int argc, char **argv) {
 
     // Setup the structure
     
+    printf("Set up the sad node structure.\n");
     // First setup the identification variables
     strcpy(sad_node->name,name);
     sad_node->req_id = req_id;
@@ -103,6 +104,7 @@ main(int argc, char **argv) {
     }
     
 
+    // this material should be sent encrypted to the Trusted Application(?)
     char* key = bytes;
     sad_node->encryption_alg = SADB_EALG_3DESCBC;
     sad_node->encryption_key = key;
@@ -136,24 +138,27 @@ main(int argc, char **argv) {
 
     sad_entry_node *new_sad_node_entry;	
     sad_entry_node *rec_sad = (sad_entry_node*) malloc(sizeof(sad_entry_node)); 
-
-    // printf("Adding sad entry...\n");
-    // add_trusted_sad_entry(rec_sad,sad_node);
-    // pf_addsad(sad_node);
+    /******************************************************************/
+    printf("Adding sad entry...\n");
+    add_trusted_sad_entry(rec_sad,sad_node);
+    pf_addsad(sad_node);
 
     print_sad_node(sad_node);
-    // sad_entry_node *out_node = create_sad_node();
-    // printf("HERE\n");
-    // if(pf_getsad(out_node, rec_sad) !=0) {
-    //     ERR("An error has ocurred");
-    // }
+    sad_entry_node *out_node = create_sad_node();
+    printf("HERE\n");
+    if(pf_getsad(out_node, rec_sad) !=0) {
+        ERR("An error has ocurred");
+    }
+    /*****************************************************************/
     pf_dump_sads(sad_node);
     verify_sad_nodes();
-    printf("Delete trusted sad entry\n");
-    // del_trusted_sad_entry(rec_sad->name);
-    del_trusted_sad_entry(sad_node->name);
-    pf_delsad(sad_node);
 
+    /****************************************************************/
+    // printf("Delete trusted sad entry\n");
+    // // del_trusted_sad_entry(rec_sad->name);
+    // del_trusted_sad_entry(sad_node->name);
+    // pf_delsad(sad_node);
+    /****************************************************************/
 
     printf("Application exit requested, exiting.\n");
     exit(0);
