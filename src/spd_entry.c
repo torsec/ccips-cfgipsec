@@ -48,8 +48,8 @@ JSON_Value *serialize_spd_node(spd_entry_node *spd_node) {
 
     // Initial vals
     json_object_set_string(root_object, "name", spd_node->name);
-    json_object_set_string(root_object, "index", spd_node->index);
-    json_object_set_string(root_object, "policy_dir", spd_node->policy_dir);
+    json_object_set_number(root_object, "index", spd_node->index);
+    json_object_set_number(root_object, "policy_dir", spd_node->policy_dir);
     json_object_set_number(root_object, "req_id", spd_node->req_id);
     json_object_set_string(root_object, "local_subnet", spd_node->local_subnet);
     json_object_set_string(root_object, "remote_subnet", spd_node->remote_subnet);
@@ -58,7 +58,7 @@ JSON_Value *serialize_spd_node(spd_entry_node *spd_node) {
 	json_object_set_number(root_object, "inner_protocol", spd_node->inner_protocol);
 	json_object_set_number(root_object, "srcport", spd_node->srcport);
 	json_object_set_number(root_object, "dstport", spd_node->dstport);
-    json_object_set_string(root_object, "action", spd_node->action);
+    json_object_set_number(root_object, "action", spd_node->action);
 	json_object_set_boolean(root_object, "ext_seq_num", spd_node->ext_seq_num);
 	json_object_set_boolean(root_object, "seq_overflow", spd_node->seq_overflow);
 	json_object_set_number(root_object, "ipsec_mode", spd_node->ipsec_mode);
@@ -66,9 +66,9 @@ JSON_Value *serialize_spd_node(spd_entry_node *spd_node) {
 	json_object_set_number(root_object, "integrity_alg", spd_node->integrity_alg);
 	json_object_set_number(root_object, "encryption_alg", spd_node->encryption_alg);
 	json_object_set_number(root_object, "anti_replay_window", spd_node->anti_replay_window);
-    json_object_set_string(root_object, "pfp_flag", spd_node->pfp_flag);
-    json_object_set_string(root_object, "stateful_frag_check", spd_node->stateful_frag_check);
-    json_object_set_string(root_object, "bypass_dscp", spd_node->bypass_dscp);
+    json_object_set_boolean(root_object, "pfp_flag", spd_node->pfp_flag);
+    json_object_set_boolean(root_object, "stateful_frag_check", spd_node->stateful_frag_check);
+    json_object_set_boolean(root_object, "bypass_dscp", spd_node->bypass_dscp);
 	json_object_set_boolean(root_object, "ecn", spd_node->ecn);
 	json_object_set_boolean(root_object, "tfc_pad", spd_node->tfc_pad);
 	json_object_set_number(root_object, "df_bit", spd_node->df_bit);
@@ -79,7 +79,7 @@ JSON_Value *serialize_spd_node(spd_entry_node *spd_node) {
 struct spd_entry_node *deserialize_spd_node(JSON_Object *schema) {
     // JSON_Object *schema = json_object(json_parse_string(serialized));
     spd_entry_node *spd_node = create_spd_node();
-    strcpy(spd_node->index,json_object_get_string(schema, "index"));
+    spd_node->index = json_object_get_number(schema, "index");
     spd_node->policy_dir = json_object_get_number(schema, "policy_dir");
     spd_node->req_id = json_object_get_number(schema, "req_id");
     strcpy(spd_node->local_subnet,json_object_get_string(schema, "local_subnet"));
@@ -88,7 +88,6 @@ struct spd_entry_node *deserialize_spd_node(JSON_Object *schema) {
 	spd_node->srcport = json_object_get_number(schema, "srcport");
 	spd_node->dstport = json_object_get_number(schema, "dstport");
   	spd_node->action = json_object_get_number(schema, "action");
-	spd_node->seq_num = json_object_get_number(schema, "seq_num");
 	spd_node->seq_overflow = json_object_get_boolean(schema, "seq_overflow");
 	spd_node->ipsec_mode = json_object_get_number(schema, "ipsec_mode");
 	spd_node->protocol_parameters = json_object_get_number(schema, "protocol_parameters");

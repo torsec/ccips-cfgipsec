@@ -26,6 +26,11 @@
 #include <stdbool.h>
 #include "constants.h"
 
+#ifdef Trusted
+	#include "parson.h"
+#endif
+#include <crypt.h>
+
 // typedef struct host_t host_t;
 typedef struct spd_entry_node {
 	char *name;

@@ -33,14 +33,14 @@ JSON_Value *encode_sad_entry_msg(sad_entry_msg *msg) {
 }
 
 int decode_spd_entry_msg(JSON_Object *schema, spd_entry_msg *msg) {
-    msg->sad_entry = deserialize_spd_node(json_object_get_object(schema,"spd_entry"));
+    msg->spd_entry = deserialize_spd_node(json_object_get_object(schema,"spd_entry"));
     return 0;
 }
 
 JSON_Value *encode_spd_entry_msg(spd_entry_msg *msg) {
     JSON_Value *root_value = json_value_init_object();
     JSON_Object *root_object = json_value_get_object(root_value);
-    json_object_set_value(root_object, "spd_entry", serialize_spd_node(msg->sad_entry));
+    json_object_set_value(root_object, "spd_entry", serialize_spd_node(msg->spd_entry));
     return root_value;
 }
 

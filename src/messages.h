@@ -3,6 +3,7 @@
 
 #include "parson.h"
 #include "sad_entry.h"
+#include "spd_entry.h"
 
 
 
@@ -37,7 +38,7 @@ typedef struct sad_entry_msg {
 // spd_entry_msg Message used to share the new spd_entry to the trusted part
 
 /// @brief Structure used to share spd_entries between the trusted and the untrusted part
-typedef struct sad_entry_msg {
+typedef struct spd_entry_msg {
     spd_entry_node *spd_entry;
 } spd_entry_msg;
 
