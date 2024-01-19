@@ -53,7 +53,7 @@ typedef struct sad_entry_node{
 } sad_entry_node;
 
 
-/// @brief creates an emptu sad_node with all the parameters initialized
+/// @brief creates an empty sad_node with all the parameters initialized
 /// @return 
 sad_entry_node* create_sad_node();
 void print_sad_node(sad_entry_node *sad);
