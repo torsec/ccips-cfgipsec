@@ -41,6 +41,32 @@
       "lft_idle_hard": 1,
       "lft_idle_soft": 1,
       "lft_idle_current": 1
+    },
+    "spd_entry" : {
+      "name": "testspd1234",
+      "index": 12,
+      "policy_dir": 1,
+      "local_subnet": "10.1.1.0/24",
+      "remote_subnet": "10.1.2.0/24",
+      "tunnel_local": "11.11.11.1",
+      "tunnel_remote": "11.11.11.2",
+      "inner_protocol": 1,
+      "srcport": 1,
+      "dstport": 1,
+      "action": 1,
+      "ext_seq_num": 1,
+      "seq_overflow": false,
+      "ipsec_mode": 1,
+      "protocol_parameters": 1,
+      "integrity_alg": 1,
+      "encryption_alg": 1,
+      "anti_replay_window": 1,
+      "pfp_flag": false,
+      "stateful_frag_check": false,
+      "bypass_dscp": false,
+      "ecn": false,
+      "tfc_pad": false,
+      "df_bit": 1
     }
   }
 }
