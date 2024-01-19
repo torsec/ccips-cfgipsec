@@ -60,5 +60,18 @@ typedef struct spd_entry_node {
 /// @brief creates an empty spd_entry_node with all the inputs intitilized
 /// @return an empty sad_entry_node
 spd_entry_node* create_spd_node();
+void print_spd_node(spd_entry_node *spd);
+
+#ifdef Trusted
+/// @brief serialize a spd_node into a JSON_VALUE
+/// @param spd_node input spd_node to serailize
+/// @return Json value
+JSON_Value *serialize_spd_node(spd_entry_node *spd_node);
+
+/// @brief deserialized a JSON_OBJECT into a spd_node
+/// @param schema json schema that contains a serialized _spd_node
+/// @return spd_entry_node // TODO maybe change this so we pass the sad_entry_node to change
+spd_entry_node *deserialize_spd_node(JSON_Object *schema);
+#endif
 
 #endif
