@@ -17,7 +17,7 @@
 // #include <pthread.h>
 #include <unistd.h>
 #include <inttypes.h>
-#include "map.h"
+// #include "map.h"
 #include "trust_handler.h"
 #define MAX 80
 typedef unsigned char BYTE;
@@ -153,9 +153,10 @@ int main(void) {
     sad_node_test->encryption_key = "af6a4041";
 
 
+    printf("\n\nHELLO FROM MAIN_TEST.C\n\n");
 
-
-    char *hash = get_sad_hash(sad_node);
+    // char *hash = get_sad_hash(sad_node); // undefined function
+    char *hash = sad_node->name;
 
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     strcpy(message->entry_id,hash);
@@ -163,7 +164,7 @@ int main(void) {
 
 
 
-    // printf("Output: %s\n", serialized_msg);
+    printf("Output: %s\n", serialized_msg);
 
     init_map();
 
@@ -196,119 +197,119 @@ int main(void) {
     handle_message(serialized_msg);
     
     // exit(0);
-    // default_msg *msg = malloc(sizeof(msg));
-    // JSON_Object *schema = json_object(json_parse_string(serialized_msg));
-    // decode_default_msg(schema, msg);
-    // printf("Message code: %d\n", msg->code);
-    // printf("Message work_id: %d\n", msg->work_id);
-    // sad_entry_msg *config_message = malloc(sizeof(sad_entry_msg));
-    // decode_sad_entry_msg(msg->data,config_message);
-    // printf("entry id: %s\n",config_message->entry_id);
+    default_msg *msg = malloc(sizeof(msg));
+    JSON_Object *schema = json_object(json_parse_string(serialized_msg));
+    decode_default_msg(schema, msg);
+    printf("Message code: %d\n", msg->code);
+    printf("Message work_id: %d\n", msg->work_id);
+    sad_entry_msg *config_message = malloc(sizeof(sad_entry_msg));
+    decode_sad_entry_msg(msg->data,config_message);
+    printf("entry id: %s\n",config_message->entry_id);
 
-    // sad_entry_node *node  = config_message->sad_entry;
-    // printf("Address1: %s, Address2: %s, Encryption_key: %s, Integrity_key: %s, Encryption_iv: %s\n",
-    //     node->local_subnet,
-    //     node->remote_subnet,
-    //     node->encryption_key,
-    //     node->integrity_key,
-    //     node->encryption_iv);
+    sad_entry_node *node  = config_message->sad_entry;
+    printf("Address1: %s, Address2: %s, Encryption_key: %s, Integrity_key: %s, Encryption_iv: %s\n",
+        node->local_subnet,
+        node->remote_subnet,
+        node->encryption_key,
+        node->integrity_key,
+        node->encryption_iv);
     
 
-    // // char hash[16];
-    // // get_sad_hash(node,hash);
-    // printf("hash: %s\n",hash);
+    // char hash[16];
+    // get_sad_hash(node,hash);
+    printf("hash: %s\n",hash);
 
-    // hashmap* m = hashmap_create();
+    hashmap* m = hashmap_create();
 
-    // printf("Pointer location %p, pointer value %p\n",(void *) node,(void *) &node);
-    // printf("Pointer location %d, pointer value %d\n",(u_64) node,(u_int64_t) &node);
-    // printf("Pointer location %" PRIu64 ", pointer value %"PRIu64 "\n",(uint64_t )node,(uint64_t )&node);
-    // hashmap_set(m,"test", sizeof("test"),(uint64_t) node);
-    // uintptr_t result;
-    // hashmap_get(m,"test",sizeof("test"), &result);
-    // sad_entry_node *map_node = (sad_entry_node*) result;
+    printf("Pointer location %p, pointer value %p\n",(void *) node,(void *) &node);
+    printf("Pointer location %d, pointer value %d\n",(u_64) node,(u_int64_t) &node);
+    printf("Pointer location %" PRIu64 ", pointer value %"PRIu64 "\n",(uint64_t )node,(uint64_t )&node);
+    hashmap_set(m,"test", sizeof("test"),(uint64_t) node);
+    uintptr_t result;
+    hashmap_get(m,"test",sizeof("test"), &result);
+    sad_entry_node *map_node = (sad_entry_node*) result;
 
-    // m_set_sad_entry(m,hash,node);
-    // sad_entry_node *map_node = m_get_sad_entry(m,hash);
-    // if (map_node == NULL) {
-    //     ERR("MAP_NODE does not exist");
-    // } 
-    // char hash2[16] = "hashtestof16byt";
-    // map_node = m_get_sad_entry(m,hash2);
-    // if (map_node == NULL) {
-    //     ERR("MAP_NODE does not exist");
-    // } 
-
-
-    // printf("Address1: %s, Address2: %s, Encryption_key: %s, Integrity_key: %s, Encryption_iv: %s\n",
-    //     map_node->local_subnet,
-    //     map_node->remote_subnet,
-    //     map_node->encryption_key,
-    //     map_node->integrity_key,
-    //     map_node->encryption_iv);
-
-    // init_map();
-    // sad_entry_msg *out = (sad_entry_msg*) malloc(sizeof(out));
-    // if (handle_new_conf_message(msg->data,out) == 0) {
-    //     INFO("NICE");
-    // }else {
-    //     ERR("NOT NICE");
-    // ;}
+    m_set_sad_entry(m,hash,node);
+    sad_entry_node *map_node = m_get_sad_entry(m,hash);
+    if (map_node == NULL) {
+        ERR("MAP_NODE does not exist");
+    } 
+    char hash2[16] = "hashtestof16byt";
+    map_node = m_get_sad_entry(m,hash2);
+    if (map_node == NULL) {
+        ERR("MAP_NODE does not exist");
+    } 
 
 
+    printf("Address1: %s, Address2: %s, Encryption_key: %s, Integrity_key: %s, Encryption_iv: %s\n",
+        map_node->local_subnet,
+        map_node->remote_subnet,
+        map_node->encryption_key,
+        map_node->integrity_key,
+        map_node->encryption_iv);
 
-    // alert_state_msg *alert_out = (alert_state_msg*) malloc(sizeof(alert_out));
-    // int status = handle_request_verify_message(msg->data,alert_out);
+    init_map();
+    sad_entry_msg *out = (sad_entry_msg*) malloc(sizeof(out));
+    if (handle_new_conf_message(msg->data,out) == 0) {
+        INFO("NICE");
+    }else {
+        ERR("NOT NICE");
+    ;}
 
-    // if (status == 0) {
-    //     INFO("Verification Succesful");
-    // } else if (status == 1) {
-    //     ERR("Something weird happened");
-    // } else if (status == 2) {
-    //     ERR("Sad entries are not equal");
-    // }
+
+
+    alert_state_msg *alert_out = (alert_state_msg*) malloc(sizeof(alert_out));
+    int status = handle_request_verify_message(msg->data,alert_out);
+
+    if (status == 0) {
+        INFO("Verification Succesful");
+    } else if (status == 1) {
+        ERR("Something weird happened");
+    } else if (status == 2) {
+        ERR("Sad entries are not equal");
+    }
     
     
-    // int r = m_set_sad_entry(get_trusted_map(),hash,node);
-    // if (r == 0) {
-    //     ERR("WHAT1");
-    // }
+    int r = m_set_sad_entry(get_trusted_map(),hash,node);
+    if (r == 0) {
+        ERR("WHAT1");
+    }
 
-    // sad_entry_node *map_node = m_get_sad_entry(get_trusted_map(),hash);
-    // if (map_node == 0) {
-    //     ERR("MAP_NODE does not exist lul");
-    // } 
+    sad_entry_node *map_node = m_get_sad_entry(get_trusted_map(),hash);
+    if (map_node == 0) {
+        ERR("MAP_NODE does not exist lul");
+    } 
 
-    // map_node = m_get_sad_entry(get_trusted_map(),hash);
-    // if (map_node == 0) {
-    //     ERR("MAP_NODE does not exist lul2");
-    // } 
+    map_node = m_get_sad_entry(get_trusted_map(),hash);
+    if (map_node == 0) {
+        ERR("MAP_NODE does not exist lul2");
+    } 
 
-    // delete_config_msg *delete_msg = (delete_config_msg*) malloc(sizeof(delete_msg));
-    // strcpy(delete_msg->entry_id,hash);
+    delete_config_msg *delete_msg = (delete_config_msg*) malloc(sizeof(delete_msg));
+    strcpy(delete_msg->entry_id,hash);
 
 
 
     
 
-    // JSON_Object *delete_object = json_value_get_object(encode_delete_config_msg(delete_msg));
-    // op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result));
-    // handle_request_remove(delete_object,op_result);
-    // r = m_set_sad_entry(get_trusted_map(),hash,node);
-    // if (r == 0) {
-    //     ERR("WHAT2");
-    // }
+    JSON_Object *delete_object = json_value_get_object(encode_delete_config_msg(delete_msg));
+    op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result));
+    handle_request_remove(delete_object,op_result);
+    r = m_set_sad_entry(get_trusted_map(),hash,node);
+    if (r == 0) {
+        ERR("WHAT2");
+    }
 
 
 
 
 
 
-    // json_object_clear(schema);
-    // free(msg);
-    // free(config_message);
-    // free(out);
-    // free(alert_out);
+    json_object_clear(schema);
+    free(msg);
+    free(config_message);
+    free(out);
+    free(alert_out);
 
 }
 
