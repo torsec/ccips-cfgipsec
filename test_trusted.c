@@ -39,13 +39,8 @@ sigint_handler(int signum)
     exit_application = 1;
 }
 
-
-int 
-main(int argc, char **argv) {
-
-    printf("Connecting to the Enarx Trusted Application...\n");
-    connect_ta();
-
+static void 
+fill_test_sad(sad_entry_node *sad_node) {
     unsigned long long int req_id = 100;
 
     char *name = "ccc";
@@ -53,11 +48,6 @@ main(int argc, char **argv) {
     char remote_subnet[MAX_IP] = "11.0.0.0/24";
     char tunnel_local[MAX_IP] = "10.0.0.61";
     char tunnel_remote[MAX_IP] = "10.0.0.228";
-    int rc;
-   
-
-    struct sad_entry_node *sad_node = create_sad_node();
-    struct sad_entry_node *sad_node_get;
 
     // Setup the structure
     
@@ -92,7 +82,7 @@ main(int argc, char **argv) {
     sad_node->protocol_parameters = 50;
     // Algorithms configuration (Some random values)
     sad_node->integrity_alg = SADB_AALG_SHA1HMAC;
-// example input hex string
+    // example input hex string
     const char* hexstr = "af:6a:40:4c";
     // convert the hex string to a byte array
     char bytes[256];
@@ -133,9 +123,74 @@ main(int argc, char **argv) {
 	sad_node->lft_idle_hard= 60;
 	sad_node->lft_idle_soft= 10;
 	sad_node->lft_idle_current= 10;
+}
+
+static void
+fill_test_spd(spd_entry_node *spd_node) {
+    unsigned long long int req_id = 100;
+
+    char *name = "ccc";
+    char local_subnet[MAX_IP] = "10.0.0.0/24";
+    char remote_subnet[MAX_IP] = "11.0.0.0/24";
+    char tunnel_local[MAX_IP] = "10.0.0.61";
+    char tunnel_remote[MAX_IP] = "10.0.0.228";
+
+    // Setup the structure
+    
+    printf("Set up the spd node structure.\n");
+    // First setup the identification variables
+    strcpy(spd_node->name,name);
+    spd_node->index = 12;
+    spd_node->req_id = req_id;
+    // To verifify the use of this values
+    spd_node->ext_seq_num = false;
+    spd_node->seq_overflow = false;
+    spd_node->anti_replay_window = 0;
+
+    // Setup subnets
+    // Local subnet is the subnet we want to intercconnect
+    strcpy(spd_node->local_subnet,local_subnet);
+    // Remote subnet is the other subnet of the tunnel that we want to interconnect
+    strcpy(spd_node->remote_subnet,remote_subnet);
+    // Tunnel local is the ip of the ip used to create the tunnel
+    strcpy(spd_node->tunnel_local,tunnel_local);
+    // Tunnel remote is the ip exposed by the other end to stablish the tunnel
+    strcpy(spd_node->tunnel_remote,tunnel_remote);
+    // Protocol we are encapsulating 256 stands for any
+    spd_node->inner_protocol = 256;
+    // We are not using ports so we set them to 0
+    spd_node->srcport = 0;
+    spd_node->dstport = 0;
+    // IPsec mode, we are running this as a tunnel, we setup protocol_params as ESP
+    spd_node->ipsec_mode = IPSEC_MODE_TRANSPORT;
+    // spd_node->protocol_parameters = IPPROTO_ESP;
+    spd_node->protocol_parameters = 50;
+    // Algorithms configuration (Some random values)
+    spd_node->integrity_alg = SADB_AALG_SHA1HMAC;
+    spd_node->encryption_alg = SADB_EALG_3DESCBC;
+
+    // TODO understand what those values do
+    spd_node->bypass_dscp = false;
+    spd_node->ecn = false;
+    spd_node->tfc_pad = false;
+}
+
+int 
+main(int argc, char **argv) {
+
+    // TODO add test with spd 
+
+    printf("Connecting to the Enarx Trusted Application...\n");
+    connect_ta();
+
+    
+    int rc;
    
 
+    struct sad_entry_node *sad_node = create_sad_node();
+    struct sad_entry_node *sad_node_get;
 
+    
     sad_entry_node *new_sad_node_entry;	
     sad_entry_node *rec_sad = (sad_entry_node*) malloc(sizeof(sad_entry_node)); 
     /******************************************************************/
@@ -143,7 +198,6 @@ main(int argc, char **argv) {
     add_trusted_sad_entry(rec_sad,sad_node);
     pf_addsad(sad_node);
 
-    print_sad_node(sad_node);
     sad_entry_node *out_node = create_sad_node();
     printf("HERE\n");
     if(pf_getsad(out_node, rec_sad) !=0) {
