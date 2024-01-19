@@ -34,6 +34,12 @@ typedef struct sad_entry_msg {
     sad_entry_node *sad_entry;
 } sad_entry_msg;
 
+// spd_entry_msg Message used to share the new spd_entry to the trusted part
+
+/// @brief Structure used to share spd_entries between the trusted and the untrusted part
+typedef struct sad_entry_msg {
+    spd_entry_node *spd_entry;
+} spd_entry_msg;
 
 /// @brief Message used to delete a set of entry from the trusted part.
 typedef struct delete_config_msg {
@@ -56,7 +62,7 @@ typedef struct op_result_msg {
 } op_result_msg;
 
 
-
+// Should we add the spd version of this?
 typedef struct insert_entry_msg 
 {
     sad_entry_node *sad_entry;
@@ -86,6 +92,12 @@ char *encode_default_msg(int work_id, int code, JSON_Value *data);
 /// @return 
 int decode_sad_entry_msg(JSON_Object *schema, sad_entry_msg *msg);
 
+/// @brief decode a json object into a spd_entry_msg
+/// @param msg return message // TODO switch fields
+/// @param schema json schema passed
+/// @return 
+int decode_spd_entry_msg(JSON_Object *schema, spd_entry_msg *msg);
+
 /// @brief decode a json object into a delete_config_msg
 /// @param msg return message // TODO switch fields
 /// @param schema json schema passed
@@ -113,10 +125,16 @@ int decode_op_result_msg(JSON_Object *schema, op_result_msg *msg);
 /// @return JSON_VALUE to be sent
 JSON_Value *encode_sad_entry_msg(sad_entry_msg *msg);
 
+/// @brief encodes a spd_entry_msg into a JSON value
+/// @param msg spd_entry_msg to be encoded
+/// @return JSON_VALUE to be sent
+JSON_Value *encode_spd_entry_msg(spd_entry_msg *msg);
+
 /// @brief encodes a sad_edelete_config_msgntry_msg into a JSON value
 /// @param msg delete_config_msg to be encoded
 /// @return JSON_VALUE to be sent
 JSON_Value *encode_delete_config_msg(delete_config_msg *msg);
+
 
 /// @brief encodes a alert_state_msg into a JSON value
 /// @param msg alert_state_msg to be encoded
