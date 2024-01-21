@@ -236,6 +236,8 @@ $ sudo ./i2nsf_cfgipsec2 -v 5
 
 # Keystone
 
+## Docs
+
 Thesis:
 * [Bruno](https://webthesis.biblio.polito.it/secure/29457/1/tesi.pdf) (fix: ```$ sudo apt install python3-pip```)
 * [Ciravegna](https://webthesis.biblio.polito.it/secure/28633/1/tesi.pdf)
@@ -247,4 +249,33 @@ Fixes:
 
 ```
 $ sudo apt install quilt
+```
+
+## Build Keystone applications
+
+1. After having built **`keystone`**, execute these commands starting from `ccips-cfgipsec` directory:
+
+```
+$ mkdir build_k
+$ cd build_k
+$ cmake -DKEYSTONE=ON ..
+$ make
+$ make keystone-ccips-package
+```
+
+2. Copy the file `build_k/keystone-ccips.ke` into `<keystone_build_dir>/overlay/root/`
+
+3. Execute this command starting from `<keystone_build_dir>` directory:
+
+```
+$ make image
+```
+
+## Run Keystone applications
+
+Execute these commands starting from `<keystone_build_dir>` directory:
+
+```
+$ ./scripts/run-qemu.sh
+# ./keystone-ccips.ke
 ```
