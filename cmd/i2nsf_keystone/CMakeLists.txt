@@ -20,6 +20,8 @@ endif()
 
 use_riscv_toolchain(${BITS})
 
+set(SRC_DIR cmd/i2nsf_keystone)
+
 # export include directory
 include_directories(${KEYSTONE_SDK_DIR}/include)
 
@@ -34,9 +36,9 @@ find_program(MAKESELF makeself)
 
 # set application values
 set(eapp_bin keystone-ccips)
-set(eapp_src cmd/i2nsf_keystone/eapp/eapp_native.c)
+set(eapp_src ${SRC_DIR}/eapp/eapp_native.c)
 set(host_bin keystone-ccips-runner)
-set(host_src cmd/i2nsf_keystone/host/host_native.cpp)
+set(host_src ${SRC_DIR}/host/host_native.cpp)
 set(package_name "keystone-ccips.ke")
 set(package_script "./keystone-ccips-runner keystone-ccips eyrie-rt loader.bin")
 
@@ -48,8 +50,8 @@ endif()
 
 # eapp
 
-add_executable(${eapp_bin} ${eapp_src})
-target_link_libraries(${eapp_bin} "-nostdlib -static" ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE})
+add_executable(${eapp_bin} ${eapp_src} ${SRC_DIR}/eapp/printf.h ${SRC_DIR}/eapp/printf.c)
+target_link_libraries(${eapp_bin} "-nostdlib -static -T ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_DIR}/app.lds" ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE})
 
 target_include_directories(${eapp_bin}
   PUBLIC ${KEYSTONE_SDK_DIR}/include/app
