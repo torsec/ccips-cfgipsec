@@ -43,6 +43,7 @@
 #include "log.h"
 #include "constants.h"
 #include "sad_entry.h"
+#include "spd_entry.h"
 
 
 char * get_ip(char * ip_mask);
@@ -67,6 +68,7 @@ unsigned char* hexstr_to_char(char* hexstr);
 int checkIKE_connection();
 void remove_colon(char* out, char* str) ;
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j);
+//int compare_spd_entries(spd_entry_node *i, spd_entry_node *j);
 char* stringToBytes(char* str);
 
 // Mngmt of local sad-entries
@@ -100,8 +102,8 @@ void show_sad_list(sad_entry_node* main_sad_entry);
 
 // TODO: Do the same thing but with the spd_entries.
 // Mngmt of local spd-entries
-// spd_entry_node *get_spd_node(spd_entry_node* main_spd_entry, char *spd_name);
-// spd_entry_node *get_spd_node_by_spi(spd_entry_node* main_spd_entry, unsigned long int spi);
-// int del_spd_node(spd_entry_node* main_spd_entry, unsigned long int spi);
-// int add_spd_node(spd_entry_node* main_spd_entry, spd_entry_node* new_spd);
+spd_entry_node *get_spd_node(spd_entry_node* main_spd_entry, char *spd_name);
+spd_entry_node *get_spd_node_by_spi(spd_entry_node* main_spd_entry, unsigned long int spi);
+int del_spd_node(spd_entry_node* main_spd_entry, unsigned long int spi);
+int add_spd_node(spd_entry_node* main_spd_entry, spd_entry_node* new_spd);
 

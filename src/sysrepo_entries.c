@@ -20,7 +20,7 @@ void add_spd_node(spd_entry_node* node_entry){
 }
 
 // for case 1
-void spd_list(){
+void show_spd_list(){
 	
 	spd_entry_node *node = init_spd_node;
 	INFO("NAME --- INDEX --- REQ_ID --- SRC --- DST --- DIRECTION --- PROTOCOL --- MODE");
@@ -357,7 +357,7 @@ int addSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 	}
     
     INFO("SPD entry added: REQID %d",spd_node->req_id);
-    // show_spd_list();
+    show_spd_list();
 	
 
     return SR_ERR_OK;
@@ -412,7 +412,7 @@ int removeSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
             ERR("Remove SPD, policy not found: %s",sr_strerror(rc));
         }		
 	}
-    // show_spd_list();
+    show_spd_list();
 	
 	return rc;
 

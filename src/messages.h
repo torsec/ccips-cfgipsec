@@ -8,6 +8,7 @@
 
 
 
+#define ERROR_MSG             -1
 #define NEW_CONFIG_MSG        1 
 #define DELETE_CONFIG_MSG     2
 #define ALERT_STATE_MSG       3
@@ -16,7 +17,15 @@
 #define INSERT_ENTRY_MSG      6
 #define RETURN_entry_MSG      7 
 #define REQUEST_VERIFY_MSG    8
-#define ERROR_MSG             -1
+
+#define NEW_SPD_CONFIG_MSG      11 
+#define DELETE_SPD_CONFIG_MSG   12
+#define ALERT_SPD_STATE_MSG     13
+#define OP_SPD_RESULT_MSG       14
+//#define REQUEST_SPD_entry_MSG       15 For the moment not used.
+#define INSERT_SPD_ENTRY_MSG    16
+#define RETURN_SPD_entry_MSG    17 
+#define REQUEST_SPD_VERIFY_MSG  18
 
 
 #define HASH_MAP_SIZE         33

@@ -398,6 +398,37 @@ int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 	return 0;
 }
 
+/*int compare_spd_entries(spd_entry_node *i, spd_entry_node *j) {
+	// verify enc key
+	TRACE("I_ENC_KEY: %s \t J_ENC_KEY: %s",stringToBytes(i->encryption_key),stringToBytes(j->encryption_key));
+    if (strncmp(i->encryption_key,j->encryption_key,MAX_KEY) != 0) {
+		ERR("Entries ENC KEYS differ");
+		return 1;
+    }
+	// verify int key
+	TRACE("I_INT_KEY: %s \t J_INT_KEY: %s",stringToBytes(i->integrity_key),stringToBytes(j->integrity_key));
+    if (strncmp(i->integrity_key,j->integrity_key,MAX_KEY) != 0) {
+		ERR("Entries AUTH KEYS differ");
+		return 1;
+    }
+	// Check that they have the same SPI
+	if (i->spi != j->spi) {
+		ERR("Entries SPI differ");
+		return 1;
+	}
+	// Check that they have they are using the same mode
+	if (i->ipsec_mode != j->ipsec_mode) {
+		ERR("Entries MODE differ");
+		return 1;
+	}
+	// TODO add more verification steps
+
+	// verify iv key for the moment ommit this
+    // if (strncmp(i->encryption_iv,j->encryption_iv,MAX_KEY) != 0) {
+    //         return 1;
+    // }
+	return 0;
+}*/
 
 
 // Mngmt of local sad-entries
