@@ -34,6 +34,57 @@ set(KEYSTONE_LIB_EAPP ${KEYSTONE_SDK_DIR}/lib/libkeystone-eapp.a)
 # find program "makeself"
 find_program(MAKESELF makeself)
 
+# check the supported platform
+if(NOT UNIX)
+    message(FATAL_ERROR "Only *nix like systems are supported.")
+endif()
+
+set(SRC_DIRECTORY "${PROJECT_SOURCE_DIR}/src")
+# Include directories
+include_directories("${SRC_DIRECTORY}")
+
+add_library(i2nsf STATIC 
+        "${SRC_DIRECTORY}/sad_entry.c"
+        "${SRC_DIRECTORY}/sad_entry.h"
+        "${SRC_DIRECTORY}/spd_entry.c"
+        "${SRC_DIRECTORY}/spd_entry.h"
+        "${SRC_DIRECTORY}/utils.c" 
+        "${SRC_DIRECTORY}/utils.h" 
+        "${SRC_DIRECTORY}/messages.c"
+        "${SRC_DIRECTORY}/messages.h"
+        "${SRC_DIRECTORY}/trust_handler.c"
+        "${SRC_DIRECTORY}/trust_handler.h"
+        "${SRC_DIRECTORY}/log.c"
+        "${SRC_DIRECTORY}/log.h"
+    )
+set_target_properties(i2nsf PROPERTIES LINK_FLAGS "-nostdlib")
+
+set(LIB_I2NSF ${PROJECT_SOURCE_DIR}/libs/libi2nsf.a)
+
+# Add parson
+add_library(parson STATIC "${PROJECT_SOURCE_DIR}/parson/parson.c")
+include_directories("${PROJECT_SOURCE_DIR}/parson")
+include_directories("${SRC_DIRECTORY}")
+
+install(TARGETS i2nsf
+        EXPORT i2nsf-config
+        ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/libs
+        LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/libs)
+install(TARGETS parson
+        ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/libs
+        LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/libs)
+install(FILES 
+"${SRC_DIRECTORY}/trust_handler.h"
+"${SRC_DIRECTORY}/sad_entry.h"
+"${SRC_DIRECTORY}/spd_entry.h"
+"${SRC_DIRECTORY}/utils.h" 
+"${SRC_DIRECTORY}/messages.h"
+"${SRC_DIRECTORY}/log.h"
+"${PROJECT_SOURCE_DIR}/parson/parson.h"
+"${SRC_DIRECTORY}/constants.h"
+DESTINATION ${PROJECT_SOURCE_DIR}/libs)
+set(LIB_PARSON ${PROJECT_SOURCE_DIR}/libs/libparson.a)
+
 # set application values
 set(eapp_bin keystone-ccips)
 set(eapp_src ${SRC_DIR}/eapp/eapp_native.c)
@@ -43,15 +94,15 @@ set(package_name "keystone-ccips.ke")
 set(package_script "./keystone-ccips-runner keystone-ccips eyrie-rt loader.bin")
 
 if(RISCV32)
-  set(eyrie_plugins "rv32 freemem")
+  set(eyrie_plugins "freemem io_syscall linux_syscall net_syscall env_setup rv32")
 else()
-  set(eyrie_plugins "freemem")
+  set(eyrie_plugins "freemem io_syscall linux_syscall net_syscall env_setup")
 endif()
 
 # eapp
 
 add_executable(${eapp_bin} ${eapp_src} ${SRC_DIR}/eapp/printf.h ${SRC_DIR}/eapp/printf.c)
-target_link_libraries(${eapp_bin} "-nostdlib -static -T ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_DIR}/app.lds" ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE})
+target_link_libraries(${eapp_bin} "-nostdlib -static -T ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_DIR}/app.lds" ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE} ${LIB_PARSON} ${LIB_I2NSF})
 
 target_include_directories(${eapp_bin}
   PUBLIC ${KEYSTONE_SDK_DIR}/include/app
