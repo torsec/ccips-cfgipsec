@@ -1,12 +1,45 @@
 #include "edge/edge_call.h"
 #include "host/keystone.h"
 #include "net.h"
+#include <unistd.h>
 #include <stdio.h>
 
 #define NET_BUFFER_SIZE 16896
 
 void
-net_send_wrapper(void* buffer) {
+close_wrapper(void* buffer) {
+  /* Parse and validate the incoming call data */
+  struct edge_call* edge_call = (struct edge_call*)buffer;
+  uintptr_t call_args;
+  size_t arg_len;
+  int ret_val;
+  size_t ret_len;
+  if (edge_call_args_ptr(edge_call, &call_args, &arg_len) != 0) {
+    edge_call->return_data.call_status = CALL_STATUS_BAD_OFFSET;
+    return;
+  }
+
+  int fd = *((int*) call_args);
+  /* Pass the arguments from the eapp to the exported ocall function */
+  ret_val = close(fd);
+
+  /* Setup return data from the ocall function */
+  uintptr_t data_section = edge_call_data_ptr();
+  ret_len = sizeof(int);
+  memcpy((void*)data_section, &ret_val, ret_len);
+  if (edge_call_setup_ret(
+          edge_call, (void*)data_section, ret_len)) {
+    edge_call->return_data.call_status = CALL_STATUS_BAD_PTR;
+  } else {
+    edge_call->return_data.call_status = CALL_STATUS_OK;
+  }
+
+  /* This will now eventually return control to the enclave */
+  return;
+}
+
+void
+send_wrapper(void* buffer) {
   /* Parse and validate the incoming call data */
   struct edge_call* edge_call = (struct edge_call*)buffer;
   uintptr_t call_args;
@@ -21,7 +54,7 @@ net_send_wrapper(void* buffer) {
   net_data_t* data_to_send = (net_data_t *) call_args;
   data_to_send->buf = (unsigned char *) call_args + sizeof(net_data_t);
   /* Pass the arguments from the eapp to the exported ocall function */
-  ret_val = write(data_to_send->fd, data_to_send->buf, data_to_send->len);
+  ret_val = send(data_to_send->sockfd, data_to_send->buf, data_to_send->len, data_to_send->flags);
 
   /* Setup return data from the ocall function */
   uintptr_t data_section = edge_call_data_ptr();
@@ -39,7 +72,7 @@ net_send_wrapper(void* buffer) {
 }
 
 void
-net_recv_wrapper(void* buffer) {
+recv_wrapper(void* buffer) {
   /* Parse and validate the incoming call data */
   struct edge_call* edge_call = (struct edge_call*)buffer;
   uintptr_t call_args;
@@ -51,13 +84,13 @@ net_recv_wrapper(void* buffer) {
     return;
   }
 
-  unsigned char recv_buffer[NET_BUFFER_SIZE+sizeof(int)] = {0};
+  unsigned char recv_buffer[NET_BUFFER_SIZE] = {0};
   net_data_t* data_to_recv = (net_data_t*) call_args;
 
   if(data_to_recv->len > NET_BUFFER_SIZE)
     ret_val = -1;
   else {
-    ret_val = read(data_to_recv->fd, recv_buffer, data_to_recv->len);
+    ret_val = recv(data_to_recv->sockfd, recv_buffer, data_to_recv->len, data_to_recv->flags);
   }
 
   /* Setup return data from the ocall function */
@@ -76,6 +109,38 @@ net_recv_wrapper(void* buffer) {
   }
   
   memcpy((void*)data_section, &ret_data, sizeof(net_data_t));
+  if (edge_call_setup_ret(
+          edge_call, (void*)data_section, ret_len)) {
+    edge_call->return_data.call_status = CALL_STATUS_BAD_PTR;
+  } else {
+    edge_call->return_data.call_status = CALL_STATUS_OK;
+  }
+
+  /* This will now eventually return control to the enclave */
+  return;
+}
+
+void
+socket_wrapper(void* buffer) {
+  /* Parse and validate the incoming call data */
+  struct edge_call* edge_call = (struct edge_call*)buffer;
+  uintptr_t call_args;
+  size_t arg_len;
+  int ret_val;
+  size_t ret_len;
+  if (edge_call_args_ptr(edge_call, &call_args, &arg_len) != 0) {
+    edge_call->return_data.call_status = CALL_STATUS_BAD_OFFSET;
+    return;
+  }
+
+  net_socket_t* socket_data = (net_socket_t*) call_args;
+  ret_val = socket(socket_data->domain, socket_data->type, socket_data->protocol);
+
+  /* Setup return data from the ocall function */
+  uintptr_t data_section = edge_call_data_ptr();
+  ret_len = sizeof(int);
+
+  memcpy((void*)data_section, &ret_val, ret_len);
   if (edge_call_setup_ret(
           edge_call, (void*)data_section, ret_len)) {
     edge_call->return_data.call_status = CALL_STATUS_BAD_PTR;

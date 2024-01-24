@@ -3,44 +3,68 @@
 #include <string.h>
 #include "eapp/printf.h"
 
-#define OCALL_NET_CONNECT 1
-#define OCALL_NET_SEND    2
-#define OCALL_NET_RECV    3
-#define OCALL_NET_FREE    4
-#define OCALL_NET_BIND    5
-#define OCALL_NET_ACCEPT  6
+#define OCALL_CLOSE       1
+#define OCALL_SEND        2
+#define OCALL_RECV        3
+#define OCALL_SOCKET      4
+
+#define OCALL_NET_FREE    5
+#define OCALL_NET_BIND    6
+#define OCALL_NET_ACCEPT  7
 
 #define NET_BUFFER_SIZE 16896
 
-int custom_net_send(int fd, const unsigned char *buf, size_t len) {
+int custom_close(int fd) {
     int ret, retval;
+    ret = ocall(OCALL_CLOSE, &fd, sizeof(int), &retval, sizeof(int));
+    return ret|retval;
+}
+
+int custom_send(int sockfd, const void *buf, size_t len, int flags) {
+    int ret; 
+    size_t retval=0;
     unsigned  char tmp_buf[NET_BUFFER_SIZE];
     if(len > NET_BUFFER_SIZE - sizeof(net_data_t))
         return -1;
     net_data_t data_to_send;
-    data_to_send
-    *fd = ((mbedtls_net_context *) ctx)->fd;
-    memcpy(tmp_buf+sizeof(int), buf, len);
-    ret = ocall(OCALL_NET_SEND, (unsigned char *)tmp_buf, len+sizeof(int), &retval, sizeof(int));
+    data_to_send.sockfd = sockfd;
+    data_to_send.buf = tmp_buf + sizeof(net_data_t);
+    data_to_send.len = len;
+    data_to_send.flags = flags;
+    memcpy(tmp_buf+sizeof(net_data_t), buf, len);
+    memcpy(tmp_buf, &data_to_send, sizeof(net_data_t));
+    ret = ocall(OCALL_SEND, (void*) tmp_buf, len+sizeof(net_data_t), &retval, sizeof(size_t));
     return ret|retval;
 }
 
-int custom_net_recv(void *ctx, unsigned char *buf, size_t len) {
+int custom_recv(int sockfd, const void *buf, size_t len, int flags) {
     int ret;
-    unsigned char tmp_buf[16896+sizeof(int)];
-    int *fd = (int*) tmp_buf;
-    *fd = ((mbedtls_net_context *) ctx)->fd;
-    ret = ocall(OCALL_NET_RECV, tmp_buf, len, tmp_buf, len + sizeof(int));
-    #if PERFORMANCE_TEST
-    custom_printf("\n[OCALL_NET_RECV] ...Receiving\n");
-    t_end = get_time_inline();
-    t_diff = t_end - t_start;
-    custom_printf("\nTicks between request and response: %lu\n", t_diff);
-    #endif
-    // custom_printf("ocall returned %d\n", ret);
-    int retval = * ((int*)tmp_buf);
-    memcpy(buf, tmp_buf+sizeof(int), len);
-    // custom_printf("Asked for %lu bytes, received %d: %s\n", len, retval, tmp_buf+sizeof(int));
+    unsigned char tmp_buf[NET_BUFFER_SIZE];
+    if(len > NET_BUFFER_SIZE - sizeof(net_data_t))
+        return -1;
+    net_data_t data_to_send;
+    data_to_send.sockfd = sockfd;
+    data_to_send.buf = NULL;
+    data_to_send.len = len;
+    data_to_send.flags = flags;
+    memcpy(tmp_buf, &data_to_send, sizeof(net_data_t));
+    ret = ocall(OCALL_RECV, (void*) tmp_buf, sizeof(net_data_t), (void*) tmp_buf, len+sizeof(net_data_t));
+    net_data_t* recv_data = ((net_data_t*) tmp_buf);
+    recv_data->buf = tmp_buf+sizeof(net_data_t);
+    if((!ret) && (recv_data->len > 0))
+        memcpy(buf, recv_data->buf, recv_data->len);
+    return ret|recv_data->len;
+}
+
+int custom_socket(int domain, int type, int protocol) {
+    int ret, retval;
+    unsigned char tmp_buf[sizeof(net_socket_t)];
+    net_socket_t data;
+    data.domain = domain;
+    data.type = type;
+    data.protocol = protocol;
+    memcpy(tmp_buf, &data, sizeof(net_socket_t));
+    ret = ocall(OCALL_SEND, (void*) tmp_buf, sizeof(net_socket_t), &retval, sizeof(int));
     return ret|retval;
 }
 
