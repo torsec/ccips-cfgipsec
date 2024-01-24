@@ -2,17 +2,26 @@
 #define _EAPP_NET_H_
 
 typedef struct {
-    int fd;
+    int sockfd;
     unsigned char *buf;
     size_t len;
+    int flags;
 } net_data_t;
 
 typedef struct {
-    int fd;
-} net_connect_t;
+    int sockfd;
+} net_sockfd_t;
 
-int custom_net_send(void *ctx, const unsigned char *buf, size_t len);
-int custom_net_recv(void *ctx, unsigned char *buf, size_t len);
+typedef struct {
+    int domain;
+    int type;
+    int protocol;
+} net_socket_t;
+
+int custom_close(int fd);
+int custom_send(int sockfd, const void *buf, size_t len, int flags);
+int custom_recv(int sockfd, const void *buf, size_t len, int flags);
+int custom_socket(int domain, int type, int protocol);
 
 int custom_net_connect(mbedtls_net_context *ctx, const char *host, const char *port, int proto);
 void custom_net_free(mbedtls_net_context *ctx);
