@@ -93,8 +93,6 @@ int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name);
 /// @param sad_name new sad_entry
 /// @return 
 int add_sad_node(sad_entry_node** main_sad_entry, sad_entry_node* new_sad);
-
-
 /// @brief Prints current values of the local sad_entry database
 /// @param main_sad_entry local sad_entry database
 void show_sad_list(sad_entry_node* main_sad_entry);
@@ -102,8 +100,20 @@ void show_sad_list(sad_entry_node* main_sad_entry);
 
 // TODO: Do the same thing but with the spd_entries.
 // Mngmt of local spd-entries
-spd_entry_node *get_spd_node(spd_entry_node* main_spd_entry, char *spd_name);
-spd_entry_node *get_spd_node_by_spi(spd_entry_node* main_spd_entry, unsigned long int spi);
-int del_spd_node(spd_entry_node* main_spd_entry, unsigned long int spi);
-int add_spd_node(spd_entry_node* main_spd_entry, spd_entry_node* new_spd);
+
+/// @brief Get spd_entry from the local database 
+/// @param main_spd_entry local spd_entry database
+/// @param spd_name spd_entry name identifier
+/// @return local spd_entry (if NULL it does not exists)
+// spd_entry_node *get_spd_node(spd_entry_node** main_spd_entry, char *spd_name);
+/// @brief Deletes a spd_entry (identified by their name) from the local_database
+/// @param main_spd_entry Local spd_entry database
+/// @param spd_name Name of the entry
+/// @return 
+// int del_spd_node(spd_entry_node** main_spd_entry, unsigned long int spi);
+/// @brief Add a spd_entry into the local database 
+/// @param main_spd_entry local spd_entry database
+/// @param new_spd new spd_entry
+/// @return 
+// int add_spd_node(spd_entry_node** main_spd_entry, spd_entry_node* new_spd);
 

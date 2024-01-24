@@ -20,7 +20,6 @@
 
 
 // TODO move this to another module so it can be used without importing the sysrepo_entries.h
-spd_entry_node *get_spd_node(char *name);
 spd_entry_node *get_spd_node_by_index(int policy_index);
 
 void print_current_config(sr_session_ctx_t *session, const char *module_name);

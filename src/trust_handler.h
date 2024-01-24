@@ -42,7 +42,7 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out);
 /// @param data 
 /// @param out 
 /// @return 
-int handle_request_remove_SPD(JSON_Object *data, op_result_msg *out)
+int handle_request_remove_SPD(JSON_Object *data, op_result_msg *out);
 
 /// @brief function that handles an incomming message and takes the necessary actions
 /// @param data 
