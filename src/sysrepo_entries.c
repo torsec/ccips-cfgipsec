@@ -6,95 +6,6 @@ spd_entry_node* init_spd_node = NULL;
 
 pthread_mutex_t sad_entries_locker =PTHREAD_MUTEX_INITIALIZER; 
 
-// FROM spd_entry.c
-void add_spd_node(spd_entry_node* node_entry){
-	if (init_spd_node == NULL) {
-		init_spd_node=node_entry;
-		node_entry->next=NULL;
-	} else {
-		spd_entry_node *node = init_spd_node;
-		while(node->next != NULL)
-			node=node->next;
-		node->next=node_entry;
-	}
-}
-
-// for case 1
-void show_spd_list(){
-	
-	spd_entry_node *node = init_spd_node;
-	INFO("NAME --- INDEX --- REQ_ID --- SRC --- DST --- DIRECTION --- PROTOCOL --- MODE");
-	while (node != NULL){
-		INFO("%s --- %d --- %d --- %s --- %s --- %d --- %d ", node->name, node->index, node->req_id, node->local_subnet, node->remote_subnet, node->policy_dir,
-			node->ipsec_mode);
-		node=node->next;
-	}
-}
-
-spd_entry_node *get_spd_node(char *name){
-
-    spd_entry_node *node = init_spd_node;
-	while (node != NULL) {
-		if (!strcmp(node->name, name)) {
-			return node;
-		} else {
-			node = node->next;
-		}
-	}
-	
-	return NULL;
-}
-
-spd_entry_node* get_spd_node_by_index(int policy_index){
-
-    spd_entry_node *node = init_spd_node;
-	while (node != NULL) {
-		if (node->index == policy_index) {
-			return node;
-		} else {
-			node = node->next;
-		}
-	}
-	
-	return NULL;
-}
-
-
-
-void free_spd_node(spd_entry_node * n) {
-	
-    if (n != NULL) {  
-        free (n);
-    } 
-}
-
-int del_spd_node(char *name) {
-
-    spd_entry_node *node = init_spd_node;
-    if (node != NULL) {
-		
-        spd_entry_node *prev_node = NULL;
-        prev_node = create_spd_node();
-
-        while (strcmp(name,node->name)) {
-            prev_node = node;
-            node = node->next;
-        }
-        if (node == init_spd_node){
-            init_spd_node = init_spd_node->next;
-            free_spd_node(prev_node);
-        }
-        else if (!strcmp(name,node->name)) {
-            prev_node->next = node->next;
-            free_spd_node(node);
-        }
-		
-    } else return SR_ERR_OPERATION_FAILED;
-
-    return SR_ERR_OK;
-}
-
-
 int readSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,spd_entry_node *spd_node, int case_value) {
 
     int rc = SR_ERR_OK;
@@ -303,15 +214,13 @@ int readSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,spd_e
     return rc;
 }
 
-
-
 int addSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *spd_name, int case_value) {
 
 	int rc = SR_ERR_OK;
 
 	DBG("**ADD/MOD SPD %s with name: %s",xpath, spd_name);
 
-	if (get_spd_node(spd_name) != NULL) {
+	if (get_spd_node(&init_spd_node, spd_name) != NULL) {
 		DBG("ADD SPD entry %s, already exists!", spd_name);
 		return rc;
 	}
@@ -324,7 +233,7 @@ int addSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 		return rc;
 	}
 
-	add_spd_node(spd_node);
+	add_spd_node(&init_spd_node, spd_node);
  
     //    return SR_ERR_OK;
 	//} else {
@@ -357,7 +266,7 @@ int addSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 	}
     
     INFO("SPD entry added: REQID %d",spd_node->req_id);
-    show_spd_list();
+    show_spd_list(init_spd_node);
 	
 
     return SR_ERR_OK;
@@ -373,7 +282,7 @@ int removeSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
 	
 		DBG("Remove SPD entry for case 2 %s:", spd_name);
 
-        spd_entry_node *node = get_spd_node(spd_name);
+        spd_entry_node *node = get_spd_node(&init_spd_node, spd_name);
 		
         if (node != NULL) {
             rc = pf_delpolicy(node);
@@ -401,7 +310,7 @@ int removeSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
             if (SR_ERR_OK != rc){
                 ERR("Remove SPD in pfkeyv2_delpolicy: %s", sr_strerror(rc));
             } else {
-                rc = del_spd_node(spd_name);
+                rc = del_spd_node(&init_spd_node, spd_name);
                 if (rc != SR_ERR_OK) {
                     ERR("Remove SPD entry in del_spd_node: %s", sr_strerror(rc));
                 } else rc = SR_ERR_OK;
@@ -412,7 +321,7 @@ int removeSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
             ERR("Remove SPD, policy not found: %s",sr_strerror(rc));
         }		
 	}
-    show_spd_list();
+    show_spd_list(init_spd_node);
 	
 	return rc;
 
@@ -492,12 +401,6 @@ void verify_sad_nodes() {
 	pthread_mutex_unlock(&sad_entries_locker);
 }
 #endif
-
-void free_sad_node(sad_entry_node * n) {
-    if (n != NULL) {  
-        free (n);
-    } 
-}
 
 int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_entry_node *sad_node) {
     int rc = SR_ERR_OK;
@@ -810,8 +713,6 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 
 }
 
-
-
 int send_acquire_notification(sr_session_ctx_t *session, int policy_index){
 
     int rc = SR_ERR_OK;
@@ -841,7 +742,7 @@ int send_acquire_notification(sr_session_ctx_t *session, int policy_index){
     }
 	
 	
-	spd_entry_node* spd_node = get_spd_node_by_index(policy_index);
+	spd_entry_node* spd_node = get_spd_node_by_index(&init_spd_node, policy_index);
     if (spd_node != NULL) {
 		
 	    if (!lyd_new_path(notif, NULL, "/ietf-i2nsf-ikeless:sadb-acquire/ipsec-policy-name", spd_node->name, 0, 0)) {

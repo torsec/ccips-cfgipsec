@@ -105,15 +105,23 @@ void show_sad_list(sad_entry_node* main_sad_entry);
 /// @param main_spd_entry local spd_entry database
 /// @param spd_name spd_entry name identifier
 /// @return local spd_entry (if NULL it does not exists)
-// spd_entry_node *get_spd_node(spd_entry_node** main_spd_entry, char *spd_name);
+spd_entry_node *get_spd_node(spd_entry_node** main_spd_entry, char *spd_name);
+/// @brief Returns a spd_entry if the index exists in the local database
+/// @param main_spd_entry local spd_entry database
+/// @param policy_index index of the entry to be found
+/// @return local spd_entry (if NULL it does not exists)
+spd_entry_node* get_spd_node_by_index(spd_entry_node** main_spd_entry, int policy_index);
 /// @brief Deletes a spd_entry (identified by their name) from the local_database
 /// @param main_spd_entry Local spd_entry database
 /// @param spd_name Name of the entry
 /// @return 
-// int del_spd_node(spd_entry_node** main_spd_entry, unsigned long int spi);
+int del_spd_node(spd_entry_node** main_spd_entry, char *spd_name);
 /// @brief Add a spd_entry into the local database 
 /// @param main_spd_entry local spd_entry database
 /// @param new_spd new spd_entry
 /// @return 
-// int add_spd_node(spd_entry_node** main_spd_entry, spd_entry_node* new_spd);
+int add_spd_node(spd_entry_node** main_spd_entry, spd_entry_node* new_spd);
+/// @brief Prints current values of the local spd_entry database
+/// @param main_spd_entry local spd_entry database
+void show_spd_list(spd_entry_node* main_spd_entry);
 

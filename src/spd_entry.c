@@ -1,6 +1,6 @@
 
 #include "spd_entry.h"
-
+#include <string.h>
 
 #define MAX_PATH  200
 #define MAX_IP 40
@@ -38,13 +38,30 @@ spd_entry_node* create_spd_node(){
     return spd_node;
 }
 
+void free_spd_node(spd_entry_node * n) {
+	
+    if (n != NULL) {
+        if(n->name != NULL)
+            free(n->name);
+        if(n->local_subnet != NULL)
+            free(n->local_subnet);
+        if(n->remote_subnet != NULL)
+            free(n->remote_subnet);
+        if(n->tunnel_local != NULL)
+            free(n->tunnel_local);
+        if(n->tunnel_remote != NULL)
+            free(n->tunnel_remote);  
+        free (n);
+    } 
+}
+
 #ifdef Trusted
 
 // https://github.com/kgabis/parson
 JSON_Value *serialize_spd_node(spd_entry_node *spd_node) {
     JSON_Value *root_value = json_value_init_object();
     JSON_Object *root_object = 	json_value_get_object(root_value);
-    char *serialized_string = NULL;
+    // char *serialized_string = NULL;
 
     // Initial vals
     json_object_set_string(root_object, "name", spd_node->name);

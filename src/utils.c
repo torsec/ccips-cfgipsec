@@ -313,6 +313,7 @@ sock_ntop(const struct sockaddr *sa, socklen_t salen) {
 	}
 /* end sock_ntop */
 	}
+	return NULL;
 }
 
 // function to remove all occurrences of a character from a string
@@ -472,7 +473,7 @@ int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name) {
 		} else {
 			*main_sad_entry = (*main_sad_entry)->next;
 		}
-		free(nh);
+		free_sad_node(nh);
 	} else {
 		sad_entry_node *nc = *main_sad_entry;
 		sad_entry_node *np;
@@ -491,7 +492,7 @@ int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name) {
 		} else {
 			np->next = nc->next;
 		}
-		free(nc);
+		free_sad_node(nc);
 	}
 	return 0;
 }
@@ -519,4 +520,93 @@ void show_sad_list(sad_entry_node* main_sad_entry) {
         INFO("%s --- %d --- %s --- %s --- %d --- ", node->name, node->spi, node->local_subnet, node->remote_subnet, node->ipsec_mode);
         node=node->next;
     }
+}
+
+spd_entry_node *get_spd_node(spd_entry_node** main_spd_entry, char *spd_name) {
+    spd_entry_node *node = *main_spd_entry;
+	while (node != NULL) {
+		if (!strcmp(node->name, spd_name)) {
+			return node;
+		} else {
+			node = node->next;
+		}
+	}
+	return NULL;
+}
+
+spd_entry_node* get_spd_node_by_index(spd_entry_node** main_spd_entry, int policy_index) {
+    spd_entry_node *node = *main_spd_entry;
+	while (node != NULL) {
+		if (node->index == policy_index) {
+			return node;
+		} else {
+			node = node->next;
+		}
+	}
+	return NULL;
+}
+
+int del_spd_node(spd_entry_node** main_spd_entry, char *spd_name) {
+	// Do we have initialized the spd_node
+	if (main_spd_entry == NULL) {
+		ERR("There is no SPD_ENTRIES stored");
+		return 1;
+	}
+	// Check that the initial spd_node is not the one we are looking for
+	if(strcmp(spd_name,(*main_spd_entry)->name) == 0) {
+		// This are some helpers variables
+		spd_entry_node *nh = *main_spd_entry;
+		// This is redundant, but just to clarify how this should work
+		if(nh -> next == NULL) {
+			*main_spd_entry = NULL;
+		} else {
+			*main_spd_entry = (*main_spd_entry)->next;
+		}
+		free_spd_node(nh);
+	} else {
+		spd_entry_node *nc = *main_spd_entry;
+		spd_entry_node *np;
+		while (strcmp(spd_name,nc->name) != 0) {
+				np = nc;
+				nc = nc->next;
+				if (nc == NULL) {
+					ERR("There is no SPD_ENTRIES stored");
+					return 1;
+				} 
+		}
+		// Nc is the current node and we want to delete it
+		// Np in this case is the previous node
+		if (nc == NULL) {
+			np->next = NULL;
+		} else {
+			np->next = nc->next;
+		}
+		free_spd_node(nc);
+	}
+	return 0;
+}
+
+int add_spd_node(spd_entry_node** main_spd_entry, spd_entry_node* new_spd) {
+	if (*main_spd_entry == NULL) {
+		// Do a copy
+		*main_spd_entry=new_spd;
+		new_spd->next=NULL;
+	} else {
+		spd_entry_node *node = *main_spd_entry;
+		while(node->next != NULL)
+			node=node->next;
+		node->next=new_spd;
+	}
+	return 0;
+}
+
+// for case 1
+void show_spd_list(spd_entry_node* main_spd_entry) {
+	spd_entry_node *node = main_spd_entry;
+	INFO("NAME --- INDEX --- REQ_ID --- SRC --- DST --- DIRECTION --- PROTOCOL --- MODE");
+	while (node != NULL){
+		INFO("%s --- %d --- %d --- %s --- %s --- %d --- %d ", node->name, node->index, node->req_id, node->local_subnet, node->remote_subnet, node->policy_dir,
+			node->ipsec_mode);
+		node=node->next;
+	}
 }

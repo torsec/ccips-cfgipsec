@@ -51,6 +51,28 @@ sad_entry_node* create_sad_node(){
 
 }
 
+void free_sad_node(sad_entry_node * n) {
+    if (n != NULL) {
+		if(n->name != NULL)
+            free(n->name);
+        if(n->local_subnet != NULL)
+            free(n->local_subnet);
+        if(n->remote_subnet != NULL)
+            free(n->remote_subnet);
+        if(n->tunnel_local != NULL)
+            free(n->tunnel_local);
+        if(n->tunnel_remote != NULL)
+            free(n->tunnel_remote);
+		if(n->encryption_key != NULL)
+			free(n->encryption_key);
+		if(n->integrity_key != NULL)
+			free(n->integrity_key);
+		if(n->encryption_iv != NULL)
+			free(n->encryption_iv);  
+        free (n);
+    } 
+}
+
 
 #ifdef Trusted
 
@@ -58,7 +80,7 @@ sad_entry_node* create_sad_node(){
 JSON_Value *serialize_sad_node(sad_entry_node *sad_node) {
     JSON_Value *root_value = json_value_init_object();
     JSON_Object *root_object = 	json_value_get_object(root_value);
-    char *serialized_string = NULL;
+    // char *serialized_string = NULL;
 
     // Initial vals
     json_object_set_string(root_object, "name", sad_node->name);
