@@ -24,8 +24,8 @@ add_library(i2nsf STATIC
         "${SRC_DIRECTORY}/trust_handler.h"
         "${SRC_DIRECTORY}/log.c"
         "${SRC_DIRECTORY}/log.h"
-        "${PROJECT_SOURCE_DIR}/cmd/i2nsf_enarx/main.c"
-        #"${PROJECT_SOURCE_DIR}/cmd/i2nsf_enarx/main_test.c"
+        # "${PROJECT_SOURCE_DIR}/cmd/i2nsf_enarx/main.c"
+        # "${PROJECT_SOURCE_DIR}/cmd/i2nsf_enarx/main_test.c"
 
     )
 set_target_properties(i2nsf PROPERTIES LINK_FLAGS "-nostdlib")

@@ -124,7 +124,7 @@ extern char *handle_message(char *data) {
             op_result_msg *op_msg = (op_result_msg*) malloc(sizeof(op_result_msg)); 
 
             // TODO: modify handle 
-            if (result = handle_request_remove(msg->data,op_msg), result != 0) {
+            if (result = handle_request_remove_SPD(msg->data,op_msg), result != 0) {
                 ERR("Error deleting SPD entry");
             } else {
                 INFO("DELETE SPD MANAGED SUCCESFUL");
