@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_BUILD_TYPE Debug)
 set(TARGET ${TARGET} "rich_app")
-# set the project name and version
-set (PROJECT_NAME "i2nsf_cfgipsec")
-project(${PROJECT_NAME} VERSION 1.0)
 message(STATUS "Selected target is ${TARGET}")
 option(ENARX_RA "Add the depencies and compiles for the Enarx rich aplication" OFF)
 option(ENARX_TA "Add the depencies and compile the libraries to be used by RUST for the Trusted Application" OFF)
@@ -12,8 +9,12 @@ option(KEYSTONE "Add the depencies and compile for Keystone applications" OFF)
 
 
 if(KEYSTONE)
+    # set the project name and version
+    set (PROJECT_NAME "i2nsf_cfgipsec")
+    project(${PROJECT_NAME} VERSION 1.0)
     message(STATUS "Selected Keystone option")
     include("cmd/i2nsf_keystone/CMakeLists.txt")
+    add_compile_definitions(Trusted)
 else()
 if(ENARX_TA)
     message(STATUS "Selected Enarx TA option")
@@ -36,6 +37,10 @@ else()
 endif()
 
 add_compile_definitions(LOG_USE_COLOR)
+
+# set the project name and version
+set (PROJECT_NAME "i2nsf_cfgipsec")
+project(${PROJECT_NAME} VERSION 1.0)
 
 include(GNUInstallDirs)
 include(CheckFunctionExists)

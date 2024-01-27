@@ -65,7 +65,13 @@ typedef struct spd_entry_node {
 /// @brief creates an empty spd_entry_node with all the inputs intitilized
 /// @return an empty sad_entry_node
 spd_entry_node* create_spd_node();
-void print_spd_node(spd_entry_node *spd);
+
+/// @brief free an spd_entry_node and all the internal data
+/// @param n input spd_node to free
+/// @return void
+void free_spd_node(spd_entry_node * n); 
+
+// void print_spd_node(spd_entry_node *spd);
 
 #ifdef Trusted
 /// @brief serialize a spd_node into a JSON_VALUE

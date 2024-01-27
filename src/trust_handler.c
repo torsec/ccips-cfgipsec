@@ -3,7 +3,7 @@
 /************** Trusted Local Databases **************/
 
 sad_entry_node *trusted_init_sad_node = NULL;
-sad_entry_node *trusted_init_spd_node = NULL;
+spd_entry_node *trusted_init_spd_node = NULL;
 
 /*****************************************************/
 
@@ -14,8 +14,8 @@ extern char *handle_message(char *data) {
     JSON_Object *schema = json_object(json_parse_string(data));
     INFO("HANDLE MESSAGE");
     if (schema == NULL) {
-        int result = -1;
-        int code = -1;
+        result = -1;
+        code = -1;
         data_value = generate_op_message("WRONG JSON", -1);    
         goto cleanup;
     }
@@ -52,7 +52,7 @@ extern char *handle_message(char *data) {
                 data_value = generate_op_message("newconf SPD err",result);
                 code = OP_SPD_RESULT_MSG;
             } else {
-                data_value = encode_sad_entry_msg(entry_msg);
+                data_value = encode_spd_entry_msg(entry_msg);
                 code = INSERT_SPD_ENTRY_MSG;
                 INFO("NEW SPD CONFIG MANAGED SUCCESFULLY");
             }
@@ -124,7 +124,7 @@ extern char *handle_message(char *data) {
             op_result_msg *op_msg = (op_result_msg*) malloc(sizeof(op_result_msg)); 
 
             // TODO: modify handle 
-            if (result = handle_request_remove(msg->data,op_msg), result != 0) {
+            if (result = handle_request_remove_SPD(msg->data,op_msg), result != 0) {
                 ERR("Error deleting SPD entry");
             } else {
                 INFO("DELETE SPD MANAGED SUCCESFUL");
@@ -378,7 +378,7 @@ int handle_request_remove_SPD(JSON_Object *data, op_result_msg *out) {
     
     strcpy(message,"deleted\0");
     INFO("Deleted SPD entry: Index: %s \t POLICY DIR: %d \t REQID: %d", config->entry_id, stored_entry->policy_dir, stored_entry->req_id);
-    del_sad_node(&trusted_init_spd_node, config->entry_id);
+    del_spd_node(&trusted_init_spd_node, config->entry_id);
 
 cleanup:
 	free(config);
