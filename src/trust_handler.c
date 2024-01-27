@@ -12,7 +12,7 @@ extern char *handle_message(char *data) {
     int result = 0, code = 0;
     JSON_Value *data_value;;
     JSON_Object *schema = json_object(json_parse_string(data));
-
+    INFO("HANDLE MESSAGE");
     if (schema == NULL) {
         int result = -1;
         int code = -1;
@@ -47,7 +47,7 @@ extern char *handle_message(char *data) {
             spd_entry_msg *entry_msg = (spd_entry_msg*) malloc(sizeof(spd_entry_msg));    
 
             // TODO: modify handle 
-            if ((result = handle_new_conf_message(msg->data,entry_msg)), result != 0) {
+            if ((result = handle_new_SPD_conf_message(msg->data,entry_msg)), result != 0) {
                 free(entry_msg);
                 data_value = generate_op_message("newconf SPD err",result);
                 code = OP_SPD_RESULT_MSG;
@@ -201,9 +201,8 @@ cleanup:
 }
 
 int handle_new_SPD_conf_message(JSON_Object *data, spd_entry_msg *out) {
-    printf("handle_new_SPD_conf_message function (trust_handler.c) called.\n");
     int status = 0;
-
+    INFO("Handle new SPD conf message");
     // Decode the data of the message
     spd_entry_msg *config = (spd_entry_msg*) malloc(sizeof(spd_entry_msg)); 
     if (decode_spd_entry_msg(data, config) != 0) {
@@ -215,13 +214,13 @@ int handle_new_SPD_conf_message(JSON_Object *data, spd_entry_msg *out) {
     spd_entry_node *entry = (spd_entry_node*) malloc(sizeof(spd_entry_node));
     memcpy(&entry, &config->spd_entry, sizeof(config->spd_entry));
     
-    if (get_spd_node(&trusted_init_spd_node, entry->name) != NULL) {
+    if (get_spd_node_local(&trusted_init_spd_node, entry->name) != NULL) {
         ERR("Error adding spd_entry, it already exists");
         status =  1;
         goto cleanup;
     }
 
-    printf("Adding spd_node in trusted spd db.\n");
+    INFO("Adding spd_node in trusted spd db.\n");
 
     if (add_spd_node(&trusted_init_spd_node,entry) != 0) {
         ERR("Error adding spd_entry, it already exists");
@@ -229,9 +228,8 @@ int handle_new_SPD_conf_message(JSON_Object *data, spd_entry_msg *out) {
         goto cleanup;
     }
 
-    // strcpy(out->entry_id,hash);
     out->spd_entry = entry;
-    //INFO("Added SPD entry: HASH: %s \t SPI: %d \t REQID: %d", entry->name,entry->spi,entry->req_id);
+    INFO("Added SPD entry: HASH: %s \t REQID: %d", entry->name,entry->req_id);
 cleanup:
     // Free data
 	free(config);
@@ -370,7 +368,7 @@ int handle_request_remove_SPD(JSON_Object *data, op_result_msg *out) {
     }
 
     // Does the SPD entry exists?
-    spd_entry_node *stored_entry = get_spd_node(&trusted_init_spd_node, config->entry_id);
+    spd_entry_node *stored_entry = get_spd_node_local(&trusted_init_spd_node, config->entry_id);
     if (stored_entry == NULL) {
         ERR("SPD entry with id %s does not exists", config->entry_id);
         strcpy(message,"do not exist\0");

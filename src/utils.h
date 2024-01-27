@@ -105,7 +105,7 @@ void show_sad_list(sad_entry_node* main_sad_entry);
 /// @param main_spd_entry local spd_entry database
 /// @param spd_name spd_entry name identifier
 /// @return local spd_entry (if NULL it does not exists)
-// spd_entry_node *get_spd_node(spd_entry_node** main_spd_entry, char *spd_name);
+spd_entry_node *get_spd_node_local(spd_entry_node** main_spd_entry, char *spd_name);
 /// @brief Deletes a spd_entry (identified by their name) from the local_database
 /// @param main_spd_entry Local spd_entry database
 /// @param spd_name Name of the entry
