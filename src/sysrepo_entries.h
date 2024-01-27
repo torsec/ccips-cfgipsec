@@ -89,6 +89,7 @@ int send_delete_SAD_request(unsigned long int spi);
 
 #ifdef Trusted
 void verify_sad_nodes();
+void verify_spd_nodes();
 void add_sad_node_enarx(sad_entry_node* node_entry);
 #endif 
 

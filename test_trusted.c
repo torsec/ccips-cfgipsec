@@ -22,6 +22,7 @@
 // #include "constants.h"
 // #include "base/serializers/sad_serializer.h"
 // #include "base/serializers/spd_serializer.h"
+#define VERSION "2"
 
 int exit_application = 0;
 void print_hash(char *p){
@@ -129,7 +130,7 @@ static void
 fill_test_spd(spd_entry_node *spd_node) {
     unsigned long long int req_id = 100;
 
-    char *name = "ccc";
+    char *name = "test_spd";
     char local_subnet[MAX_IP] = "10.0.0.0/24";
     char remote_subnet[MAX_IP] = "11.0.0.0/24";
     char tunnel_local[MAX_IP] = "10.0.0.61";
@@ -179,33 +180,87 @@ int
 main(int argc, char **argv) {
 
     // TODO add test with spd 
+    if ( geteuid() != 0 ) {
+            fprintf ( stderr, "Must be root in order to execute cfgipsec2. You are UID=%u, EUID=%u\n", getuid(), geteuid() );
+            return 1;
+        }
 
-    printf("Connecting to the Enarx Trusted Application...\n");
+        // Get options
+        int foreground = false;
+        int c;
+        int l = CI_VERB_INFO;
+        log_set_level(l);
+        while ( ( c = getopt ( argc, argv, "f:c:v:h" ) ) != -1 ) {
+            switch ( c ) {
+                case 'f':
+                    foreground = true; // TBD
+                    break;
+                case 'v':
+                    l = atoi(optarg);  // Convert optarg to an integer
+                    if (l < 0 || l > CI_VERB_TRACE) {
+                        printf("verbose level out of range: %d\n", l);
+                        exit(EXIT_FAILURE);
+                    } else {
+                        log_set_level(l);  // Set the log level based on the converted value
+                    }
+                    break;
+                case 'h': {
+                    fprintf(stderr, "cfgipsec2 version %s \n", VERSION);
+                    fprintf(stderr, "Usage:\n" );
+                    fprintf(stderr, "       %s [-v verbose_level]\n",argv[0]);
+                    fprintf(stderr, "\n" );
+                    fprintf(stderr, "Where:\n" );
+                    fprintf(stderr, "       - case is `case1` (IKE case) or `case2` (IKE-less case, default)\n" );
+                    fprintf(stderr, "       - verbose_level is 0: FATAL, 1: ERR, 2: WARN, 3: INFO (default), 4: DEBUG, 5: TRACE\n" );
+                    fprintf(stderr, "" );
+                    return 0;
+                }
+                default: {
+                    fprintf(stderr, "Usage: %s [-v verbose_level]\n", argv[0]);
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+
+    INFO("LOG level set to: %d",l);
+
+
+#ifdef Enarx
+    INFO("Enarx CCIPs version");
+    // Enable connectivity with enarx client
+    if(connect_ta() != 0) {
+        ERR("Couldnt connect to TA");
+        exit(1);
+    }
+#endif
+    // printf("Connecting to the Enarx Trusted Application...\n");
     connect_ta();
 
     
     int rc;
    
 
-    struct sad_entry_node *sad_node = create_sad_node();
-    struct sad_entry_node *sad_node_get;
+    // struct sad_entry_node *sad_node = create_sad_node();
+    // struct sad_entry_node *sad_node_get;
 
     
-    sad_entry_node *new_sad_node_entry;	
-    sad_entry_node *rec_sad = (sad_entry_node*) malloc(sizeof(sad_entry_node)); 
+    // sad_entry_node *new_sad_node_entry;	
+    // sad_entry_node *rec_sad = (sad_entry_node*) malloc(sizeof(sad_entry_node)); 
     /******************************************************************/
-    printf("Adding sad entry...\n");
-    add_trusted_sad_entry(rec_sad,sad_node);
-    pf_addsad(sad_node);
+    // printf("Adding sad entry...\n");
+    // add_trusted_sad_entry(rec_sad,sad_node);
+    // pf_addsad(sad_node);
 
-    sad_entry_node *out_node = create_sad_node();
-    printf("HERE\n");
-    if(pf_getsad(out_node, rec_sad) !=0) {
-        ERR("An error has ocurred");
-    }
-    /*****************************************************************/
-    pf_dump_sads(sad_node);
-    verify_sad_nodes();
+    // sad_entry_node *out_node = create_sad_node();
+    // if(pf_getsad(out_node, rec_sad) !=0) {
+    //     ERR("An error has ocurred");
+    // }
+    // /*****************************************************************/
+    // pf_dump_sads(sad_node);
+    // verify_sad_nodes();
+    // printf("HERE\n");
+
+
 
     /****************************************************************/
     // printf("Delete trusted sad entry\n");
@@ -213,6 +268,43 @@ main(int argc, char **argv) {
     // del_trusted_sad_entry(sad_node->name);
     // pf_delsad(sad_node);
     /****************************************************************/
+
+
+    printf("\n\nSPD TEST.\n");
+
+
+    struct spd_entry_node *spd_node = create_spd_node();
+    struct spd_entry_node *spd_node_get;
+    fill_test_spd(spd_node);
+    spd_entry_node *new_spd;
+
+    // This function manages a local db in the untrusted part
+    add_spd_node(spd_node, new_spd);
+
+    // This function prints the local db of the untrusted part
+    show_spd_list(); 	
+    spd_entry_node *rec_spd = (spd_entry_node*) malloc(sizeof(spd_entry_node)); 
+    /******************************************************************/
+    printf("\nAdding trusted spd entry...\n");
+    add_trusted_spd_entry(rec_spd,spd_node);
+    // printf("Here\n");
+    // pf_addpolicy(spd_node);
+
+    // spd_entry_node *spd_out_node = create_spd_node();
+    // if(pf_getpolicy(spd_out_node, rec_spd) !=0) {
+    //     ERR("An error has ocurred");
+    // }
+    /*****************************************************************/
+    // pf_dump_policies(spd_node);
+    // verify_spd_nodes();
+
+    // /****************************************************************/
+    // printf("Delete trusted spd entry\n");
+    // del_trusted_spd_entry(rec_spd->name);
+    // del_trusted_spd_entry(spd_node->name);
+    // pf_delpolicy(spd_node);
+    /****************************************************************/
+
 
     printf("Application exit requested, exiting.\n");
     exit(0);

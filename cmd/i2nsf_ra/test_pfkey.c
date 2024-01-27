@@ -19,6 +19,9 @@
 #include "trust_client.h"
 #include "trust_handler.h"
 #include "sysrepo_entries.h"
+
+#define VERSION "2"
+
 // #include "constants.h"
 // #include "base/serializers/sad_serializer.h"
 // #include "base/serializers/spd_serializer.h"
@@ -43,7 +46,7 @@ static void
 fill_test_sad(sad_entry_node *sad_node) {
     unsigned long long int req_id = 100;
 
-    char *name = "ccc";
+    char *name = "aaa";
     char local_subnet[MAX_IP] = "10.0.0.0/24";
     char remote_subnet[MAX_IP] = "11.0.0.0/24";
     char tunnel_local[MAX_IP] = "10.0.0.61";
@@ -51,7 +54,6 @@ fill_test_sad(sad_entry_node *sad_node) {
 
     // Setup the structure
     
-    printf("Set up the sad node structure.\n");
     // First setup the identification variables
     strcpy(sad_node->name,name);
     sad_node->req_id = req_id;
@@ -178,42 +180,80 @@ fill_test_spd(spd_entry_node *spd_node) {
 int 
 main(int argc, char **argv) {
 
-    printf("Hello from the CCIPS Agent.\n");
+    if ( geteuid() != 0 ) {
+        fprintf ( stderr, "Must be root in order to execute cfgipsec2. You are UID=%u, EUID=%u\n", getuid(), geteuid() );
+        return 1;
+    }
+    // Get options
+    int foreground = false;
+    int c;
+    int l = CI_VERB_INFO;
+    log_set_level(l);
+    while ( ( c = getopt ( argc, argv, "f:c:v:h" ) ) != -1 ) {
+        switch ( c ) {
+            case 'f':
+                foreground = true; // TBD
+                break;
+            case 'v':
+                l = atoi(optarg);  // Convert optarg to an integer
+                if (l < 0 || l > CI_VERB_TRACE) {
+                    printf("verbose level out of range: %d\n", l);
+                    exit(EXIT_FAILURE);
+                } else {
+                    log_set_level(l);  // Set the log level based on the converted value
+                }
+                break;
+            case 'h': {
+                fprintf(stderr, "cfgipsec2 version %s \n", VERSION);
+                fprintf(stderr, "Usage:\n" );
+                fprintf(stderr, "       %s [-v verbose_level]\n",argv[0]);
+                fprintf(stderr, "\n" );
+                fprintf(stderr, "Where:\n" );
+                fprintf(stderr, "       - case is `case1` (IKE case) or `case2` (IKE-less case, default)\n" );
+                fprintf(stderr, "       - verbose_level is 0: FATAL, 1: ERR, 2: WARN, 3: INFO (default), 4: DEBUG, 5: TRACE\n" );
+                fprintf(stderr, "" );
+                return 0;
+            }
+            default: {
+                fprintf(stderr, "Usage: %s [-v verbose_level]\n", argv[0]);
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
 
-    printf("Testing PFKEY API FOR SAD ENTRIES.\n");
-    
+INFO("LOG level set to: %d",l);    
     int rc;
    
-    printf("Creating sad node (from sad_entry.c)\n");
     struct sad_entry_node *sad_node = create_sad_node();
     struct sad_entry_node *sad_node_get;
+    sad_entry_node *rec_sad = (sad_entry_node*) malloc(sizeof(sad_entry_node)); 
+    sad_entry_node *out_node = create_sad_node();
     
     fill_test_sad(sad_node);
-    printf("Calling pf_addsad function to install the sad in the kernel.\n");
-
     pf_addsad(sad_node);
-    
-    sad_entry_node *new_sad_node_entry;	
-    sad_entry_node *rec_sad = (sad_entry_node*) malloc(sizeof(sad_entry_node)); 
-    /******************************************************************/
-    printf("Adding sad entry...\n");
-    // add_trusted_sad_entry(rec_sad,sad_node);
-    // pf_addsad(sad_node);
+    pf_addsad(sad_node);
 
-    // sad_entry_node *out_node = create_sad_node();
-    // printf("HERE\n");
     // if(pf_getsad(out_node, rec_sad) !=0) {
     //     ERR("An error has ocurred");
     // }
-    /*****************************************************************/
+    
+    // sad_entry_node *new_sad_node_entry;	
     pf_dump_sads(sad_node);
+    pf_delsad(sad_node);
+
+    /******************************************************************/
+    // printf("Adding sad entry...\n");
+    // add_trusted_sad_entry(rec_sad,sad_node);
+    // pf_addsad(sad_node);
+
+    /*****************************************************************/
     // verify_sad_nodes();
 
     /****************************************************************/
-    printf("Delete trusted sad entry\n");
+    // printf("Delete trusted sad entry\n");
     // del_trusted_sad_entry(rec_sad->name);
     // del_trusted_sad_entry(sad_node->name);
-    pf_delsad(sad_node);
+    // pf_delsad(sad_node);
     /****************************************************************/
 
     exit(0);
