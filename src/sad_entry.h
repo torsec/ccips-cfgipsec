@@ -62,7 +62,6 @@ sad_entry_node* create_sad_node();
 /// @return void
 void free_sad_node(sad_entry_node * n); 
 
-// void print_sad_node(sad_entry_node *sad);
 
 #ifdef Trusted
 /// @brief serialize a sad_node into a JSON_VALUE

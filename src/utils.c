@@ -445,18 +445,6 @@ sad_entry_node *get_sad_node(sad_entry_node** main_sad_entry, char *sad_name) {
 	return NULL;
 }
 
-spd_entry_node *get_spd_node_local(spd_entry_node** main_spd_entry, char *spd_name) {
-    spd_entry_node *node = *main_spd_entry;
-	while (node != NULL) {
-		if (!strcmp(node->name, spd_name)) {
-			return node;
-		} else {
-			node = node->next;
-		}
-	}
-	return NULL;
-}
-
 sad_entry_node *get_sad_node_by_spi(sad_entry_node** main_sad_entry, unsigned long int spi) {
     sad_entry_node *node = *main_sad_entry;
 	while (node != NULL) {
@@ -622,3 +610,4 @@ void show_spd_list(spd_entry_node* main_spd_entry) {
 		node=node->next;
 	}
 }
+

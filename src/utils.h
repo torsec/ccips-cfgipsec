@@ -105,8 +105,7 @@ void show_sad_list(sad_entry_node* main_sad_entry);
 /// @param main_spd_entry local spd_entry database
 /// @param spd_name spd_entry name identifier
 /// @return local spd_entry (if NULL it does not exists)
-spd_entry_node *get_spd_node_local(spd_entry_node** main_spd_entry, char *spd_name);
-
+spd_entry_node *get_spd_node(spd_entry_node** main_spd_entry, char *spd_name);
 /// @brief Returns a spd_entry if the index exists in the local database
 /// @param main_spd_entry local spd_entry database
 /// @param policy_index index of the entry to be found
@@ -125,4 +124,3 @@ int add_spd_node(spd_entry_node** main_spd_entry, spd_entry_node* new_spd);
 /// @brief Prints current values of the local spd_entry database
 /// @param main_spd_entry local spd_entry database
 void show_spd_list(spd_entry_node* main_spd_entry);
-

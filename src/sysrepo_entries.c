@@ -3,97 +3,7 @@
 sad_entry_node *init_sad_node = NULL;
 spd_entry_node* init_spd_node = NULL;
 
-
 pthread_mutex_t sad_entries_locker =PTHREAD_MUTEX_INITIALIZER; 
-
-// FROM spd_entry.c
-void add_spd_node(spd_entry_node* node_entry){
-	if (init_spd_node == NULL) {
-		init_spd_node=node_entry;
-		node_entry->next=NULL;
-	} else {
-		spd_entry_node *node = init_spd_node;
-		while(node->next != NULL)
-			node=node->next;
-		node->next=node_entry;
-	}
-}
-
-// for case 1
-void show_spd_list(){
-	
-	spd_entry_node *node = init_spd_node;
-	INFO("NAME --- INDEX --- REQ_ID --- SRC --- DST --- DIRECTION --- PROTOCOL --- MODE");
-	while (node != NULL){
-		INFO("%s --- %d --- %d --- %s --- %s --- %d --- %d ", node->name, node->index, node->req_id, node->local_subnet, node->remote_subnet, node->policy_dir,
-			node->ipsec_mode);
-		node=node->next;
-	}
-}
-
-spd_entry_node *get_spd_node(char *name){
-
-    spd_entry_node *node = init_spd_node;
-	while (node != NULL) {
-		if (!strcmp(node->name, name)) {
-			return node;
-		} else {
-			node = node->next;
-		}
-	}
-	
-	return NULL;
-}
-
-spd_entry_node* get_spd_node_by_index(int policy_index){
-
-    spd_entry_node *node = init_spd_node;
-	while (node != NULL) {
-		if (node->index == policy_index) {
-			return node;
-		} else {
-			node = node->next;
-		}
-	}
-	
-	return NULL;
-}
-
-
-
-void free_spd_node(spd_entry_node * n) {
-	
-    if (n != NULL) {  
-        free (n);
-    } 
-}
-
-int del_spd_node(char *name) {
-
-    spd_entry_node *node = init_spd_node;
-    if (node != NULL) {
-		
-        spd_entry_node *prev_node = NULL;
-        prev_node = create_spd_node();
-
-        while (strcmp(name,node->name)) {
-            prev_node = node;
-            node = node->next;
-        }
-        if (node == init_spd_node){
-            init_spd_node = init_spd_node->next;
-            free_spd_node(prev_node);
-        }
-        else if (!strcmp(name,node->name)) {
-            prev_node->next = node->next;
-            free_spd_node(node);
-        }
-		
-    } else return SR_ERR_OPERATION_FAILED;
-
-    return SR_ERR_OK;
-}
-
 
 int readSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,spd_entry_node *spd_node, int case_value) {
 
@@ -437,20 +347,6 @@ void add_sad_node_enarx(sad_entry_node* node_entry){
 	printf("HERE\n");
 }
 
-void add_spd_node_enarx(spd_entry_node *node_entry) {
-	INFO("add_spd_node_enarx function called");
-		// We need to add the node_entry into the enarx client
-		// It will return a new spd_entry_node whith the decrypted contents and an entryid
-		spd_entry_node* rec_entry = create_spd_node();
-		// We may change the method in a future, so we dont need to malloc more data
-		if (add_trusted_spd_entry(rec_entry, node_entry) != 0) {
-			ERR("Couldnt add spd_entry node");
-			free(rec_entry);
-			return;
-		}
-		free(rec_entry);
-}
-
 int del_sad_node_enarx(char *sad_name) {
 	if (del_trusted_sad_entry(sad_name) != 0) {
 		ERR("Error when removing sad entry %s",sad_name);
@@ -503,48 +399,7 @@ void verify_sad_nodes() {
 	}
 	pthread_mutex_unlock(&sad_entries_locker);
 }
-
-void verify_spd_nodes() {
-	pthread_mutex_lock(&spd_entries_locker);
-	spd_entry_node *node = init_spd_node;
-	while (node != NULL) {
-		spd_entry_node *out_node = create_spd_node();
-		if (pf_getpolicy(node,out_node) != 0) {
-			ERR("SPD not found in kernel, probably removed");
-		} else {
-			strcpy(out_node->name,node->name);
-			// Now lets against the trusted app
-			char verify_response[32];
-			int verification = verify_trusted_spd_entry(verify_response,out_node);
-			switch (verification)
-			{
-			case 1:
-				// Socket error 
-				break;
-			case 2:
-				ERR("ALERT with %s", verify_response);
-				ERR("Invalid verification of %s: REQID: %d",node->name,node->req_id);
-				break;
-			case 3:
-				ERR("INVALID ANSWER!");
-				break;
-			default:
-				INFO("Correct verification of %s: REQID: %d",node->name,node->req_id);
-				break;
-			}
-		}
-		node=node->next;
-	}
-	pthread_mutex_unlock(&spd_entries_locker);
-}
-
 #endif
-
-void free_sad_node(sad_entry_node * n) {
-    if (n != NULL) {  
-        free (n);
-    } 
-}
 
 int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_entry_node *sad_node) {
     int rc = SR_ERR_OK;
@@ -1116,9 +971,3 @@ cleanup:
         // sr_disconnect(conn);
     }
 }
-
-
-
-
-
-

@@ -233,67 +233,36 @@ main(int argc, char **argv) {
         exit(1);
     }
 #endif
-    // printf("Connecting to the Enarx Trusted Application...\n");
     connect_ta();
 
     
     int rc;
-   
 
+
+    // printf("\n\nSAD TEST.\n\n");
     // struct sad_entry_node *sad_node = create_sad_node();
-    // struct sad_entry_node *sad_node_get;
+    // sad_entry_node *rec_sad = (sad_entry_node *)malloc(sizeof(sad_entry_node));
+    // fill_test_sad(sad_node);
 
-    
-    // sad_entry_node *new_sad_node_entry;	
-    // sad_entry_node *rec_sad = (sad_entry_node*) malloc(sizeof(sad_entry_node)); 
-    /******************************************************************/
-    // printf("Adding sad entry...\n");
-    // add_trusted_sad_entry(rec_sad,sad_node);
-    // pf_addsad(sad_node);
-
-    // sad_entry_node *out_node = create_sad_node();
-    // if(pf_getsad(out_node, rec_sad) !=0) {
-    //     ERR("An error has ocurred");
-    // }
-    // /*****************************************************************/
-    // pf_dump_sads(sad_node);
-    // verify_sad_nodes();
-    // printf("HERE\n");
-
-
-
-    /****************************************************************/
-    // printf("Delete trusted sad entry\n");
-    // // del_trusted_sad_entry(rec_sad->name);
-    // del_trusted_sad_entry(sad_node->name);
-    // pf_delsad(sad_node);
-    /****************************************************************/
-
-
+    // printf("\nAdding trusted sad entry...\n");
+    // add_trusted_sad_entry(rec_sad, sad_node);
     printf("\n\nSPD TEST.\n");
-
 
     struct spd_entry_node *spd_node = create_spd_node();
     struct spd_entry_node *spd_node_get;
     fill_test_spd(spd_node);
-    spd_entry_node *new_spd;
 
-    // This function manages a local db in the untrusted part
-    add_spd_node(spd_node, new_spd);
-
-    // This function prints the local db of the untrusted part
-    show_spd_list(); 	
     spd_entry_node *rec_spd = (spd_entry_node*) malloc(sizeof(spd_entry_node)); 
     /******************************************************************/
     printf("\nAdding trusted spd entry...\n");
     add_trusted_spd_entry(rec_spd,spd_node);
     // printf("Here\n");
-    // pf_addpolicy(spd_node);
+    pf_addpolicy(spd_node);
 
-    // spd_entry_node *spd_out_node = create_spd_node();
-    // if(pf_getpolicy(spd_out_node, rec_spd) !=0) {
-    //     ERR("An error has ocurred");
-    // }
+    spd_entry_node *spd_out_node = create_spd_node();
+    if(pf_getpolicy(spd_out_node, rec_spd) !=0) {
+        ERR("An error has ocurred");
+    }
     /*****************************************************************/
     // pf_dump_policies(spd_node);
     // verify_spd_nodes();

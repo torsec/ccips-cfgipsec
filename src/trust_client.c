@@ -263,8 +263,10 @@ int del_trusted_sad_entry(char *sad_name) {
 int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd) {
     spd_entry_msg *message = (spd_entry_msg*) malloc(sizeof(spd_entry_msg)); 
     message->spd_entry =  old_spd;
-    JSON_Value *new_conf_msg = encode_spd_entry_msg(message);
-    char *serialized_msg = encode_default_msg(10,NEW_SPD_CONFIG_MSG,new_conf_msg);
+    INFO("Encoding SPD_ENTRY MESSAGE IN JSON FORMAT");
+    JSON_Value *new_spd_conf_msg = encode_spd_entry_msg(message);
+    char *serialized_msg = encode_default_msg(10,NEW_SPD_CONFIG_MSG,new_spd_conf_msg);
+    // printf("SERIALIZED MESSAGE: %s\n", serialized_msg);
     int result = 1;
     INFO("Sending the spd entry to Enarx");
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
@@ -273,7 +275,7 @@ int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd) {
         free(serialized_msg);
         return result;
     }
-    INFO("HERE");
+    INFO("SENT SPD ENTRY");
     char buffer2[2048] = {0};
     if (recv(ENARX_SOCKET, buffer2, 2048, 0) < 0) {
         ERR("Couldnt receive any information from the server");
@@ -282,7 +284,6 @@ int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd) {
         return result;
     }
 
-    INFO("BUFFER2: %s", buffer2);
     default_msg *msg = malloc(sizeof(default_msg));
     JSON_Object *schema = json_object(json_parse_string(buffer2));
     if (schema == NULL) {
@@ -329,7 +330,7 @@ int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd) {
         free(serialized_msg);
         json_object_clear(schema);
         free(schema);
-        json_value_free(new_conf_msg);
+        json_value_free(new_spd_conf_msg);
         return result;
 }
 
