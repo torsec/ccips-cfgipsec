@@ -234,6 +234,38 @@ $ cd build_ra
 $ sudo ./i2nsf_cfgipsec2 -v 5
 ```
 
+# Build Rust applications for QEMU (RISC-V)
+1. Install [Rust](#rust)
+2. Add RISC-V (linux) target
+```
+$ rustup target add riscv64gc-unknown-linux-gnu
+```
+3. Create a new project with
+```
+$ cargo new <project_name>
+```
+4. Create a new folder for the Cargo build configuration
+```
+$ cd <project_name>
+$ mkdir .cargo && cd .cargo
+$ touch config.toml
+```
+5. Insert the following lines into the new file (config.toml). Note: Keystone must be already built
+```
+[build]
+target = "riscv64gc-unknown-linux-gnu"
+
+[target.riscv64gc-unknown-linux-gnu]
+rustflags = ["-C", "target-feature=+crt-static"]
+linker = "<path_to_keystone_dir>/riscv64/bin/riscv64-unknown-linux-gnu-gcc"
+```
+6. Cross-compile the project (in the root directory of the project)
+```
+$ cargo build --release
+```
+
+
+
 # Keystone
 
 ## Docs
