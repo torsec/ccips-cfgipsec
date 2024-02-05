@@ -96,6 +96,7 @@ JSON_Value *serialize_spd_node(spd_entry_node *spd_node) {
 struct spd_entry_node *deserialize_spd_node(JSON_Object *schema) {
     // JSON_Object *schema = json_object(json_parse_string(serialized));
     spd_entry_node *spd_node = create_spd_node();
+    strcpy(spd_node->name,json_object_get_string(schema, "name"));
     spd_node->index = json_object_get_number(schema, "index");
     spd_node->policy_dir = json_object_get_number(schema, "policy_dir");
     spd_node->req_id = json_object_get_number(schema, "req_id");

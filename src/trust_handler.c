@@ -12,7 +12,6 @@ extern char *handle_message(char *data) {
     int result = 0, code = 0;
     JSON_Value *data_value;;
     JSON_Object *schema = json_object(json_parse_string(data));
-    INFO("HANDLE MESSAGE");
     if (schema == NULL) {
         result = -1;
         code = -1;
@@ -25,10 +24,8 @@ extern char *handle_message(char *data) {
         // TODO handle error of decode_default
         goto cleanup;
     } 
-
     switch (msg->code) {
         case NEW_CONFIG_MSG: {
-            INFO("NEW_CONFIG_MSG");
             sad_entry_msg *entry_msg = (sad_entry_msg*) malloc(sizeof(sad_entry_msg));    
 
             // TODO: modify handle 
@@ -45,9 +42,7 @@ extern char *handle_message(char *data) {
             break;
         }
         case NEW_SPD_CONFIG_MSG: {
-            INFO("NEW SPD CONFIG MSG");
             spd_entry_msg *entry_msg = (spd_entry_msg*) malloc(sizeof(spd_entry_msg));    
-
             // TODO: modify handle 
             if ((result = handle_new_SPD_conf_message(msg->data,entry_msg)), result != 0) {
                 free(entry_msg);
@@ -126,7 +121,7 @@ extern char *handle_message(char *data) {
             op_result_msg *op_msg = (op_result_msg*) malloc(sizeof(op_result_msg)); 
 
             // TODO: modify handle 
-            if (result = handle_request_remove(msg->data,op_msg), result != 0) {
+            if (result = handle_request_remove_SPD(msg->data,op_msg), result != 0) {
                 ERR("Error deleting SPD entry");
             } else {
                 INFO("DELETE SPD MANAGED SUCCESFUL");
@@ -136,7 +131,7 @@ extern char *handle_message(char *data) {
             code = OP_SPD_RESULT_MSG;
             // TODO revise this free, since sometimes we get some errors with wasm and the application crashes
             // only when forcing the delete from the controller. When removing through the rekey phase it works without any issue
-            // free(op_msg);
+            free(op_msg);
             // INFO("FEE_OP_MSG");
             break;
         }
@@ -155,7 +150,6 @@ cleanup:
 // TODO change order of input parameters
 int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     
-    printf("handle_new_conf_message function (trust_handler.c) called.\n");
     int status = 0;
     // Decode the data of the message
     sad_entry_msg *config = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
@@ -167,6 +161,7 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     sad_entry_node *entry = (sad_entry_node*) malloc(sizeof(sad_entry_node));
     // Copy struct into another so we can free later the config value
     memcpy(&entry, &config->sad_entry, sizeof(config->sad_entry));
+    INFO("entry->name = %s", entry->name);
     // Just strcpy the auth and encryption key seems to be missing in RUST implementation after been added into the map
     strcpy(entry->encryption_key,config->sad_entry->encryption_key);
     strcpy(entry->integrity_key,config->sad_entry->integrity_key);
@@ -182,8 +177,6 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     }
 
     // TODO Proceed with the decryption of the entry
-
-    printf("Adding sad_node in trusted sad db.\n");
 
     if (add_sad_node(&trusted_init_sad_node,entry) != 0) {
         ERR("Error adding sad_entry, it already exists");
@@ -203,7 +196,6 @@ cleanup:
 }
 
 int handle_new_SPD_conf_message(JSON_Object *data, spd_entry_msg *out) {
-    INFO("handle_new_SPD_conf_message function (trust_handler.c) called.\n");
     int status = 0;
 
     // Decode the data of the message
@@ -213,17 +205,14 @@ int handle_new_SPD_conf_message(JSON_Object *data, spd_entry_msg *out) {
         status = 1;
         goto cleanup;
     }
-
     spd_entry_node *entry = (spd_entry_node*) malloc(sizeof(spd_entry_node));
     memcpy(&entry, &config->spd_entry, sizeof(config->spd_entry));
-    
+    INFO("entry->name = %s", entry->name);
     if (get_spd_node(&trusted_init_spd_node, entry->name) != NULL) {
         ERR("Error adding spd_entry, it already exists");
         status =  1;
         goto cleanup;
     }
-
-    INFO("Adding spd_node in trusted spd db.\n");
 
     if (add_spd_node(&trusted_init_spd_node,entry) != 0) {
         ERR("Error adding spd_entry, it already exists");
@@ -362,6 +351,7 @@ int handle_request_remove_SPD(JSON_Object *data, op_result_msg *out) {
     int status = 0;
     char message[16];
 
+    show_spd_list(trusted_init_spd_node);
     // Decode the data of the message
     delete_config_msg *config = (delete_config_msg*) malloc(sizeof(delete_config_msg));
     if (decode_delete_config_msg(data, config) != 0) {
@@ -370,7 +360,7 @@ int handle_request_remove_SPD(JSON_Object *data, op_result_msg *out) {
         status = 1;
         goto cleanup;
     }
-
+    DBG("ENTRY ID = %s", config->entry_id);
     // Does the SPD entry exists?
     spd_entry_node *stored_entry = get_spd_node(&trusted_init_spd_node, config->entry_id);
     if (stored_entry == NULL) {
@@ -381,8 +371,8 @@ int handle_request_remove_SPD(JSON_Object *data, op_result_msg *out) {
     }
     
     strcpy(message,"deleted\0");
-    INFO("Deleted SPD entry: Index: %s \t POLICY DIR: %d \t REQID: %d", config->entry_id, stored_entry->policy_dir, stored_entry->req_id);
     del_spd_node(&trusted_init_spd_node, config->entry_id);
+    INFO("Deleted SPD entry: Index: %s \t POLICY DIR: %d \t REQID: %d", config->entry_id, stored_entry->policy_dir, stored_entry->req_id);
 
 cleanup:
 	free(config);

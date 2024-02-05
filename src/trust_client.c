@@ -44,10 +44,8 @@ int disconnect_ta() {
 }
 
 int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
-    printf("Called add_trusted_sad_entry function.\n");
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     message->sad_entry =  old_sad;
-    printf("Encoding sad_entry message in JSON format (sad_entry_msg is used to share sad_entries between trusted and untrusted)\n");
     JSON_Value *new_conf_msg = encode_sad_entry_msg(message);
     char *serialized_msg = encode_default_msg(10,NEW_CONFIG_MSG,new_conf_msg);
     int result = 1;
@@ -263,19 +261,15 @@ int del_trusted_sad_entry(char *sad_name) {
 int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd) {
     spd_entry_msg *message = (spd_entry_msg*) malloc(sizeof(spd_entry_msg)); 
     message->spd_entry =  old_spd;
-    INFO("Encoding SPD_ENTRY MESSAGE IN JSON FORMAT");
     JSON_Value *new_spd_conf_msg = encode_spd_entry_msg(message);
     char *serialized_msg = encode_default_msg(10,NEW_SPD_CONFIG_MSG,new_spd_conf_msg);
-    // printf("SERIALIZED MESSAGE: %s\n", serialized_msg);
     int result = 1;
-    INFO("Sending the spd entry to Enarx");
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
         free(message);
         free(serialized_msg);
         return result;
     }
-    INFO("SENT SPD ENTRY");
     char buffer2[2048] = {0};
     if (recv(ENARX_SOCKET, buffer2, 2048, 0) < 0) {
         ERR("Couldnt receive any information from the server");
@@ -295,7 +289,6 @@ int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd) {
         // TODO handle error of decode_default
         goto cleanup;
     }
-    printf("MESSAGE CODE = %d\n", msg->code);
     spd_entry_msg *entry_msg = (spd_entry_msg*) malloc(sizeof(spd_entry_msg)); 
     switch (msg->code) {
         case INSERT_SPD_ENTRY_MSG: {
@@ -408,12 +401,13 @@ int verify_trusted_spd_entry(char *alert, spd_entry_node *spd_node) {
 }
 
 int del_trusted_spd_entry(char *spd_name) {
+    // delete_config_msg is for both sad and spd
     delete_config_msg *message = (delete_config_msg*) malloc(sizeof(delete_config_msg));
     message->entry_id = (char *) malloc(sizeof(char) * MAX_PATH);
     strcpy(message->entry_id,spd_name);
     int result = 1;
-    JSON_Value *delete_msg =  encode_delete_config_msg(message);
-    char *serialized_msg = encode_default_msg(10,DELETE_CONFIG_MSG,delete_msg);
+    JSON_Value *delete_msg =  encode_delete_config_msg(message); // same as sad
+    char *serialized_msg = encode_default_msg(13,DELETE_SPD_CONFIG_MSG,delete_msg);
 
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
@@ -448,7 +442,7 @@ int del_trusted_spd_entry(char *spd_name) {
     }
 
     // Check if the message is type of operation
-    if (msg->code != OP_RESULT_MSG) { 
+    if (msg->code != OP_SPD_RESULT_MSG) { 
         ERR("Message type not found");
         goto cleanup;
     }
@@ -459,7 +453,7 @@ int del_trusted_spd_entry(char *spd_name) {
     }
 
     if (op_result->success != 0) {
-        ERR("Error when deleting the sad entry %s : %s\n",message->entry_id, op_result->message);
+        ERR("Error when deleting the spd entry %s : %s\n",message->entry_id, op_result->message);
         // free(op_result);
         goto cleanup;
     }

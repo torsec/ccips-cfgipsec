@@ -44,7 +44,7 @@ static void
 fill_test_sad(sad_entry_node *sad_node) {
     unsigned long long int req_id = 100;
 
-    char *name = "ccc";
+    char *name = "test_sad";
     char local_subnet[MAX_IP] = "10.0.0.0/24";
     char remote_subnet[MAX_IP] = "11.0.0.0/24";
     char tunnel_local[MAX_IP] = "10.0.0.61";
@@ -52,7 +52,6 @@ fill_test_sad(sad_entry_node *sad_node) {
 
     // Setup the structure
     
-    printf("Set up the sad node structure.\n");
     // First setup the identification variables
     strcpy(sad_node->name,name);
     sad_node->req_id = req_id;
@@ -128,7 +127,7 @@ fill_test_sad(sad_entry_node *sad_node) {
 
 static void
 fill_test_spd(spd_entry_node *spd_node) {
-    unsigned long long int req_id = 100;
+    unsigned long long int req_id = 111;
 
     char *name = "test_spd";
     char local_subnet[MAX_IP] = "10.0.0.0/24";
@@ -141,7 +140,8 @@ fill_test_spd(spd_entry_node *spd_node) {
     printf("Set up the spd node structure.\n");
     // First setup the identification variables
     strcpy(spd_node->name,name);
-    spd_node->index = 12;
+    spd_node->index = 13;
+    spd_node->policy_dir = 2;
     spd_node->req_id = req_id;
     // To verifify the use of this values
     spd_node->ext_seq_num = false;
@@ -239,42 +239,66 @@ main(int argc, char **argv) {
     int rc;
 
 
-    // printf("\n\nSAD TEST.\n\n");
-    // struct sad_entry_node *sad_node = create_sad_node();
-    // sad_entry_node *rec_sad = (sad_entry_node *)malloc(sizeof(sad_entry_node));
-    // fill_test_sad(sad_node);
+    printf("\n\nSAD TEST.\n\n");
+    struct sad_entry_node *sad_node = create_sad_node();
+    sad_entry_node *rec_sad = (sad_entry_node *)malloc(sizeof(sad_entry_node));
+    fill_test_sad(sad_node);
 
-    // printf("\nAdding trusted sad entry...\n");
-    // add_trusted_sad_entry(rec_sad, sad_node);
-    printf("\n\nSPD TEST.\n");
+    printf("\nAdding trusted sad entry...\n");
+    add_trusted_sad_entry(rec_sad, sad_node);
+    printf("PF_ADDSAD");
+    pf_addsad(sad_node);
+    
+    printf("\nDump sads.\n");
+    
+    pf_dump_sads(sad_node);
+    printf("Delete trusted sad entry\n");
+    
+    sad_entry_node *sad_out_node = create_sad_node();
+    if(pf_getsad(sad_node, rec_sad) !=0) {
+        ERR("An error has ocurred");
+    }
+    
+    del_trusted_sad_entry(rec_sad->name);
+    
+    printf("\n\nTesting pf_delsad function.\n\n");
+    pf_delsad(rec_sad);
+    
+
+
+    printf("SPD TEST.\n");
 
     struct spd_entry_node *spd_node = create_spd_node();
-    struct spd_entry_node *spd_node_get;
     fill_test_spd(spd_node);
 
     spd_entry_node *rec_spd = (spd_entry_node*) malloc(sizeof(spd_entry_node)); 
     /******************************************************************/
     printf("\nAdding trusted spd entry...\n");
+    
     add_trusted_spd_entry(rec_spd,spd_node);
-    // printf("Here\n");
+    
     pf_addpolicy(spd_node);
 
-    spd_entry_node *spd_out_node = create_spd_node();
-    if(pf_getpolicy(spd_out_node, rec_spd) !=0) {
-        ERR("An error has ocurred");
-    }
     /*****************************************************************/
-    // pf_dump_policies(spd_node);
+    printf("\nDump policies.\n");
+    
+    pf_dump_policies();
     // verify_spd_nodes();
 
     // /****************************************************************/
-    // printf("Delete trusted spd entry\n");
-    // del_trusted_spd_entry(rec_spd->name);
-    // del_trusted_spd_entry(spd_node->name);
-    // pf_delpolicy(spd_node);
+    
+    // TODO: fix this
+    // if(pf_getpolicy(spd_node, rec_spd) !=0) {
+    //     ERR("An error has ocurred");
+    // }
+    
+    printf("Delete trusted spd entry\n");
+    del_trusted_spd_entry(rec_spd->name);
+    
+    pf_delpolicy(rec_spd);
     /****************************************************************/
 
-
+    
     printf("Application exit requested, exiting.\n");
     exit(0);
 

@@ -1,4 +1,5 @@
 #include "sad_entry.h"
+#include <string.h>
 #define MAX_PATH  200
 #define MAX_IP 40
 #define MAX_KEY 1024

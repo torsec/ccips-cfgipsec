@@ -81,7 +81,7 @@ int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node);
 /// @return 
 int pf_dump_sads(sad_entry_node *sad_node);
 
-int pf_dump_policies(spd_entry_node *spd_node);
+int pf_dump_policies();
 int pf_getpolicy(spd_entry_node *spd_node, spd_entry_node *out_node);
 /// @brief Thread that handles the incoming messages from the kernel. It will mainly be used during the process of rekey (notifying soft-hard rekey). And when a SAD entry is removed.
 /// @param register_thread_info Information that contains the sysrepo session to handle the incomming request from the kernel.
