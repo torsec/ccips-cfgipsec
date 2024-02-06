@@ -8,6 +8,7 @@ spd_entry_node *trusted_init_spd_node = NULL;
 /*****************************************************/
 
 extern char *handle_message(char *data) {
+    // INFO("Input data for handle_message:\n%s", data); // json
     default_msg *msg = malloc(sizeof(default_msg));
     int result = 0, code = 0;
     JSON_Value *data_value;;
@@ -139,11 +140,10 @@ extern char *handle_message(char *data) {
     char *out_data;
 cleanup:
     out_data = encode_default_msg(msg->work_id,code,data_value);
-    // free(msg);
-    // return out_data;
-    // if (data_value != NULL) {
-    //     json_value_free(data_value);
-    // }
+    free(msg);
+    if (data_value != NULL) {
+        json_value_free(data_value);
+    }
     return out_data;
 }
 
@@ -161,11 +161,12 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     sad_entry_node *entry = (sad_entry_node*) malloc(sizeof(sad_entry_node));
     // Copy struct into another so we can free later the config value
     memcpy(&entry, &config->sad_entry, sizeof(config->sad_entry));
-    INFO("entry->name = %s", entry->name);
     // Just strcpy the auth and encryption key seems to be missing in RUST implementation after been added into the map
     strcpy(entry->encryption_key,config->sad_entry->encryption_key);
     strcpy(entry->integrity_key,config->sad_entry->integrity_key);
 
+    INFO("entry->name = %s", entry->name);
+    INFO("received SAD NODE:\nencryption key = %s\nlocal subnet = %s\n",entry->encryption_key, entry->local_subnet);
     // XOR the key parameters
     // TODO Add this part
     // Store the values
@@ -254,7 +255,8 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
         status = 1;
         goto cleanup;
     }
-    
+    INFO("STORED key = %s", stored_entry->encryption_key);
+    INFO("RECEIVED key = %s", received_entry->encryption_key);
     // Is the same entry?
     if (compare_sad_entries(config->sad_entry,stored_entry) != 0) {
         // Generate out message

@@ -77,9 +77,9 @@ fill_test_sad(sad_entry_node *sad_node) {
     sad_node->srcport = 0;
     sad_node->dstport = 0;
     // IPsec mode, we are running this as a tunnel, we setup protocol_params as ESP
-    sad_node->ipsec_mode = IPSEC_MODE_TRANSPORT;
-    // sad_node->protocol_parameters = IPPROTO_ESP;
-    sad_node->protocol_parameters = 50;
+    sad_node->ipsec_mode = IPSEC_MODE_TUNNEL;
+    sad_node->protocol_parameters = IPPROTO_ESP;
+    // sad_node->protocol_parameters = 50;
     // Algorithms configuration (Some random values)
     sad_node->integrity_alg = SADB_AALG_SHA1HMAC;
     // example input hex string
@@ -100,6 +100,7 @@ fill_test_sad(sad_entry_node *sad_node) {
     sad_node->encryption_key = key;
     sad_node->integrity_key = key;
 	sad_node->encryption_iv = key;
+    sad_node->encryption_key_length = strlen(key);
 
     // TODO understand what those values do
     sad_node->bypass_dscp = false;
@@ -176,9 +177,25 @@ fill_test_spd(spd_entry_node *spd_node) {
     spd_node->tfc_pad = false;
 }
 
+void *
+custom_malloc(size_t size) {
+    void *p;
+    p = malloc(size);
+    printf("Alloc POINTER = %p\n", p);
+    return p;
+}
+
+void
+custom_free(void *p) {
+    printf("Free POINTER = %p\n", p);
+    free(p);
+    return;
+}
+
 int 
 main(int argc, char **argv) {
 
+    // json_set_allocation_functions(custom_malloc, custom_free);
     // TODO add test with spd 
     if ( geteuid() != 0 ) {
             fprintf ( stderr, "Must be root in order to execute cfgipsec2. You are UID=%u, EUID=%u\n", getuid(), geteuid() );
@@ -243,60 +260,93 @@ main(int argc, char **argv) {
     struct sad_entry_node *sad_node = create_sad_node();
     sad_entry_node *rec_sad = (sad_entry_node *)malloc(sizeof(sad_entry_node));
     fill_test_sad(sad_node);
-
-    printf("\nAdding trusted sad entry...\n");
+    printf("INPUT SAD NODE before add_trusted_sad_entry:\n");
+    printf("local subnet = %s\n", sad_node->local_subnet);
+    printf("encryption key = %s\n", sad_node->encryption_key);
     add_trusted_sad_entry(rec_sad, sad_node);
-    printf("PF_ADDSAD");
+    // after add_trusted_sad_entry() is called, the "encryption key" field of the sad is empty
+    printf("INPUT SAD NODE after add_trusted_sad_entry:\n");
+    printf("local subnet = %s\n", sad_node->local_subnet);
+    printf("encryption key = %s\n", sad_node->encryption_key);
+    printf("integrity key = %s\n", sad_node->integrity_key);
+    printf("ipsec_mode = %d\n", sad_node->ipsec_mode);
+    printf("\nAdding trusted sad entry...\n");
     pf_addsad(sad_node);
     
-    printf("\nDump sads.\n");
-    
+    printf("INPUT SAD NODE after pf_addsad:\n");
+    printf("local subnet = %s\n", sad_node->local_subnet);
+    printf("encryption key = %s\n", sad_node->encryption_key);
     pf_dump_sads(sad_node);
-    printf("Delete trusted sad entry\n");
-    
-    sad_entry_node *sad_out_node = create_sad_node();
+    // sad_entry_node *sad_out_node = create_sad_node();
     if(pf_getsad(sad_node, rec_sad) !=0) {
         ERR("An error has ocurred");
     }
-    
+    printf("OUTPUT SAD NODE (after pf_getsad):\n");
+    printf("local subnet = %s\n", rec_sad->local_subnet);
+    printf("encryption key = %s\n", rec_sad->encryption_key);
+
+    printf("Verify sad node.\n");
+    // verify_sad_nodes(); // this function needs sysrepo connection
+    char verify_response[32];
+    int verification = verify_trusted_sad_entry(verify_response, rec_sad);
+
+    switch (verification)
+			{
+			case 1:
+				// Socket error 
+				break;
+			case 2:
+				ERR("ALERT with %s", verify_response);
+				ERR("Invalid verification of %s: SPI %d\tREQID: %d",rec_sad->name,rec_sad->spi,rec_sad->req_id);
+				break;
+			case 3:
+				ERR("INVALID ANSWER!");
+				break;
+			default:
+				INFO("Correct verification of %s: SPI %d\t REQID: %d",rec_sad->name,rec_sad->spi,rec_sad->req_id);
+				break;
+			}
+
+
+    printf("Delete trusted sad entry\n");
     del_trusted_sad_entry(rec_sad->name);
     
-    printf("\n\nTesting pf_delsad function.\n\n");
     pf_delsad(rec_sad);
     
 
 
-    printf("SPD TEST.\n");
+    // printf("SPD TEST.\n");
 
-    struct spd_entry_node *spd_node = create_spd_node();
-    fill_test_spd(spd_node);
+    // struct spd_entry_node *spd_node = create_spd_node();
+    // fill_test_spd(spd_node);
 
-    spd_entry_node *rec_spd = (spd_entry_node*) malloc(sizeof(spd_entry_node)); 
-    /******************************************************************/
-    printf("\nAdding trusted spd entry...\n");
+    // spd_entry_node *rec_spd = (spd_entry_node*) malloc(sizeof(spd_entry_node)); 
+    // /******************************************************************/
+    // printf("\nAdding trusted spd entry...\n");
     
-    add_trusted_spd_entry(rec_spd,spd_node);
+    // add_trusted_spd_entry(rec_spd,spd_node);
     
-    pf_addpolicy(spd_node);
+    // pf_addpolicy(spd_node);
 
-    /*****************************************************************/
-    printf("\nDump policies.\n");
+    // /*****************************************************************/
+    // printf("\nDump policies.\n");
     
-    pf_dump_policies();
-    // verify_spd_nodes();
+    // pf_dump_policies();
+    // // printf("Verify policy nodes.\n");
+    // // verify_spd_nodes();
 
+    // // /****************************************************************/
+    
+    // // TODO: fix this
+    // // if(pf_getpolicy(spd_node, rec_spd) !=0) {
+    // //     ERR("An error has ocurred");
+    // // }
+    
+    // printf("Delete trusted spd entry\n");
+    // del_trusted_spd_entry(rec_spd->name);
+    
+    // pf_delpolicy(rec_spd);
     // /****************************************************************/
-    
-    // TODO: fix this
-    // if(pf_getpolicy(spd_node, rec_spd) !=0) {
-    //     ERR("An error has ocurred");
-    // }
-    
-    printf("Delete trusted spd entry\n");
-    del_trusted_spd_entry(rec_spd->name);
-    
-    pf_delpolicy(rec_spd);
-    /****************************************************************/
 
     
     printf("Application exit requested, exiting.\n");

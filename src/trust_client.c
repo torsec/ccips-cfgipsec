@@ -47,7 +47,10 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     message->sad_entry =  old_sad;
     JSON_Value *new_conf_msg = encode_sad_entry_msg(message);
+
     char *serialized_msg = encode_default_msg(10,NEW_CONFIG_MSG,new_conf_msg);
+    // printf("Serialized message:\n%s\n", serialized_msg);
+
     int result = 1;
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
@@ -55,6 +58,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
         free(serialized_msg);
         return result;
     }
+    INFO("NEW SAD ENC KEY = %s", new_sad->encryption_key);
 
     char buffer2[2048] = {0};
     if (recv(ENARX_SOCKET, buffer2, 2048, 0) < 0) {
@@ -63,6 +67,8 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
         free(serialized_msg);
         return result;
     }
+    INFO("After receiving the server output, the old_sad no longer has sensitive data such as enc key");
+    INFO("OLD SAD ENC KEY = %s", old_sad->encryption_key);
 
     
     default_msg *msg = malloc(sizeof(default_msg));
@@ -86,6 +92,8 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
             }
             // new_sad = entry_msg->sad_entry;
             memcpy(new_sad,entry_msg->sad_entry,sizeof(sad_entry_node));
+            INFO("NEW SAD ENC KEY = %s", new_sad->encryption_key);
+
             break;
         }
         case OP_RESULT_MSG: {
@@ -117,10 +125,12 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
 }
 
 int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
+    INFO("VERIFY TRUSTED SAD ENTRY");
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     message->sad_entry =  sad_node;
     JSON_Value *verify_entry = encode_sad_entry_msg(message);
     char *serialized_msg = encode_default_msg(10,REQUEST_VERIFY_MSG,verify_entry);
+    // printf("Serialized message:\n%s\n\n", serialized_msg);
     int result = 1;
 
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {

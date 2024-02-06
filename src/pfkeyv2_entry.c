@@ -519,8 +519,7 @@ int pf_addsad(sad_entry_node *sad_node) {
     int len;
     int mypid;
     int rc = SR_ERR_OK;
-
-    s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
+     s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
     mypid = getpid();
     //http://www.cs.fsu.edu/~baker/devices/lxr/source/2.6.31.13/linux/net/key/af_key.c 
     // Build and write SADB_ADD request 
@@ -646,10 +645,12 @@ int pf_addsad(sad_entry_node *sad_node) {
                 keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_GCM_ICV16_KEY_BITS/8) + 7) / 8;
                 keyext->sadb_key_bits = EAL_AES_GCM_ICV16_KEY_BITS;
             }
-            // INFO("-----------Key length %d",keyext->sadb_key_len); 
+            INFO("-----------Key length %d",keyext->sadb_key_len); 
             memcpy(keyext + 1, sad_node->encryption_key, strlen(sad_node->encryption_key));
+            INFO("-----------Key ext %d",keyext->sadb_key_len); 
             len += keyext->sadb_key_len * 8;
             p += keyext->sadb_key_len * 8;
+
     }
 
     // TODO support more algorithms
@@ -743,8 +744,8 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node) {
     int rc = SR_ERR_OK;
     char buf[4096], *p;
     struct sadb_sa *saext;
-    // struct sadb_key *keyext;
-    // struct sadb_address *addrext;
+    struct sadb_key *keyext;
+    struct sadb_address *addrext;
     int mypid;
 
     s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
@@ -775,6 +776,7 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node) {
         int dst_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, 32, sad_node->dstport, sad_node->tunnel_remote);
         len += dst_len; p += dst_len;
     } else {
+        INFO("IPSEC MODE TRANSPORT");
         int src_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, get_mask(sad_node->local_subnet), sad_node->srcport, get_ip(sad_node->local_subnet));
         p += src_len; len += src_len;    
         int dst_len = pf_setsadbaddr(p,SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, get_mask(sad_node->remote_subnet), sad_node->dstport, get_ip(sad_node->remote_subnet));
@@ -822,14 +824,14 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node) {
             case SADB_EXT_KEY_ENCRYPT:{
                 TRACE("Parsing ENC KEY");
                 struct  sadb_key *keyext = (struct sadb_key *) ext;
-                // out_node->encryption_key = malloc(keyext->sadb_key_bits / 8);
+                out_node->encryption_key = malloc(keyext->sadb_key_bits / 8);
                 memcpy(out_node->encryption_key, (char *) (keyext + 1), keyext->sadb_key_bits / 8);
                 break;
             }
             case SADB_EXT_KEY_AUTH: {
                 TRACE("Parsing INT KEY");
                 struct  sadb_key *keyext = (struct sadb_key *) ext;
-                // out_node->integrity_key = malloc(keyext->sadb_key_bits / 8);
+                out_node->integrity_key = malloc(keyext->sadb_key_bits / 8);
                 memcpy(out_node->integrity_key, (char *) (keyext + 1), keyext->sadb_key_bits / 8);
                 break;
             }
@@ -923,6 +925,8 @@ int pf_dump_sads(sad_entry_node *sad_node) {
     int type = SADB_SATYPE_UNSPEC;
 
     s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
+
+    INFO("PF_DUMP_SADS");
     
       // Build and write SADB_DUMP request 
     bzero(&msg, sizeof (msg));
