@@ -271,7 +271,7 @@ main(int argc, char **argv) {
     printf("integrity key = %s\n", sad_node->integrity_key);
     printf("ipsec_mode = %d\n", sad_node->ipsec_mode);
     printf("\nAdding trusted sad entry...\n");
-    pf_addsad(sad_node);
+    pf_addsad(rec_sad);
     
     printf("INPUT SAD NODE after pf_addsad:\n");
     printf("local subnet = %s\n", sad_node->local_subnet);
