@@ -926,7 +926,7 @@ int pf_dump_sads(sad_entry_node *sad_node) {
 
     s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
 
-    INFO("PF_DUMP_SADS");
+    // INFO("PF_DUMP_SADS");
     
       // Build and write SADB_DUMP request 
     bzero(&msg, sizeof (msg));

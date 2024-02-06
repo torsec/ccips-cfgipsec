@@ -47,7 +47,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     message->sad_entry =  old_sad;
     JSON_Value *new_conf_msg = encode_sad_entry_msg(message);
-    INFO("OLD SAD ENC KEY = %s\nPOINTER = %p", old_sad->encryption_key, old_sad->encryption_key);
+    // INFO("OLD SAD ENC KEY = %s\nPOINTER = %p", old_sad->encryption_key, old_sad->encryption_key);
     char *serialized_msg = encode_default_msg(10,NEW_CONFIG_MSG,new_conf_msg);
 
     // printf("Serialized message after encode_default (add_sad):\n%s\n", serialized_msg);
@@ -59,7 +59,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
         free(serialized_msg);
         return result;
     }
-    INFO("NEW SAD ENC KEY = %s\nPOINTER = %p", new_sad->encryption_key, new_sad->encryption_key);
+    // INFO("NEW SAD ENC KEY = %s\nPOINTER = %p", new_sad->encryption_key, new_sad->encryption_key);
 
 
     char buffer2[2048] = {0};
@@ -70,7 +70,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
         return result;
     }
     INFO("After receiving the server output, the old_sad no longer has sensitive data such as enc key");
-    INFO("OLD SAD ENC KEY = %s\nPOINTER = %p", old_sad->encryption_key, old_sad->encryption_key);
+    // INFO("OLD SAD ENC KEY = %s\nPOINTER = %p", old_sad->encryption_key, old_sad->encryption_key);
 
     
     default_msg *msg = malloc(sizeof(default_msg));
@@ -94,7 +94,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
             }
             // new_sad = entry_msg->sad_entry;
             memcpy(new_sad,entry_msg->sad_entry,sizeof(sad_entry_node));
-            INFO("NEW SAD ENC KEY = %s\nPOINTER = %p", new_sad->encryption_key, new_sad->encryption_key);
+            // INFO("NEW SAD ENC KEY = %s\nPOINTER = %p", new_sad->encryption_key, new_sad->encryption_key);
 
             break;
         }
@@ -127,7 +127,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
 }
 
 int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
-    INFO("VERIFY TRUSTED SAD ENTRY");
+    // INFO("VERIFY TRUSTED SAD ENTRY");
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     message->sad_entry =  sad_node;
     JSON_Value *verify_entry = encode_sad_entry_msg(message);
