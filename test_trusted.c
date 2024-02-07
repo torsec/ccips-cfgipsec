@@ -103,7 +103,8 @@ main(int argc, char **argv) {
     }
 #endif
     connect_ta();
-    test_sad();
+    // test_sad();
+    test_spd();
     printf("Application exit requested, exiting.\n");
     exit(0);
 

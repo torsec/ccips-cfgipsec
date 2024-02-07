@@ -62,7 +62,7 @@ fill_test_spd(spd_entry_node *spd_node) {
     spd_node->srcport = 0;
     spd_node->dstport = 0;
     // IPsec mode, we are running this as a tunnel, we setup protocol_params as ESP
-    spd_node->ipsec_mode = IPSEC_MODE_TRANSPORT;
+    spd_node->ipsec_mode = IPSEC_MODE_TUNNEL;
     // spd_node->protocol_parameters = IPPROTO_ESP;
     spd_node->protocol_parameters = 50;
     // Algorithms configuration (Some random values)
@@ -79,38 +79,65 @@ fill_test_spd(spd_entry_node *spd_node) {
 void 
 test_spd() {
 
-    printf("SPD TEST.\n");
+    printf("------------------------------------------\n");
+    printf("\n\t\tSPD TEST\n");
+    printf("------------------------------------------\n");
+    sleep(1);
+    printf("TEST 1: Add trusted spd entry.\n");
 
     struct spd_entry_node *spd_node = create_spd_node();
+    printf("\tFirst step: create spd node data structure to send (assuming it has been already received by sysrepo)\n");
     fill_test_spd(spd_node);
 
     spd_entry_node *rec_spd = (spd_entry_node*) malloc(sizeof(spd_entry_node)); 
     /******************************************************************/
     sleep(2);
-    printf("\nAdding trusted spd entry...\n");
-    
+    printf("\tSecond step: call add_trusted_spd_entry function to send the new spd entry to the trusted part.\n");
     add_trusted_spd_entry(rec_spd,spd_node);
-    
-    pf_addpolicy(spd_node);
+    printf("\tThird step: call pf_addpolicy function to install the new spd entry in the untrusted kernel through PFKEY API.\n");
+
+    pf_addpolicy(rec_spd);
     sleep(2);
     /*****************************************************************/
-    printf("\nDump policies.\n");
     
     pf_dump_policies();
     sleep(2);
-    printf("Verify policy nodes.\n");
-    // verify_spd_nodes();
-
-    // /****************************************************************/
-    
-    // TODO: fix this
+    printf("\n\nTEST 2: Verify spd node.\n");
+    printf("\tFirst step: retrieve the spd entry from the untrusted kernel through pf_getpolicy function.\n");
     if(pf_getpolicy(spd_node, rec_spd) !=0) {
         ERR("An error has ocurred");
     }
-    sleep(2);
-    printf("Delete trusted spd entry\n");
-    del_trusted_spd_entry(rec_spd->name);
+    char verify_response[32];
+    sleep(1);
+    printf("\tSecond step: call the function verify_trusted_spd_entry.\n");
+    int verification = verify_trusted_spd_entry(verify_response, rec_spd);
+    switch (verification)
+			{
+			case 1:
+				// Socket error 
+				break;
+			case 2:
+				ERR("ALERT with %s", verify_response);
+				ERR("Invalid verification of %s: \tREQID: %d",rec_spd->name,rec_spd->req_id);
+				break;
+			case 3:
+				ERR("INVALID ANSWER!");
+				break;
+			default:
+				printf("\tCorrect verification of %s: \t REQID: %d\n",rec_spd->name,rec_spd->req_id);
+				break;
+			}
+    // /****************************************************************/
     
+    // TODO: fix this
+    sleep(2);
+    printf("\n\nTEST 3: Delete trusted spd entry\n");
+    printf("\tFirst step: retrieve from untrusted kernel the spd we want to delete.\n");
+    printf("\tSecond step: call del_trusted_spd_entry to delete the spd from the trusted database.\n");
+    del_trusted_spd_entry(rec_spd->name);
+    sleep(1);
+    printf("\tThird step: remove the spd from the untrusted kernel through pf_delpolicy function.\n");
+
     pf_delpolicy(rec_spd);
     // /****************************************************************/
 

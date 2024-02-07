@@ -237,6 +237,7 @@ get_sadb_msg_type(int type) {
 	case SADB_UPDATE:	return "Update";
 	case SADB_ADD:		return "Add";
 	case SADB_X_SPDADD: return "SADB_X_SPADD";
+	case SADB_X_SPDGET:	return "SADB_X_SPDGET";
 	case SADB_DELETE:	return "Delete";
 	case SADB_GET:		return "Get";
 	case SADB_ACQUIRE:	return "Acquire";
