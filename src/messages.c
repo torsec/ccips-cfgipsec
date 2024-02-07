@@ -16,7 +16,9 @@ char *encode_default_msg(int work_id, int code, JSON_Value *data) {
     json_object_set_number(root_object, "work_id", work_id);
     json_object_set_number(root_object, "code", code);
     json_object_set_value(root_object, "data", data);
-    return json_serialize_to_string_pretty(root_value);
+    char * res = json_serialize_to_string_pretty(root_value);
+    json_value_free(root_value); // even 'data' is deallocated
+    return res;
 }
 
 

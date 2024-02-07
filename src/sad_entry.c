@@ -74,6 +74,50 @@ void free_sad_node(sad_entry_node * n) {
     } 
 }
 
+void copy_sad_node(sad_entry_node *dst, sad_entry_node *src) {
+	strcpy(dst->name, src->name);
+	dst->req_id = src->req_id;
+	dst->spi = src->spi;
+	dst->ext_seq_num = src->ext_seq_num;
+	dst->seq_overflow = src->seq_overflow;
+	dst->seq_number_counter = src->seq_number_counter;
+	dst->anti_replay_window = src->anti_replay_window;
+	strcpy(dst->local_subnet, src->local_subnet);
+	strcpy(dst->remote_subnet, src->remote_subnet);
+	strcpy(dst->tunnel_local, src->tunnel_local);
+	strcpy(dst->tunnel_remote, src->tunnel_remote);
+	dst->inner_protocol = src->inner_protocol;
+	dst->srcport = src->srcport;
+	dst->dstport = src->dstport;
+	dst->ipsec_mode = src->ipsec_mode;
+	dst->protocol_parameters = src->protocol_parameters;
+	dst->integrity_alg = src->integrity_alg;
+	dst->encryption_alg = src->encryption_alg;
+	strcpy(dst->encryption_key, src->encryption_key);
+	strcpy(dst->integrity_key, src->integrity_key);
+	strcpy(dst->encryption_iv, src->encryption_iv);
+	dst->bypass_dscp = src->bypass_dscp;
+	dst->ecn = src->ecn;
+	dst->tfc_pad = src->tfc_pad;
+	dst->df_bit = src->df_bit;
+	dst->lft_bytes_hard = src->lft_bytes_hard;
+	dst->lft_bytes_soft = src->lft_bytes_soft;
+	dst->lft_bytes_current = src->lft_bytes_current;
+	dst->lft_packets_hard = src->lft_packets_hard;
+	dst->lft_packets_soft = src->lft_packets_soft;
+	dst->lft_packets_current = src->lft_packets_current;
+	dst->lft_time_hard = src->lft_time_hard;
+	dst->lft_time_soft = src->lft_time_soft;
+	dst->lft_time_current = src->lft_time_current;
+	dst->lft_idle_hard = src->lft_idle_hard;
+	dst->lft_idle_soft = src->lft_idle_soft;
+	dst->lft_idle_current = src->lft_idle_current;
+
+	dst->next = src->next; // should be copied?
+
+	return;
+}
+
 
 #ifdef Trusted
 

@@ -55,6 +55,38 @@ void free_spd_node(spd_entry_node * n) {
     } 
 }
 
+void copy_spd_node(spd_entry_node *dst, spd_entry_node *src) {
+    strcpy(dst->name, src->name);
+    dst->index = src->index;
+    dst->policy_dir = src->policy_dir;
+    dst->req_id = src->req_id;
+    strcpy(dst->local_subnet, src->local_subnet);
+    strcpy(dst->remote_subnet, src->remote_subnet);
+    strcpy(dst->tunnel_local, src->tunnel_local);
+    strcpy(dst->tunnel_remote, src->tunnel_remote);
+    dst->inner_protocol = src->inner_protocol;
+    dst->srcport = src->srcport;
+    dst->dstport = src->dstport;
+    dst->action = src->action;
+    dst->ext_seq_num = src->ext_seq_num;
+    dst->seq_overflow = src->seq_overflow;
+    dst->ipsec_mode = src->ipsec_mode;
+    dst->protocol_parameters = src->protocol_parameters;
+    dst->integrity_alg = src->integrity_alg;
+    dst->encryption_alg = src->encryption_alg;
+    dst->anti_replay_window = src->anti_replay_window;
+    dst->pfp_flag = src->pfp_flag;
+    dst->stateful_frag_check = src->stateful_frag_check;
+    dst->bypass_dscp = src->bypass_dscp;
+    dst->ecn = src->ecn;
+    dst->tfc_pad = src->tfc_pad;
+    dst->df_bit = src->df_bit;
+
+    dst->next = src->next; // should be copied?
+
+    return;
+}
+
 #ifdef Trusted
 
 // https://github.com/kgabis/parson

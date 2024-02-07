@@ -56,7 +56,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
         free(message);
-        free(serialized_msg);
+        json_free_serialized_string(serialized_msg);
         return result;
     }
     // INFO("NEW SAD ENC KEY = %s\nPOINTER = %p", new_sad->encryption_key, new_sad->encryption_key);
@@ -66,7 +66,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
     if (recv(ENARX_SOCKET, buffer2, 2048, 0) < 0) {
         ERR("Couldnt receive any information from the server");
         free(message);
-        free(serialized_msg);
+        json_free_serialized_string(serialized_msg);
         return result;
     }
     INFO("After receiving the server output, the old_sad no longer has sensitive data such as enc key");
@@ -74,7 +74,8 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
 
     
     default_msg *msg = malloc(sizeof(default_msg));
-    JSON_Object *schema = json_object(json_parse_string(buffer2));
+    JSON_Value *parsed_resp = json_parse_string(buffer2);
+    JSON_Object *schema = json_object(parsed_resp);
     if (schema == NULL) {
         result = 1;
         goto cleanup;
@@ -85,22 +86,22 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
         goto cleanup;
     }
 
-    sad_entry_msg *entry_msg = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     switch (msg->code) {
         case INSERT_ENTRY_MSG: {
             sad_entry_msg *entry_msg = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
             if ((result = decode_sad_entry_msg(msg->data,entry_msg)), result != 0) {
+                free(entry_msg);
                 goto cleanup;
             }
-            // new_sad = entry_msg->sad_entry;
-            memcpy(new_sad,entry_msg->sad_entry,sizeof(sad_entry_node));
-            // INFO("NEW SAD ENC KEY = %s\nPOINTER = %p", new_sad->encryption_key, new_sad->encryption_key);
-
+            copy_sad_node(new_sad, entry_msg->sad_entry);
+            free_sad_node(entry_msg->sad_entry);
+            free(entry_msg);
             break;
         }
         case OP_RESULT_MSG: {
             op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result_msg)); 
             if (decode_op_result_msg(msg->data, op_result) != 0) {
+                free(op_result);
                 goto cleanup;
             }
             if (op_result->success != 0) {
@@ -108,6 +109,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
                 free(op_result);
                 goto cleanup;
             }
+            free(op_result);
             break;
         }
         default: {
@@ -119,10 +121,8 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
     cleanup:
         free(message);
         free(msg);
-        free(serialized_msg);
-        json_object_clear(schema);
-        free(schema);
-        json_value_free(new_conf_msg);
+        json_free_serialized_string(serialized_msg);
+        json_value_free(parsed_resp);
         return result;
 }
 
@@ -137,17 +137,18 @@ int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
 
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
-        goto cleanup;
+        goto cleanup; // some variables may not be declared
     }
 
     char buffer2[2048] = {0};
     if (recv(ENARX_SOCKET, buffer2, 2048, 0) < 0) {
         ERR("Couldnt receive any information from the server");
-        goto cleanup;
+        goto cleanup; // some variables may not be declared
     }
 
     default_msg *msg = malloc(sizeof(default_msg));
-    JSON_Object *schema = json_object(json_parse_string(buffer2));
+    JSON_Value *parsed_resp = json_parse_string(buffer2);
+    JSON_Object *schema = json_object(parsed_resp);
     if (schema == NULL) {
         result = 1;
         goto cleanup;
@@ -165,12 +166,14 @@ int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
                 strcpy(alert, alert_msg->message);
                 result = 2;
             }
+            free(alert_msg->entry_id);
             free(alert_msg);
             goto cleanup;
         }
         case OP_RESULT_MSG: {
             op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result_msg)); 
             if (decode_op_result_msg(msg->data, op_result) != 0) {
+                free(op_result);
                 goto cleanup;
             }
             if (op_result->success != 0) {
@@ -180,8 +183,9 @@ int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
                 result = 3;
                 goto cleanup;
             }
-            break;
+            free(op_result);
             DBG("Verification successful");
+            break;
         }
         default: {
             ERR("Message type not found");
@@ -194,10 +198,8 @@ int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
     cleanup:
         free(message);
         free(msg);
-        free(serialized_msg);
-        json_object_clear(schema);
-        free(schema);
-        json_value_free(verify_entry);
+        json_free_serialized_string(serialized_msg);
+        json_value_free(parsed_resp);
         return result;
 }
 
@@ -211,25 +213,26 @@ int del_trusted_sad_entry(char *sad_name) {
 
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
+        free(message->entry_id);
         free(message);
-        free(serialized_msg);
-        json_value_free(delete_msg);
+        json_free_serialized_string(serialized_msg);
         return result;
     }
 
     char bufferAnswer[1024] = {0};
     if (recv(ENARX_SOCKET, bufferAnswer, 1024, 0) < 0) {
         ERR("Couldnt receive any information from the server");
+        free(message->entry_id);
         free(message);
-        free(serialized_msg);
-        json_value_free(delete_msg);
+        json_free_serialized_string(serialized_msg);
         return result;
     }
 
 
 
     default_msg *msg = malloc(sizeof(default_msg));
-    JSON_Object *schema = json_object(json_parse_string(bufferAnswer));
+    JSON_Value *parsed_resp = json_parse_string(bufferAnswer);
+    JSON_Object *schema = json_object(parsed_resp);
     op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result_msg));
     if (schema == NULL) {
         result = 1;
@@ -254,19 +257,17 @@ int del_trusted_sad_entry(char *sad_name) {
 
     if (op_result->success != 0) {
         ERR("Error when deleting the sad entry %s : %s\n",message->entry_id, op_result->message);
-        // free(op_result);
         goto cleanup;
     }
 
     result = 0;
     cleanup:
+        free(message->entry_id);
         free(message);
         free(msg);
         free(op_result);
-        free(serialized_msg);
-        json_object_clear(schema);
-        free(schema);
-        // free(delete_msg);
+        json_free_serialized_string(serialized_msg);
+        json_value_free(parsed_resp);
         return result;
 }
 
@@ -279,19 +280,20 @@ int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd) {
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
         free(message);
-        free(serialized_msg);
+        json_free_serialized_string(serialized_msg);
         return result;
     }
     char buffer2[2048] = {0};
     if (recv(ENARX_SOCKET, buffer2, 2048, 0) < 0) {
         ERR("Couldnt receive any information from the server");
         free(message);
-        free(serialized_msg);
+        json_free_serialized_string(serialized_msg);
         return result;
     }
 
     default_msg *msg = malloc(sizeof(default_msg));
-    JSON_Object *schema = json_object(json_parse_string(buffer2));
+    JSON_Value *parsed_resp = json_parse_string(buffer2);
+    JSON_Object *schema = json_object(parsed_resp);
     if (schema == NULL) {
         result = 1;
         goto cleanup;
@@ -301,19 +303,23 @@ int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd) {
         // TODO handle error of decode_default
         goto cleanup;
     }
-    spd_entry_msg *entry_msg = (spd_entry_msg*) malloc(sizeof(spd_entry_msg)); 
+ 
     switch (msg->code) {
         case INSERT_SPD_ENTRY_MSG: {
             spd_entry_msg *entry_msg = (spd_entry_msg*) malloc(sizeof(spd_entry_msg)); 
             if ((result = decode_spd_entry_msg(msg->data,entry_msg)), result != 0) {
+                free(entry_msg);
                 goto cleanup;
             }
-            memcpy(new_spd,entry_msg->spd_entry,sizeof(spd_entry_node));
+            copy_spd_node(new_spd, entry_msg->spd_entry);
+            free_spd_node(entry_msg->spd_entry);
+            free(entry_msg);
             break;
         }
         case OP_RESULT_MSG: {
             op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result_msg)); 
             if (decode_op_result_msg(msg->data, op_result) != 0) {
+                free(op_result);
                 goto cleanup;
             }
             if (op_result->success != 0) {
@@ -321,6 +327,7 @@ int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd) {
                 free(op_result);
                 goto cleanup;
             }
+            free(op_result);
             break;
         }
         default: {
@@ -332,10 +339,8 @@ int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd) {
     cleanup:
         free(message);
         free(msg);
-        free(serialized_msg);
-        json_object_clear(schema);
-        free(schema);
-        json_value_free(new_spd_conf_msg);
+        json_free_serialized_string(serialized_msg);
+        json_value_free(parsed_resp);
         return result;
 }
 
@@ -348,17 +353,18 @@ int verify_trusted_spd_entry(char *alert, spd_entry_node *spd_node) {
 
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
-        goto cleanup;
+        goto cleanup; // some variables may not be declared
     }
 
     char buffer2[2048] = {0};
     if (recv(ENARX_SOCKET, buffer2, 2048, 0) < 0) {
         ERR("Couldnt receive any information from the server");
-        goto cleanup;
+        goto cleanup; // some variables may not be declared
     }
 
     default_msg *msg = malloc(sizeof(default_msg));
-    JSON_Object *schema = json_object(json_parse_string(buffer2));
+    JSON_Value *parsed_resp = json_parse_string(buffer2);
+    JSON_Object *schema = json_object(parsed_resp);
     if (schema == NULL) {
         result = 1;
         goto cleanup;
@@ -376,12 +382,14 @@ int verify_trusted_spd_entry(char *alert, spd_entry_node *spd_node) {
                 strcpy(alert, alert_msg->message);
                 result = 2;
             }
+            free(alert_msg->entry_id);
             free(alert_msg);
             goto cleanup;
         }
         case OP_RESULT_MSG: {
             op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result_msg)); 
             if (decode_op_result_msg(msg->data, op_result) != 0) {
+                free(op_result);
                 goto cleanup;
             }
             if (op_result->success != 0) {
@@ -391,8 +399,9 @@ int verify_trusted_spd_entry(char *alert, spd_entry_node *spd_node) {
                 result = 3;
                 goto cleanup;
             }
-            break;
+            free(op_result);
             DBG("Verification successful");
+            break;
         }
         default: {
             ERR("Message type not found");
@@ -405,10 +414,8 @@ int verify_trusted_spd_entry(char *alert, spd_entry_node *spd_node) {
     cleanup:
         free(message);
         free(msg);
-        free(serialized_msg);
-        json_object_clear(schema);
-        free(schema);
-        json_value_free(verify_entry);
+        json_free_serialized_string(serialized_msg);
+        json_value_free(parsed_resp);
         return result;
 }
 
@@ -423,25 +430,26 @@ int del_trusted_spd_entry(char *spd_name) {
 
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
+        free(message->entry_id);
         free(message);
-        free(serialized_msg);
-        json_value_free(delete_msg);
+        json_free_serialized_string(serialized_msg);
         return result;
     }
 
     char bufferAnswer[1024] = {0};
     if (recv(ENARX_SOCKET, bufferAnswer, 1024, 0) < 0) {
         ERR("Couldnt receive any information from the server");
+        free(message->entry_id);
         free(message);
-        free(serialized_msg);
-        json_value_free(delete_msg);
+        json_free_serialized_string(serialized_msg);
         return result;
     }
 
 
 
     default_msg *msg = malloc(sizeof(default_msg));
-    JSON_Object *schema = json_object(json_parse_string(bufferAnswer));
+    JSON_Value *parsed_resp = json_parse_string(bufferAnswer);
+    JSON_Object *schema = json_object(parsed_resp);
     op_result_msg *op_result = (op_result_msg*) malloc(sizeof(op_result_msg));
     if (schema == NULL) {
         result = 1;
@@ -466,18 +474,16 @@ int del_trusted_spd_entry(char *spd_name) {
 
     if (op_result->success != 0) {
         ERR("Error when deleting the spd entry %s : %s\n",message->entry_id, op_result->message);
-        // free(op_result);
         goto cleanup;
     }
 
     result = 0;
     cleanup:
+        free(message->entry_id);
         free(message);
         free(msg);
         free(op_result);
-        free(serialized_msg);
-        json_object_clear(schema);
-        free(schema);
-        // free(delete_msg);
+        json_free_serialized_string(serialized_msg);
+        json_value_free(parsed_resp);
         return result;
 }

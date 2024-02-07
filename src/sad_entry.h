@@ -62,6 +62,11 @@ sad_entry_node* create_sad_node();
 /// @return void
 void free_sad_node(sad_entry_node * n); 
 
+/// @brief copy a sad_entry_node
+/// @param dst input sad_node where values are copied into
+/// @param src input sad_node to be copied
+/// @return void
+void copy_sad_node(sad_entry_node *dst, sad_entry_node *src);
 
 #ifdef Trusted
 /// @brief serialize a sad_node into a JSON_VALUE
