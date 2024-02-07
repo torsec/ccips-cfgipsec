@@ -40,6 +40,6 @@ int verify_trusted_sad_entry(char *alert_msg, sad_entry_node *sad_node);
 
 
 int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd);
-verify_trusted_spd_entry(char *alert, spd_entry_node *spd_node);
+int verify_trusted_spd_entry(char *alert, spd_entry_node *spd_node);
 int del_trusted_spd_entry(char *spd_name);
 #endif

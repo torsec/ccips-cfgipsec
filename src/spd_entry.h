@@ -71,6 +71,12 @@ spd_entry_node* create_spd_node();
 /// @return void
 void free_spd_node(spd_entry_node * n); 
 
+/// @brief copy a spd_entry_node
+/// @param dst input spd_node where values are copied into
+/// @param src input spd_node to be copied
+/// @return void
+void copy_spd_node(spd_entry_node *dst, spd_entry_node *src);
+
 // void print_spd_node(spd_entry_node *spd);
 
 #ifdef Trusted

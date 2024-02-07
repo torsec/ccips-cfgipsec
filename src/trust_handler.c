@@ -10,13 +10,15 @@ spd_entry_node *trusted_init_spd_node = NULL;
 extern char *handle_message(char *data) {
     default_msg *msg = malloc(sizeof(default_msg));
     int result = 0, code = 0;
-    JSON_Value *data_value;;
-    JSON_Object *schema = json_object(json_parse_string(data));
+    char *out_data;
+    JSON_Value *data_value;
+    JSON_Value *parsed_data = json_parse_string(data);
+    JSON_Object *schema = json_object(parsed_data);
     if (schema == NULL) {
         result = -1;
         code = -1;
         data_value = generate_op_message("WRONG JSON", -1);    
-        goto cleanup;
+        goto cleanup; // msg is not initialized
     }
 
     // TODO handle error of decode_default
@@ -30,7 +32,6 @@ extern char *handle_message(char *data) {
 
             // TODO: modify handle 
             if ((result = handle_new_conf_message(msg->data,entry_msg)), result != 0) {
-                free(entry_msg);
                 data_value = generate_op_message("newconf err",result);
                 code = OP_RESULT_MSG;
             } else {
@@ -38,6 +39,7 @@ extern char *handle_message(char *data) {
                 code = INSERT_ENTRY_MSG;
                 INFO("NEW CONFIG MANAGED SUCCESFUL");
             }
+            free(entry_msg);
 
             break;
         }
@@ -45,7 +47,6 @@ extern char *handle_message(char *data) {
             spd_entry_msg *entry_msg = (spd_entry_msg*) malloc(sizeof(spd_entry_msg));    
             // TODO: modify handle 
             if ((result = handle_new_SPD_conf_message(msg->data,entry_msg)), result != 0) {
-                free(entry_msg);
                 data_value = generate_op_message("newconf SPD err",result);
                 code = OP_SPD_RESULT_MSG;
             } else {
@@ -53,6 +54,7 @@ extern char *handle_message(char *data) {
                 code = INSERT_SPD_ENTRY_MSG;
                 INFO("NEW SPD CONFIG MANAGED SUCCESFULLY");
             }
+            free(entry_msg);
 
             break;
         }
@@ -75,6 +77,7 @@ extern char *handle_message(char *data) {
                 code = OP_RESULT_MSG;
             }
 
+            free(alert_msg->entry_id);
             free(alert_msg);
             break;
         }
@@ -111,9 +114,9 @@ extern char *handle_message(char *data) {
 
             data_value = encode_op_result_msg(op_msg);
             code = OP_RESULT_MSG;
-            // TODO revise this free, since sometimes we get some errors with wasm and the application crashes
+            // [updated, to check] TODO revise this free, since sometimes we get some errors with wasm and the application crashes
             // only when forcing the delete from the controller. When removing through the rekey phase it works without any issue
-            // free(op_msg);
+            free(op_msg);
             // INFO("FEE_OP_MSG");
             break;
         }
@@ -129,21 +132,18 @@ extern char *handle_message(char *data) {
 
             data_value = encode_op_result_msg(op_msg);
             code = OP_SPD_RESULT_MSG;
-            // TODO revise this free, since sometimes we get some errors with wasm and the application crashes
+            // [updated, to check] TODO revise this free, since sometimes we get some errors with wasm and the application crashes
             // only when forcing the delete from the controller. When removing through the rekey phase it works without any issue
             free(op_msg);
             // INFO("FEE_OP_MSG");
             break;
         }
     }
-    char *out_data;
+
 cleanup:
     out_data = encode_default_msg(msg->work_id,code,data_value);
-    // free(msg);
-    // return out_data;
-    // if (data_value != NULL) {
-    //     json_value_free(data_value);
-    // }
+    free(msg);
+    json_value_free(parsed_data);
     return out_data;
 }
 
@@ -158,13 +158,11 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
         status = 1;
         goto cleanup;
     }
-    sad_entry_node *entry = (sad_entry_node*) malloc(sizeof(sad_entry_node));
-    // Copy struct into another so we can free later the config value
-    memcpy(&entry, &config->sad_entry, sizeof(config->sad_entry));
+
+    // This may be optimized
+    sad_entry_node *entry = create_sad_node();
+    copy_sad_node(entry, config->sad_entry);
     INFO("entry->name = %s", entry->name);
-    // Just strcpy the auth and encryption key seems to be missing in RUST implementation after been added into the map
-    strcpy(entry->encryption_key,config->sad_entry->encryption_key);
-    strcpy(entry->integrity_key,config->sad_entry->integrity_key);
 
     // XOR the key parameters
     // TODO Add this part
@@ -173,6 +171,7 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     if (get_sad_node(&trusted_init_sad_node,entry->name) != NULL) {
         ERR("Error adding sad_entry, it already exists");
         status =  1;
+        free_sad_node(entry);
         goto cleanup;
     }
 
@@ -181,16 +180,18 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     if (add_sad_node(&trusted_init_sad_node,entry) != 0) {
         ERR("Error adding sad_entry, it already exists");
         status =  1;
+        free_sad_node(entry);
         goto cleanup;
     }
 
 
     // strcpy(out->entry_id,hash);
-    out->sad_entry = entry;
+    out->sad_entry = entry; // it's the same value stored in the trusted list
     INFO("Added SAD entry: HASH: %s \t SPI: %d \t REQID: %d",
     entry->name,entry->spi,entry->req_id);
 cleanup:
     // Free data
+    free_sad_node(config->sad_entry);
 	free(config);
     return status;
 }
@@ -205,18 +206,23 @@ int handle_new_SPD_conf_message(JSON_Object *data, spd_entry_msg *out) {
         status = 1;
         goto cleanup;
     }
-    spd_entry_node *entry = (spd_entry_node*) malloc(sizeof(spd_entry_node));
-    memcpy(&entry, &config->spd_entry, sizeof(config->spd_entry));
+
+    // This may be optimized
+    spd_entry_node *entry = create_spd_node();
+    copy_spd_node(entry, config->spd_entry);
     INFO("entry->name = %s", entry->name);
+
     if (get_spd_node(&trusted_init_spd_node, entry->name) != NULL) {
         ERR("Error adding spd_entry, it already exists");
         status =  1;
+        free_spd_node(entry);
         goto cleanup;
     }
 
     if (add_spd_node(&trusted_init_spd_node,entry) != 0) {
         ERR("Error adding spd_entry, it already exists");
         status =  1;
+        free_spd_node(entry);
         goto cleanup;
     }
 
@@ -225,6 +231,7 @@ int handle_new_SPD_conf_message(JSON_Object *data, spd_entry_msg *out) {
     INFO("Added SPD entry: HASH: %s \t REQID: %d", entry->name,entry->req_id);
 cleanup:
     // Free data
+    free_spd_node(config->spd_entry);
 	free(config);
     return status;
 }
@@ -256,10 +263,10 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
     }
     
     // Is the same entry?
-    if (compare_sad_entries(config->sad_entry,stored_entry) != 0) {
+    if (compare_sad_entries(received_entry, stored_entry) != 0) {
         // Generate out message
         strcpy(out->message, "entries differ");
-        strcpy(out->entry_id,config->sad_entry->name);
+        strcpy(out->entry_id, received_entry->name);
         status = 2;
         ERR("Entry could not be validated: Name: %s\tSPI: %d\tREQID: %d",stored_entry->name, stored_entry->spi,stored_entry->req_id);
         ERR("\n\tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
@@ -268,6 +275,7 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
         INFO("Entry validated: Name: %s\tSPI: %d\tREQID: %d",stored_entry->name, stored_entry->spi,stored_entry->req_id);
     }
 cleanup:
+    free_sad_node(config->sad_entry);
 	free(config);
     return status;
 }
@@ -319,6 +327,7 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out) {
     char message[16];
     // Decode the data of the message
     delete_config_msg *config = (delete_config_msg*) malloc(sizeof(delete_config_msg));
+    config->entry_id = (char *)malloc(sizeof(char) * MAX_PATH);
     if (decode_delete_config_msg(data, config) != 0) {
         ERR("Error decoding the data of the message");
         strcpy(message,"decoding\0");
@@ -341,6 +350,7 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out) {
     del_sad_node(&trusted_init_sad_node,config->entry_id);
 
 cleanup:
+    free(config->entry_id);
 	free(config);
     strcpy(out->message, message);
     out->success = status;
@@ -354,6 +364,7 @@ int handle_request_remove_SPD(JSON_Object *data, op_result_msg *out) {
     show_spd_list(trusted_init_spd_node);
     // Decode the data of the message
     delete_config_msg *config = (delete_config_msg*) malloc(sizeof(delete_config_msg));
+    config->entry_id = (char *)malloc(sizeof(char) * MAX_PATH);
     if (decode_delete_config_msg(data, config) != 0) {
         ERR("Error decoding the data of the SPD message");
         strcpy(message,"decoding\0");
@@ -375,6 +386,7 @@ int handle_request_remove_SPD(JSON_Object *data, op_result_msg *out) {
     INFO("Deleted SPD entry: Index: %s \t POLICY DIR: %d \t REQID: %d", config->entry_id, stored_entry->policy_dir, stored_entry->req_id);
 
 cleanup:
+    free(config->entry_id);
 	free(config);
     strcpy(out->message, message);
     out->success = status;
