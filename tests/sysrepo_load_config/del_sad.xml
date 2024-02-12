@@ -8,6 +8,14 @@
                     <reqid>12</reqid>
                     <ipsec-sa-config>
                         <spi>34502</spi>
+                        <traffic-selector>
+                            <!-- local-addresses -->
+                            <local-prefix>192.168.201.0/24</local-prefix>  
+                            <!-- <remote-addresses> -->
+                            <remote-prefix>192.168.202.0/24</remote-prefix>
+                            <!-- ???? -->
+                            <inner-protocol>any</inner-protocol>
+                        </traffic-selector>
                     </ipsec-sa-config>
             </sad-entry>
         </sad>
