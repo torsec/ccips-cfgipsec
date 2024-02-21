@@ -22,9 +22,7 @@ if(KEYSTONE_LIB)
 use_riscv_musl_toolchain(${BITS})
 else()
 set(BUILDROOT_HOST_DIRS ${KEYSTONE_SDK_DIR}/../../build/buildroot.build/host)
-set(BUILDROOT_TARGET_DIRS ${KEYSTONE_SDK_DIR}/../../build/buildroot.build/target)
 set(BUILDROOT_RISCV_DIRS ${BUILDROOT_HOST_DIRS}/riscv64-buildroot-linux-gnu/sysroot)
-# set(CMAKE_SYSROOT ${BUILDROOT_RISCV_DIRS})
 set(CMAKE_FIND_ROOT_PATH "${BUILDROOT_RISCV_DIRS};${BUILDROOT_RISCV_DIRS}/usr/include;${BUILDROOT_RISCV_DIRS}/usr/lib;${BUILDROOT_RISCV_DIRS}/lib")
 use_riscv_toolchain(${BITS})
 endif()
@@ -185,40 +183,21 @@ add_subdirectory(${SRC_DIR}/eapp)
 
 add_executable(${host_bin} ${host_src} ${SRC_DIR}/host/connect_sysrepo.c)
 
-#/home/giacomo/Documents/keystone/riscv64/sysroot;
-# set(CMAKE_FIND_ROOT_PATH ${BUILDROOT_HOST_DIRS} ${BUILDROOT_RISCV_DIRS} ${BUILDROOT_RISCV_DIRS}/usr/lib ${BUILDROOT_RISCV_DIRS}/lib)
-# target_link_directories(${host_bin} PUBLIC ${BUILDROOT_RISCV_DIRS} ${BUILDROOT_HOST_DIRS} ${BUILDROOT_TARGET_DIRS} ${BUILDROOT_RISCV_DIRS}/usr/lib  ${BUILDROOT_RISCV_DIRS}/usr/inlcude ${BUILDROOT_RISCV_DIRS}/lib)
-
 # add -std=c++11 flag
 # set_target_properties(${host_bin}
 #   PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO
 # )
 
-# set(SYSREPO_LIBRARIES ${BUILDROOT_RISCV_DIRS}/usr/lib/libsysrepo.so)
-# set(LIBYANG_LIBRARIES ${BUILDROOT_RISCV_DIRS}/usr/lib/libyang.so)
-# set(LIBPCRE2_LIBRARIES ${BUILDROOT_RISCV_DIRS}/usr/lib/libpcre2-8.so.0)
-# set(PTHREADS_LIBRARIES ${BUILDROOT_RISCV_DIRS}/lib/libpthread.so.0)
-# set(LIBC_LIBRARIES ${BUILDROOT_RISCV_DIRS}/usr/lib/libc.a)
-
-# find_package(Threads REQUIRED)
 include("${CMAKE_SOURCE_DIR}/build-scripts/ImportSysrepo_keystone.cmake")
 
-# set(THREADS_PREFER_PTHREAD_FLAG ON)
-# set(CMAKE_THREAD_LIBS_INIT "-lpthread")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread --sysroot=${BUILDROOT_RISCV_DIRS}") # add -latomic
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lpthread") # add -latomic
-# set(CMAKE_THREAD_PREFER_PTHREAD ON) 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread --sysroot=${BUILDROOT_RISCV_DIRS}") 
 
-# include_directories(${BUILDROOT_RISCV_DIRS}/usr/include)
-
-# target_link_directories(${host_bin} PUBLIC ${BUILDROOT_RISCV_DIRS}/usr/lib ${BUILDROOT_RISCV_DIRS}/lib ${BUILDROOT_RISCV_DIRS})
 target_include_directories(${host_bin}
   PUBLIC ${KEYSTONE_SDK_DIR}/include/host
   PUBLIC ${KEYSTONE_SDK_DIR}/include/edge
   PUBLIC ${PPOJECT_SOURCE_DIR}/libs)
-  #${BUILDROOT_RISCV_DIRS}/usr/include)
 
-target_link_libraries(${host_bin} PUBLIC ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE} i2nsf ${SYSREPO_LIBRARIES} ${LIBYANG_LIBRARIES} pthread) #  parson ${LIBPCRE2_LIBRARIES} ${LIBPCRE2_LIBRARIES} ${PTHREADS_LIBRARIES}
+target_link_libraries(${host_bin} PUBLIC ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE} i2nsf ${SYSREPO_LIBRARIES} ${LIBYANG_LIBRARIES} pthread) # parson
 
 # add target for Eyrie runtime (see keystone.cmake)
 
