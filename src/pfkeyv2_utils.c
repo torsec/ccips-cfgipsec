@@ -109,7 +109,7 @@ void lifetime_print(struct sadb_ext *ext) {
 		life->sadb_lifetime_bytes);
 	if (life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_CURRENT) {
 		time_t t;
-		struct m *tm;
+		struct tm *tm;
 		char buf[100];
 
 		/* absolute times */
@@ -135,7 +135,7 @@ void
 address_print(struct sadb_ext *ext) {
 	// return;
 	struct sadb_address *addr = (struct sadb_address *)ext;
-	struct sockaddr *sa;
+	// struct sockaddr *sa;
 
 	TRACE(" %s address: ",
 		addr->sadb_address_exttype == SADB_EXT_ADDRESS_SRC ?
@@ -143,7 +143,7 @@ address_print(struct sadb_ext *ext) {
 		addr->sadb_address_exttype == SADB_EXT_ADDRESS_DST ?
 		"Dest" :
 		"Proxy");
-	sa = (struct sockaddr *)(addr + 1);
+	// sa = (struct sockaddr *)(addr + 1);
 //	printf("  %s", sock_ntop(sa, addr->sadb_address_len * 8 - sizeof(*addr)));
 	if (addr->sadb_address_prefixlen == 0) {
 		TRACE(" ");
@@ -162,8 +162,8 @@ address_print(struct sadb_ext *ext) {
 void key_print(struct sadb_ext *ext) {
 
 	struct sadb_key *key = (struct sadb_key *)ext;
-	int bits;
-	unsigned char *p;
+	// int bits;
+	// unsigned char *p;
 
 	TRACE(" %s key, %d bits: 0x",
 		key->sadb_key_exttype == SADB_EXT_KEY_AUTH ?

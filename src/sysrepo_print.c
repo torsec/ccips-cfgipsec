@@ -88,8 +88,9 @@ void print_current_config(sr_session_ctx_t *session, const char *module_name)
     sr_val_t *values = NULL;
     size_t count = 0;
     int rc = SR_ERR_OK;
-    char *xpath;
-    asprintf(&xpath, "/%s:*//.", module_name);
+    size_t xpath_len = strlen(module_name) + 16; // overallocated string
+    char *xpath = malloc(sizeof(char) * xpath_len);
+    sprintf(xpath, "/%s:*//.", module_name);
     rc = sr_get_items(session, xpath, 0, 0, &values, &count);
     free(xpath);
     if (rc != SR_ERR_OK) {
@@ -99,6 +100,7 @@ void print_current_config(sr_session_ctx_t *session, const char *module_name)
         print_val(&values[i]);
     }
     sr_free_values(values, count);
+    return;
 }
 
 char *ev_to_str(sr_event_t ev)

@@ -19,7 +19,7 @@
 
 #include "utils.h"
 
-char * get_ip(char * ip_mask) {
+char * get_ip(char * ip_mask) { // leakage?
 
 	const char d[2] = "/";
 	char * ip;
@@ -46,7 +46,9 @@ int get_mask(char * ip_mask) {
     ip = strdup(ip_mask);
     ip = strtok(ip,d);
  	mask = strtok(NULL,d);
- 	return atoi(mask);
+	int res = atoi(mask);
+	free(ip);
+ 	return res;
 
 }
 
@@ -370,14 +372,22 @@ char* stringToBytes(char* str) {
 
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 	// verify enc key
-	TRACE("I_ENC_KEY: %s \t J_ENC_KEY: %s",stringToBytes(i->encryption_key),stringToBytes(j->encryption_key));
-    if (strncmp(i->encryption_key,j->encryption_key,MAX_KEY) != 0) {
+	char *i_enc_key_b = stringToBytes(i->encryption_key);
+	char *j_enc_key_b = stringToBytes(j->encryption_key);
+	TRACE("I_ENC_KEY: %s \t J_ENC_KEY: %s", i_enc_key_b, j_enc_key_b);
+	free(i_enc_key_b);
+	free(j_enc_key_b);
+	if (strncmp(i->encryption_key,j->encryption_key,MAX_KEY) != 0) {
 		ERR("Entries ENC KEYS differ");
 		return 1;
     }
 	// verify int key
-	TRACE("I_INT_KEY: %s \t J_INT_KEY: %s",stringToBytes(i->integrity_key),stringToBytes(j->integrity_key));
-    if (strncmp(i->integrity_key,j->integrity_key,MAX_KEY) != 0) {
+	char *i_int_key_b = stringToBytes(i->integrity_key);
+	char *j_int_key_b = stringToBytes(j->integrity_key);
+	TRACE("I_INT_KEY: %s \t J_INT_KEY: %s", i_int_key_b, j_int_key_b);
+	free(i_int_key_b);
+	free(j_int_key_b);
+	if (strncmp(i->integrity_key,j->integrity_key,MAX_KEY) != 0) {
 		ERR("Entries AUTH KEYS differ");
 		return 1;
     }
@@ -402,13 +412,13 @@ int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 
 /*int compare_spd_entries(spd_entry_node *i, spd_entry_node *j) {
 	// verify enc key
-	TRACE("I_ENC_KEY: %s \t J_ENC_KEY: %s",stringToBytes(i->encryption_key),stringToBytes(j->encryption_key));
+	TRACE("I_ENC_KEY: %s \t J_ENC_KEY: %s",stringToBytes(i->encryption_key),stringToBytes(j->encryption_key)); // fix string deallocation
     if (strncmp(i->encryption_key,j->encryption_key,MAX_KEY) != 0) {
 		ERR("Entries ENC KEYS differ");
 		return 1;
     }
 	// verify int key
-	TRACE("I_INT_KEY: %s \t J_INT_KEY: %s",stringToBytes(i->integrity_key),stringToBytes(j->integrity_key));
+	TRACE("I_INT_KEY: %s \t J_INT_KEY: %s",stringToBytes(i->integrity_key),stringToBytes(j->integrity_key)); // fix string deallocation
     if (strncmp(i->integrity_key,j->integrity_key,MAX_KEY) != 0) {
 		ERR("Entries AUTH KEYS differ");
 		return 1;

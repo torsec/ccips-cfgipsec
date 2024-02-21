@@ -84,6 +84,8 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 /// @return 
 int send_delete_SAD_request(unsigned long int spi);
 
+int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi, bool soft);
+
 
 #ifdef Trusted
 void verify_sad_nodes();

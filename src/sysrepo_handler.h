@@ -80,7 +80,7 @@ int sadb_register(sr_session_ctx_t *session);
 #ifdef Trusted
 /// @brief When using a trusted application, this process may run in the background so it can verify 
 /// @return 
-int sad_verification_process();
+void* sad_verification_process(void* arg);
 
 /// @brief When using a trusted application, this process may run in the background so it can verify 
 /// @return 

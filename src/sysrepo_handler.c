@@ -54,6 +54,12 @@ new_entry(sr_change_oper_t op, sr_val_t *old_val, sr_val_t *new_val)
 			return true;
 		} else return false;
         break;
+	case SR_OP_MODIFIED:
+		// not implemented
+		break;
+	case SR_OP_MOVED:
+		// not implemented
+		break;
     }
 	
 	return true;
@@ -121,6 +127,8 @@ int spd_entry_change_cb(sr_session_ctx_t *session, uint32_t sub_id, const char *
 	               	 	}
 	                	else {
 							ERR("Adding spd-entry: %s",sr_strerror(rc));
+							sr_free_val(old_value);
+	        				sr_free_val(new_value); 
 	                    	sr_free_change_iter(it);
 							return SR_ERR_OPERATION_FAILED;                                
 	                	} 
@@ -142,6 +150,8 @@ int spd_entry_change_cb(sr_session_ctx_t *session, uint32_t sub_id, const char *
 	               	 	}
 	                	else {
 	                    	ERR("Deleting spd-entry: %s",sr_strerror(rc));
+							sr_free_val(old_value);
+	        				sr_free_val(new_value); 
 	                    	sr_free_change_iter(it);
 							return SR_ERR_OPERATION_FAILED;                             
 	                	} 
@@ -218,11 +228,14 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 						pthread_mutex_lock(&locker);
 		                rc = addSAD_entry(session,it,new_xpath,sad_name);
 						pthread_mutex_unlock(&locker);
+						free(new_xpath);
 						if (SR_ERR_OK == rc) {
 	                    	// DBG("sad-entry ");
 	               	 	}
 	                	else {
 							ERR("Adding sad-entry: %s",sr_strerror(rc));
+							sr_free_val(old_value);
+	        				sr_free_val(new_value);
 	                    	sr_free_change_iter(it);
 							// pthread_mutex_unlock(&sad_entry_change_lock);
 							return SR_ERR_OPERATION_FAILED;                                
@@ -237,11 +250,14 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 						new_xpath = get_new_xpath(old_value->xpath);
 	                	// In case 2, the SPD configuration values are applied into the kernel by means of pfkey_v2 or xfrm
 						rc = removeSAD_entry(session,it,new_xpath,sad_name);
+						free(new_xpath);
 						if (SR_ERR_OK == rc) {
 	                    	INFO("sad-entry deleted");
 	               	 	}
 	                	else {
 	                    	ERR("Deleting sad-entry: %s",sr_strerror(rc));
+							sr_free_val(old_value);
+	        				sr_free_val(new_value);
 	                    	sr_free_change_iter(it);
 							return SR_ERR_OPERATION_FAILED;                             
 	                	} 
@@ -282,9 +298,10 @@ int sadb_register(sr_session_ctx_t *session) {
 }
 
 
-int exit_verification = 0;
 #ifdef Trusted
-int sad_verification_process() {
+int exit_verification = 0;
+
+void* sad_verification_process(void* arg) {
 	// TODO perform also verifications after installing new entries. 
 	while(exit_verification == 0) {
 		// DBG("====== Starting sad_entries verification process ======");
@@ -293,8 +310,10 @@ int sad_verification_process() {
 		sleep(5);
 	}
 
+	return NULL;
 }
 int close_verification_process() {
 	exit_verification = 1;
+	return 0;
 }
 #endif 

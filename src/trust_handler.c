@@ -272,8 +272,16 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
         strcpy(out->message, "entries differ");
         strcpy(out->entry_id, received_entry->name);
         status = 2;
-        ERR("Entry could not be validated: Name: %s\tSPI: %d\tREQID: %d",stored_entry->name, stored_entry->spi,stored_entry->req_id);
-        ERR("\n\tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
+        char *stor_int_key_b = stringToBytes(stored_entry->integrity_key);
+        char *recv_int_key_b = stringToBytes(received_entry->integrity_key);
+        char *stor_enc_key_b = stringToBytes(stored_entry->encryption_key);
+        char *recv_enc_key_b = stringToBytes(received_entry->encryption_key);
+        ERR("Entry could not be validated: Name: %s\tSPI: %d\tREQID: %d", stored_entry->name, stored_entry->spi, stored_entry->req_id);
+        ERR("\n\tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s", stor_int_key_b, recv_int_key_b, stor_enc_key_b, recv_enc_key_b);
+        free(stor_int_key_b);
+        free(recv_int_key_b);
+        free(stor_enc_key_b);
+        free(recv_enc_key_b);
         goto cleanup;
     } else {
         INFO("Entry validated: Name: %s\tSPI: %d\tREQID: %d",stored_entry->name, stored_entry->spi,stored_entry->req_id);
@@ -316,7 +324,7 @@ cleanup:
         strcpy(out->entry_id,config->spd_entry->name);
         status = 2;
         ERR("Entry could not be validated: Name: %s\tSPI: %d\tREQID: %d", stored_entry->name, stored_entry->spi, stored_entry->req_id);
-        ERR("\n\tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key));
+        ERR("\n\tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s",stringToBytes(stored_entry->integrity_key),stringToBytes(received_entry->integrity_key),stringToBytes(stored_entry->encryption_key),stringToBytes(received_entry->encryption_key)); // fix string deallocation
         goto cleanup;
     } else {
         INFO("Entry validated: Name: %s\tSPI: %d\tREQID: %d",stored_entry->name, stored_entry->spi,stored_entry->req_id);
