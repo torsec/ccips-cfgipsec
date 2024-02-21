@@ -4,13 +4,15 @@
 //------------------------------------------------------------------------------
 #include "edge/edge_call.h"
 #include "host/keystone.h"
+#include "connect_sysrepo.h"
 
 using namespace Keystone;
 
 int
-main(int argc, char** argv) {
+create_enclave(int argc, char** argv) {
   Enclave enclave;
   Params params;
+  (void) argc;
 
   params.setFreeMemSize(256 * 1024);
   params.setUntrustedMem(DEFAULT_UNTRUSTED_PTR, 256 * 1024);
@@ -24,5 +26,14 @@ main(int argc, char** argv) {
   uint64_t ret;
   enclave.run(&ret);
   printf("[host] enclave returned: %ld\n", ret);
+  return 0;
+}
+
+int 
+main(int argc, char** argv) {
+  printf("test\n");
+  create_enclave(argc, argv);
+  // connect_sysrepo(5);
+
   return 0;
 }
