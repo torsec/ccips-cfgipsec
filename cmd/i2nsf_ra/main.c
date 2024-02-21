@@ -85,7 +85,7 @@ int main(int argc, char **argv)
                 fprintf(stderr, "Where:\n" );
                 fprintf(stderr, "       - case is `case1` (IKE case) or `case2` (IKE-less case, default)\n" );
                 fprintf(stderr, "       - verbose_level is 0: FATAL, 1: ERR, 2: WARN, 3: INFO (default), 4: DEBUG, 5: TRACE\n" );
-                fprintf(stderr, "" );
+                fprintf(stderr, "\n" );
                 return 0;
             }
             default: {
