@@ -31,9 +31,9 @@ create_enclave(int argc, char** argv) {
 
 int 
 main(int argc, char** argv) {
-  printf("test\n");
-  create_enclave(argc, argv);
-  // connect_sysrepo(5);
+  // printf("test\n");
+  // create_enclave(argc, argv);
+  connect_sysrepo(5);
 
   return 0;
 }

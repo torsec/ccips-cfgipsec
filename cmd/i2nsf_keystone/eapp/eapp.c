@@ -43,7 +43,7 @@ int main()
 {
   // setup environment: set log level and initialize HEAP
   log_set_level(5);
-  umm_init_heap(&__malloc_start, HEAP_SIZE);
+  // umm_init_heap(&__malloc_start, HEAP_SIZE);
   json_set_allocation_functions(custom_malloc, custom_free);
 
   // your code

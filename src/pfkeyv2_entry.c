@@ -236,6 +236,9 @@ int pf_exec_register(sr_session_ctx_t *session, int satype){
 
     int pid = getpid();
     int s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
+    if(s == -1)
+        return SR_ERR_OPERATION_FAILED;
+
     //* Build and write SADB_REGISTER request 
     bzero(&msg, sizeof(msg));
     msg.sadb_msg_version =  PF_KEY_V2;

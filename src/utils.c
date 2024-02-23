@@ -274,8 +274,11 @@ int Socket(int family, int type, int protocol) {
 
     int n;
 
-    if ( (n = socket(family, type, protocol)) < 0)
-        log_error("socket error");
+    if ( (n = socket(family, type, protocol)) < 0) {
+		int errnum = errno;
+		log_error("socket error: %d (%s)", errnum, strerror(errnum)); // remove for release
+	}
+        
     return(n);
 }
 /* end Socket */
@@ -283,8 +286,13 @@ int Socket(int family, int type, int protocol) {
 void
 Write(int fd, void *ptr, size_t nbytes) {
 
-    if (write(fd, ptr, nbytes) != nbytes)
-       log_error("write error");
+	ssize_t n;
+
+    if ((n = write(fd, ptr, nbytes)) != nbytes) {
+		int errnum = errno;
+		log_error("write error: %d (%s)", errnum, strerror(errnum)); // remove for release
+	}
+       
 }
 
 ssize_t
@@ -292,8 +300,11 @@ Read(int fd, void *ptr, size_t nbytes) {
 
         ssize_t n;
 
-        if ( (n = read(fd, ptr, nbytes)) == -1)
-                log_error("read error");
+        if ( (n = read(fd, ptr, nbytes)) == -1) {
+			int errnum = errno;
+			log_error("read error: %d (%s)", errnum, strerror(errnum)); // remove for release
+		}
+                
         return(n);
 }
 
