@@ -17,6 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __UTILS
+#define __UTILS
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 
@@ -49,7 +56,11 @@
 char * get_ip(char * ip_mask);
 int get_mask(char * ip_mask);
 void set_verbose(int setting);
+#ifdef __cplusplus
+int v_printf(const char * format, ...);
+#else 
 int v_printf(const char * restrict format, ...);
+#endif
 const char * get_sadb_msg_type(int type);
 const char * get_sadb_satype(int type);
 const char * get_sadb_alg_type(int alg, int authenc);
@@ -124,3 +135,9 @@ int add_spd_node(spd_entry_node** main_spd_entry, spd_entry_node* new_spd);
 /// @brief Prints current values of the local spd_entry database
 /// @param main_spd_entry local spd_entry database
 void show_spd_list(spd_entry_node* main_spd_entry);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

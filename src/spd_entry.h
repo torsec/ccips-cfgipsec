@@ -21,6 +21,10 @@
 #ifndef __SPD_ENTRY
 #define __SPD_ENTRY
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -89,6 +93,10 @@ JSON_Value *serialize_spd_node(spd_entry_node *spd_node);
 /// @param schema json schema that contains a serialized _spd_node
 /// @return spd_entry_node // TODO maybe change this so we pass the sad_entry_node to change
 spd_entry_node *deserialize_spd_node(JSON_Object *schema);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

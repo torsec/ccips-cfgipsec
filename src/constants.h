@@ -1,4 +1,9 @@
+#ifndef __CONSTANTS
+#define __CONSTANTS
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define MAX_PATH  200
 #define MAX_IP 40
@@ -216,3 +221,9 @@
 // #define SR_ERR_NOT_FOUND  1
 // #define SR_ERR_OPERATION_FAILED 3
 // #define SR_ERR_OK 0
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

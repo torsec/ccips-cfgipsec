@@ -27,7 +27,7 @@
 #include "pfkeyv2_entry.h"
 #include "pfkeyv2_utils.h"
 #include "trust_client.h"
-#include "connect_sysrepo.h"
+#include "connect_sysrepo.hpp"
 #define VERSION "2"
 
 // Process of starting the application
@@ -51,7 +51,7 @@ static void sigint_handler(int signum)
 
 
 
-int connect_sysrepo(int l)
+int connect_sysrepo(int *l)
 {
 
     if ( geteuid() != 0 ) {
@@ -63,7 +63,7 @@ int connect_sysrepo(int l)
     // int foreground = false;
     // int c;
     // int l = CI_VERB_INFO;
-    log_set_level(l);
+    log_set_level(*l);
     // while ( ( c = getopt ( argc, argv, "f:c:v:h" ) ) != -1 ) {
     //     switch ( c ) {
     //         case 'f':
@@ -96,7 +96,7 @@ int connect_sysrepo(int l)
     //     }
     // }
 
-INFO("LOG level set to: %d",l);
+INFO("LOG level set to: %d",*l);
 
 
 #ifdef Enarx

@@ -18,6 +18,11 @@
  */
 #ifndef __SYSREPO_HANDLER
 #define __SYSREPO_HANDLER
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 #include <sys/socket.h>
 #include <linux/pfkeyv2.h>
@@ -88,5 +93,8 @@ int close_verification_process();
 
 #endif
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

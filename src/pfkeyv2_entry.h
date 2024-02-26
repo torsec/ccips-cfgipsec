@@ -20,6 +20,10 @@
 #ifndef __PFKEYV2_ENTRY
 #define __PFKEYV2_ENTRY
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "utils.h"
 #include "log.h"
 #include "spd_entry.h"
@@ -167,6 +171,9 @@ struct pfkey_msg_t
 	};
 };
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

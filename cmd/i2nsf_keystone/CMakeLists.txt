@@ -181,7 +181,7 @@ add_subdirectory(${SRC_DIR}/eapp)
 
 # host
 
-add_executable(${host_bin} ${host_src} ${SRC_DIR}/host/connect_sysrepo.c)
+add_executable(${host_bin} ${host_src} ${SRC_DIR}/host/connect_sysrepo.cpp)
 
 # add -std=c++11 flag
 # set_target_properties(${host_bin}

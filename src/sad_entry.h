@@ -1,5 +1,10 @@
 #ifndef __SAD_ENTRY
 #define __SAD_ENTRY
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdio.h>
 #include "sad_entry.h"
@@ -80,6 +85,8 @@ JSON_Value *serialize_sad_node(sad_entry_node *sad_node);
 sad_entry_node *deserialize_sad_node(JSON_Object *schema);
 #endif
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif

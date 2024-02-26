@@ -1,11 +1,16 @@
+#ifndef __TRUST_HANDLER
+#define __TRUST_HANDLER
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "messages.h"
 #include <stdio.h>
 #include "log.h"
 #include "utils.h"
 #include "sad_entry.h"
 #include "spd_entry.h"
-#ifndef __TRUST_HANDLER
-#define __TRUST_HANDLER
 
 
 /// @brief function that handles a message containing a new configuration (SAD entry)
@@ -49,5 +54,8 @@ int handle_request_remove_SPD(JSON_Object *data, op_result_msg *out);
 /// @return 
 extern char *handle_message(char *data);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

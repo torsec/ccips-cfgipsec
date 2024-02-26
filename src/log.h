@@ -8,6 +8,10 @@
 #ifndef LOG_H
 #define LOG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -66,9 +70,8 @@ extern int log_add_fp(FILE *fp, int level);
 extern int get_verbose_level();
 extern void log_log(int level, const char *file, int line, const char *fmt, ...);
 
-
-
-
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif
