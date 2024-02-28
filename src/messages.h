@@ -1,12 +1,13 @@
 #ifndef __MESSAGES
 #define __MESSAGES
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "parson.h"
 #include "sad_entry.h"
 #include "spd_entry.h"
-
-
-
 
 #define ERROR_MSG             -1
 #define NEW_CONFIG_MSG        1 
@@ -165,5 +166,9 @@ JSON_Value *encode_insert_entry_msg(insert_entry_msg *msg);
 // Some helpers to remove redundancy
 // TODO remove since it is not used
 JSON_Value *generate_op_message(char* message, int code);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

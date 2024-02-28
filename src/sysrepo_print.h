@@ -1,5 +1,10 @@
 #ifndef __SYSREPO_PRINT
 #define __SYSREPO_PRINT
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 #include <linux/pfkeyv2.h>
 #include <stdlib.h>
@@ -12,4 +17,9 @@
 void print_val(const sr_val_t *value);
 void print_current_config(sr_session_ctx_t *session, const char *module_name);
 char *ev_to_str(sr_event_t ev);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

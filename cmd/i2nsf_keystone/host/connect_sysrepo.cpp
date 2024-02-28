@@ -27,6 +27,7 @@
 #include "pfkeyv2_entry.h"
 #include "pfkeyv2_utils.h"
 #include "trust_client.h"
+#include "connect_sysrepo.hpp"
 #define VERSION "2"
 
 // Process of starting the application
@@ -50,7 +51,7 @@ static void sigint_handler(int signum)
 
 
 
-int main(int argc, char **argv)
+int connect_sysrepo(int *l)
 {
 
     if ( geteuid() != 0 ) {
@@ -59,43 +60,43 @@ int main(int argc, char **argv)
     }
 
     // Get options
-    int foreground = false;
-    int c;
-    int l = CI_VERB_INFO;
-    log_set_level(l);
-    while ( ( c = getopt ( argc, argv, "f:c:v:h" ) ) != -1 ) {
-        switch ( c ) {
-            case 'f':
-                foreground = true; // TBD
-                break;
-            case 'v':
-                l = atoi(optarg);  // Convert optarg to an integer
-                if (l < 0 || l > CI_VERB_TRACE) {
-                    printf("verbose level out of range: %d\n", l);
-                    exit(EXIT_FAILURE);
-                } else {
-                    log_set_level(l);  // Set the log level based on the converted value
-                }
-                break;
-            case 'h': {
-                fprintf(stderr, "cfgipsec2 version %s \n", VERSION);
-                fprintf(stderr, "Usage:\n" );
-                fprintf(stderr, "       %s [-v verbose_level]\n",argv[0]);
-                fprintf(stderr, "\n" );
-                fprintf(stderr, "Where:\n" );
-                fprintf(stderr, "       - case is `case1` (IKE case) or `case2` (IKE-less case, default)\n" );
-                fprintf(stderr, "       - verbose_level is 0: FATAL, 1: ERR, 2: WARN, 3: INFO (default), 4: DEBUG, 5: TRACE\n" );
-                fprintf(stderr, "\n" );
-                return 0;
-            }
-            default: {
-                fprintf(stderr, "Usage: %s [-v verbose_level]\n", argv[0]);
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
+    // int foreground = false;
+    // int c;
+    // int l = CI_VERB_INFO;
+    log_set_level(*l);
+    // while ( ( c = getopt ( argc, argv, "f:c:v:h" ) ) != -1 ) {
+    //     switch ( c ) {
+    //         case 'f':
+    //             // foreground = true; // TBD
+    //             break;
+    //         case 'v':
+    //             l = atoi(optarg);  // Convert optarg to an integer
+    //             if (l < 0 || l > CI_VERB_TRACE) {
+    //                 printf("verbose level out of range: %d\n", l);
+    //                 exit(EXIT_FAILURE);
+    //             } else {
+    //                 log_set_level(l);  // Set the log level based on the converted value
+    //             }
+    //             break;
+    //         case 'h': {
+    //             fprintf(stderr, "cfgipsec2 version %s \n", VERSION);
+    //             fprintf(stderr, "Usage:\n" );
+    //             fprintf(stderr, "       %s [-v verbose_level]\n",argv[0]);
+    //             fprintf(stderr, "\n" );
+    //             fprintf(stderr, "Where:\n" );
+    //             fprintf(stderr, "       - case is `case1` (IKE case) or `case2` (IKE-less case, default)\n" );
+    //             fprintf(stderr, "       - verbose_level is 0: FATAL, 1: ERR, 2: WARN, 3: INFO (default), 4: DEBUG, 5: TRACE\n" );
+    //             fprintf(stderr, "\n" );
+    //             return 0;
+    //         }
+    //         default: {
+    //             fprintf(stderr, "Usage: %s [-v verbose_level]\n", argv[0]);
+    //             exit(EXIT_FAILURE);
+    //         }
+    //     }
+    // }
 
-INFO("LOG level set to: %d",l);
+INFO("LOG level set to: %d",*l);
 
 
 #ifdef Enarx
@@ -187,6 +188,6 @@ cleanup:
 
     if (connection != NULL) {
 	    sr_disconnect(connection);
-        return rc ? EXIT_FAILURE : EXIT_SUCCESS;
     }
+    return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }

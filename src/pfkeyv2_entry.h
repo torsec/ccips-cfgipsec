@@ -20,6 +20,10 @@
 #ifndef __PFKEYV2_ENTRY
 #define __PFKEYV2_ENTRY
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "utils.h"
 #include "log.h"
 #include "spd_entry.h"
@@ -86,7 +90,7 @@ int pf_getpolicy(spd_entry_node *spd_node, spd_entry_node *out_node);
 /// @brief Thread that handles the incoming messages from the kernel. It will mainly be used during the process of rekey (notifying soft-hard rekey). And when a SAD entry is removed.
 /// @param register_thread_info Information that contains the sysrepo session to handle the incomming request from the kernel.
 /// @return 
-static void* pf_sadb_esp_register_run(void* register_thread_info);
+// static void* pf_sadb_esp_register_run(void* register_thread_info);
 // https://fossies.org/dox/tinc-1.0.36/net_8h_source.html
 typedef struct sockaddr_unknown {
      uint16_t family;
@@ -167,6 +171,9 @@ struct pfkey_msg_t
 	};
 };
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

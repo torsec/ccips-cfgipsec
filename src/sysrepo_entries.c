@@ -229,6 +229,7 @@ int addSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 	rc = readSPD_entry(sess,it,xpath,spd_node,case_value);
 	if (rc != SR_ERR_OK) {
 		ERR("ADD SPD in getSDP_entry: %s", sr_strerror(rc));
+		free_spd_node(spd_node);
 		return rc;
 	}
 
@@ -338,12 +339,12 @@ void add_sad_node_enarx(sad_entry_node* node_entry){
 	// We may change the method in a future, so we dont need to malloc more data
 	if (add_trusted_sad_entry(rec_entry, node_entry) != 0) {
 		ERR("Couldnt add sad_entry node");
-		free(rec_entry);
+		free_sad_node(rec_entry);
 		return;
 	}
 	strcpy(node_entry->encryption_key,rec_entry->encryption_key);
 	strcpy(node_entry->integrity_key,rec_entry->integrity_key);
-	free(rec_entry);
+	free_sad_node(rec_entry);
 	printf("HERE\n");
 }
 
@@ -395,6 +396,7 @@ void verify_sad_nodes() {
 				break;
 			}
 		}
+		free_sad_node(out_node);
 		node=node->next;
 	}
 	pthread_mutex_unlock(&sad_entries_locker);
@@ -685,6 +687,7 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
     rc = readSAD_entry(sess,it,xpath,sad_node);
     if (rc != SR_ERR_OK) {
         ERR("ADD SAD in getSAD_entry: %s",sr_strerror(rc));
+		free_sad_node(sad_node);
 		pthread_mutex_unlock(&sad_entries_locker);
         return rc;
     }
@@ -717,8 +720,8 @@ int send_acquire_notification(sr_session_ctx_t *session, int policy_index){
     int rc = SR_ERR_OK;
     /*sr_val_t *input = NULL;
     size_t input_cnt = 0;*/
-    char full_xpath[MAX_PATH];
-    char tmp_xpath[MAX_PATH];
+    // char full_xpath[MAX_PATH];
+    // char tmp_xpath[MAX_PATH];
 	 
     
 	DBG ("send_acquire_notification for policy %i:", policy_index);	
@@ -727,7 +730,7 @@ int send_acquire_notification(sr_session_ctx_t *session, int policy_index){
 	struct lyd_node *notif = NULL;
 	const struct ly_ctx *ctx;
 	const char *path = "/ietf-i2nsf-ikeless:sadb-acquire";
-	const char *node_path = NULL, *node_val;
+	// const char *node_path = NULL, *node_val;
 	
 	connection = sr_session_get_connection(session); 
 	
@@ -825,8 +828,8 @@ int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi
     int rc = SR_ERR_OK;
     /*sr_val_t *input = NULL;
     size_t input_cnt = 0;*/
-    char full_xpath[MAX_PATH];
-    char tmp_xpath[MAX_PATH];
+    // char full_xpath[MAX_PATH];
+    // char tmp_xpath[MAX_PATH];
 	 
     
 	DBG ("send_expire_notification for spi: %i", spi);	
@@ -835,7 +838,7 @@ int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi
 	struct lyd_node *notif = NULL;
 	const struct ly_ctx *ctx;
 	const char *path = "/ietf-i2nsf-ikeless:sadb-expire";
-	const char *node_path = NULL, *node_val;
+	// const char *node_path = NULL, *node_val;
 	
 	if (session == NULL) {
 		ERR("Sesssion is NULL");
@@ -941,7 +944,7 @@ int send_delete_SAD_request(unsigned long int spi) {
     rc = sr_delete_item(session, xpath, SR_EDIT_DEFAULT);
     if (SR_ERR_OK != rc) {
         ERR("sr_delete_item: %s", sr_strerror(rc));
-		pthread_mutex_unlock(&sad_entries_locker);
+		// pthread_mutex_unlock(&sad_entries_locker);
         goto cleanup;
     }
     rc =  sr_apply_changes(session,0);
@@ -955,8 +958,10 @@ int send_delete_SAD_request(unsigned long int spi) {
 		del_sad_node_enarx(sad_node->name);
 	#endif
 	del_sad_node(&init_sad_node,sad_node->name);
-	pthread_mutex_unlock(&sad_entries_locker);
+	// pthread_mutex_unlock(&sad_entries_locker);
 
+cleanup:
+	pthread_mutex_unlock(&sad_entries_locker);
 	if (NULL != session) {
         sr_session_stop(session);
     }
@@ -964,12 +969,4 @@ int send_delete_SAD_request(unsigned long int spi) {
         // sr_disconnect(conn);
     }
 	return rc ? EXIT_FAILURE : EXIT_SUCCESS;
-
-cleanup:
-    if (NULL != session) {
-        sr_session_stop(session);
-    }
-    if (NULL != conn) {
-        // sr_disconnect(conn);
-    }
 }

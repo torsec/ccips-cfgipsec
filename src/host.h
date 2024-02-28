@@ -25,6 +25,9 @@
 #ifndef HOST_H_
 #define HOST_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum host_diff_t host_diff_t;
 typedef struct host_t host_t;
@@ -165,5 +168,9 @@ struct host_t {
 	 */
 	void (*destroy) (host_t *this);
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /** HOST_H_ @}*/

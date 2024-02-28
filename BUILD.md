@@ -134,6 +134,12 @@ $ git submodule update
 $ NINJA_FLAGS=-v make package
 ```
 
+## Python packages
+
+```
+$ pip install ncclient
+```
+
 # Build TNED
 
 ## Clone repository
@@ -238,6 +244,21 @@ $ cd build_ra
 $ sudo ./i2nsf_cfgipsec2 -v 5
 ```
 
+## Tests
+
+Build and run docker container for `i2nsf_ra`:
+
+```
+$ docker build -t ccips_ra .
+$ docker run --name ccips_ra -p 830:830 --cap-add SYS_ADMIN --cap-add NET_ADMIN ccips_ra
+```
+
+Launch tests:
+```
+$ cd tests/sysrepo_load_config/
+$ python3 <test>.py
+```
+
 # Build Rust applications for QEMU (RISC-V)
 1. Install [Rust](#rust)
 2. Add RISC-V (linux) target
@@ -279,7 +300,9 @@ Thesis:
 * [Ciravegna](https://webthesis.biblio.polito.it/secure/28633/1/tesi.pdf)
 * [Donnini](https://webthesis.biblio.polito.it/secure/27657/1/tesi.pdf)
 
-Current repository: [keystone](https://gitlab.com/valerio_donnini/keystone)
+Current repository: [keystone](https://gitlab.com/LorenzoFerro15/keystone)
+
+Other repository: [keystone](https://gitlab.com/valerio_donnini/keystone)
 
 Fixes:
 
@@ -287,7 +310,7 @@ Fixes:
 $ sudo apt install quilt
 ```
 
-## Build Keystone applications
+## Build Keystone applications (TO BE UPDATED)
 
 1. After having built **`keystone`**, execute these commands starting from `ccips-cfgipsec` directory:
 
@@ -307,7 +330,7 @@ $ make keystone-ccips-package
 $ make image
 ```
 
-## Run Keystone applications
+## Run Keystone applications (TO BE UPDATED)
 
 Execute these commands starting from `<keystone_build_dir>` directory:
 

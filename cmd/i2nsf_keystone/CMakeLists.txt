@@ -21,6 +21,9 @@ endif()
 if(KEYSTONE_LIB)
 use_riscv_musl_toolchain(${BITS})
 else()
+set(BUILDROOT_HOST_DIRS ${KEYSTONE_SDK_DIR}/../../build/buildroot.build/host)
+set(BUILDROOT_RISCV_DIRS ${BUILDROOT_HOST_DIRS}/riscv64-buildroot-linux-gnu/sysroot)
+set(CMAKE_FIND_ROOT_PATH "${BUILDROOT_RISCV_DIRS};${BUILDROOT_RISCV_DIRS}/usr/include;${BUILDROOT_RISCV_DIRS}/usr/lib;${BUILDROOT_RISCV_DIRS}/lib")
 use_riscv_toolchain(${BITS})
 endif()
 
@@ -105,6 +108,59 @@ else()
 set(LIB_I2NSF ${PROJECT_SOURCE_DIR}/libs/libi2nsf.a)
 set(LIB_PARSON ${PROJECT_SOURCE_DIR}/libs/libparson.a)
 
+# add_library(parson STATIC "${PROJECT_SOURCE_DIR}/parson/parson.c")
+
+# add_library(i2nsf STATIC
+#         "${LIB_SRC_DIR}/constants.h"
+#         "${LIB_SRC_DIR}/host.h"
+#         "${LIB_SRC_DIR}/pfkeyv2_entry.c"
+#         "${LIB_SRC_DIR}/pfkeyv2_entry.h"
+#         "${LIB_SRC_DIR}/pfkeyv2_utils.c"
+#         "${LIB_SRC_DIR}/pfkeyv2_utils.h"
+#         "${LIB_SRC_DIR}/sysrepo_entries.c"
+#         "${LIB_SRC_DIR}/sysrepo_entries.h"
+#         "${LIB_SRC_DIR}/sysrepo_handler.c"
+#         "${LIB_SRC_DIR}/sysrepo_handler.h"
+#         "${LIB_SRC_DIR}/sysrepo_print.c"
+#         "${LIB_SRC_DIR}/sysrepo_print.h"
+#         "${LIB_SRC_DIR}/trust_client.c"
+#         "${LIB_SRC_DIR}/trust_client.h"
+#         "${LIB_SRC_DIR}/sad_entry.c"
+#         "${LIB_SRC_DIR}/sad_entry.h"
+#         "${LIB_SRC_DIR}/spd_entry.c"
+#         "${LIB_SRC_DIR}/spd_entry.h"
+#         "${LIB_SRC_DIR}/utils.c" 
+#         "${LIB_SRC_DIR}/utils.h" 
+#         "${LIB_SRC_DIR}/messages.c"
+#         "${LIB_SRC_DIR}/messages.h"
+#         "${LIB_SRC_DIR}/trust_handler.c"
+#         "${LIB_SRC_DIR}/trust_handler.h"
+#         "${LIB_SRC_DIR}/log.c"
+#         "${LIB_SRC_DIR}/log.h"
+#     )
+add_library(i2nsf STATIC
+        "${LIB_SRC_DIR}/constants.h"
+        "${LIB_SRC_DIR}/host.h"
+        "${LIB_SRC_DIR}/pfkeyv2_entry.c"
+        "${LIB_SRC_DIR}/pfkeyv2_entry.h"
+        "${LIB_SRC_DIR}/pfkeyv2_utils.c"
+        "${LIB_SRC_DIR}/pfkeyv2_utils.h"
+        "${LIB_SRC_DIR}/sysrepo_entries.c"
+        "${LIB_SRC_DIR}/sysrepo_entries.h"
+        "${LIB_SRC_DIR}/sysrepo_handler.c"
+        "${LIB_SRC_DIR}/sysrepo_handler.h"
+        "${LIB_SRC_DIR}/sysrepo_print.c"
+        "${LIB_SRC_DIR}/sysrepo_print.h"
+        "${LIB_SRC_DIR}/sad_entry.c"
+        "${LIB_SRC_DIR}/sad_entry.h"
+        "${LIB_SRC_DIR}/spd_entry.c"
+        "${LIB_SRC_DIR}/spd_entry.h"
+        "${LIB_SRC_DIR}/utils.c" 
+        "${LIB_SRC_DIR}/utils.h" 
+        "${LIB_SRC_DIR}/log.c"
+        "${LIB_SRC_DIR}/log.h"
+    )
+
 # set application values
 set(eapp_bin keystone-ccips)
 set(eapp_src ${SRC_DIR}/eapp/eapp.c)
@@ -125,17 +181,23 @@ add_subdirectory(${SRC_DIR}/eapp)
 
 # host
 
-add_executable(${host_bin} ${host_src})
+add_executable(${host_bin} ${host_src} ${SRC_DIR}/host/connect_sysrepo.cpp)
+
 # add -std=c++11 flag
 # set_target_properties(${host_bin}
 #   PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO
 # )
+
+include("${CMAKE_SOURCE_DIR}/build-scripts/ImportSysrepo_keystone.cmake")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread --sysroot=${BUILDROOT_RISCV_DIRS}") 
+
 target_include_directories(${host_bin}
   PUBLIC ${KEYSTONE_SDK_DIR}/include/host
   PUBLIC ${KEYSTONE_SDK_DIR}/include/edge
   PUBLIC ${PPOJECT_SOURCE_DIR}/libs)
 
-target_link_libraries(${host_bin} ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE} ${LIB_I2NSF} ${LIB_PARSON})
+target_link_libraries(${host_bin} PUBLIC ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE} i2nsf ${SYSREPO_LIBRARIES} ${LIBYANG_LIBRARIES} pthread) # parson
 
 # add target for Eyrie runtime (see keystone.cmake)
 

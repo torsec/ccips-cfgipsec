@@ -41,6 +41,7 @@ int disconnect_ta() {
         return 1;
     }
     printf("Disconnected from Enarx.\n");
+    return 0;
 }
 
 int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
