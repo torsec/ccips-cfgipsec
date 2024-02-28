@@ -4,6 +4,7 @@
 
 int main(void)
 {
+    show_sad_list(init_sad_node);
     return (0);
 }
 

@@ -787,12 +787,14 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
     pthread_mutex_lock(&sad_entries_locker);
     DBG("SAD entry REMOVE: %s",sad_name);
 	sad_entry_node *node = get_sad_node(&init_sad_node, sad_name);
+	INFO("removeSAD_entry: get_sad_node done");
     if (node != NULL) {
         rc = pf_delsad(node);
         if (SR_ERR_OK != rc){
             ERR("Remove SAD in pfkeyv2_delsad: %s",sr_strerror(rc));
             rc = SR_ERR_OPERATION_FAILED;
         } else {
+			INFO("pf_delsad done");
             rc = del_sad_node(&init_sad_node, sad_name);
             if (rc != SR_ERR_OK) {
                 ERR("Remove SAD entry in del_sad_node: %s",sr_strerror(rc));

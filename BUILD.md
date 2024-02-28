@@ -30,6 +30,7 @@ $ sudo make install
 
 ```
 $ git clone https://github.com/CESNET/libyang.git
+$ git checkout 7e5ea210
 $ cd libyang
 $ mkdir build
 $ cd build
@@ -45,6 +46,7 @@ $ sudo make install
 ```
 $ git clone https://github.com/sysrepo/sysrepo.git
 $ cd sysrepo
+$ git checkout 0af1daaf
 $ mkdir build
 $ cd build
 $ cmake ..
@@ -59,6 +61,7 @@ $ sudo make install
 ```
 $ git clone https://github.com/CESNET/libnetconf2.git
 $ cd libnetconf2
+$ git checkout 4514f16d
 $ mkdir build
 $ cd build
 $ cmake ..
@@ -73,6 +76,7 @@ $ sudo make install
 ```
 $ git clone https://github.com/CESNET/netopeer2.git
 $ cd netopeer2
+$ git checkout 3f6e921e
 $ mkdir build
 $ cd build
 $ cmake ..
