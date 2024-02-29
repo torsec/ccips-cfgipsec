@@ -33,5 +33,3 @@ start_build_enarx.sh
 start_build_keystone.sh
 clean.sh
 !build-scripts
-install_yang_modules.sh
-disable-acm.xml
