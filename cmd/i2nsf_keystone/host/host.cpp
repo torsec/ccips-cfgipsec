@@ -33,9 +33,8 @@ int
 main(int argc, char** argv) {
   // printf("test\n");
   // create_enclave(argc, argv);
-  int *p;
-  *p = 5;
-  connect_sysrepo(p);
+  int p = 5;
+  connect_sysrepo(&p);
 
   return 0;
 }
