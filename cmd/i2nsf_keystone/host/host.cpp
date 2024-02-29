@@ -4,7 +4,7 @@
 //------------------------------------------------------------------------------
 #include "edge/edge_call.h"
 #include "host/keystone.h"
-#include "connect_sysrepo.h"
+#include "connect_sysrepo.hpp"
 
 using namespace Keystone;
 
@@ -33,7 +33,9 @@ int
 main(int argc, char** argv) {
   // printf("test\n");
   // create_enclave(argc, argv);
-  connect_sysrepo(5);
+  int *p;
+  *p = 5;
+  connect_sysrepo(p);
 
   return 0;
 }
