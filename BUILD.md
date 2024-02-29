@@ -296,9 +296,9 @@ Thesis:
 * [Ciravegna](https://webthesis.biblio.polito.it/secure/28633/1/tesi.pdf)
 * [Donnini](https://webthesis.biblio.polito.it/secure/27657/1/tesi.pdf)
 
-Current repository: [keystone](https://gitlab.com/LorenzoFerro15/keystone)
+Current repository: [keystone (Ferro)](https://gitlab.com/LorenzoFerro15/keystone)
 
-Other repository: [keystone](https://gitlab.com/valerio_donnini/keystone)
+Other repository: [keystone (Donnini)](https://gitlab.com/valerio_donnini/keystone)
 
 Fixes:
 
@@ -306,19 +306,26 @@ Fixes:
 $ sudo apt install quilt
 ```
 
-## Build Keystone applications (TO BE UPDATED)
+## Build Keystone applications
 
-1. After having built **`keystone`**, execute these commands starting from `ccips-cfgipsec` directory:
+1. After having built **`keystone`** and exported its environment variables, execute these commands starting from `ccips-cfgipsec` directory:
 
 ```
-$ mkdir build_k
-$ cd build_k
-$ cmake -DKEYSTONE=ON ..
+$ mkdir build_kl
+$ cd ./build_kl
+$ cmake -DKEYSTONE_LIB=ON ..
+$ make
+$ make install
+$ cd ..
+$ mkdir build_ka
+$ cd ./build_ka
+$ cmake -DKEYSTONE_APP=ON ..
 $ make
 $ make keystone-ccips-package
 ```
 
-2. Copy the file `build_k/keystone-ccips.ke` into `<keystone_build_dir>/overlay/root/`
+2. Copy the files `build_ka/keystone-ccips.ke`, `yang/`, and `install_yang_modules.sh` into `<keystone_build_dir>/overlay/root/`
+
 
 3. Execute this command starting from `<keystone_build_dir>` directory:
 
@@ -326,11 +333,20 @@ $ make keystone-ccips-package
 $ make image
 ```
 
-## Run Keystone applications (TO BE UPDATED)
+## Run Keystone applications
 
 Execute these commands starting from `<keystone_build_dir>` directory:
 
 ```
 $ ./scripts/run-qemu.sh
+# ./install_yang_modules.sh
 # ./keystone-ccips.ke
 ```
+
+# Scripts
+
+The following scripts are available:
+- `start_build.sh`: build the `i2nsf_ra` application without the trusted part
+- `start_build_enarx.sh`: build the `i2nsf_ra` application with the trusted part and the enarx container
+- `start_build_keystone.sh`: build the CCIPS agent to be run in Keystone
+- `clean.sh`: remove all the build directories
