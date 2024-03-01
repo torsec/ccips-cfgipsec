@@ -25,3 +25,6 @@ cp keystone-ccips.ke $KEYSTONE_SDK_DIR/../../build/overlay/root/
 cd ..
 cp -r yang/ $KEYSTONE_SDK_DIR/../../build/overlay/root/
 cp install_yang_modules.sh $KEYSTONE_SDK_DIR/../../build/overlay/root/
+
+cd $KEYSTONE_SDK_DIR/../../build
+make image
