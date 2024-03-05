@@ -250,7 +250,7 @@ Build and run docker container for `i2nsf_ra`:
 
 ```
 $ docker build -t ccips_ra .
-$ docker run --name ccips_ra -p 830:830 --cap-add SYS_ADMIN --cap-add NET_ADMIN ccips_ra
+$ docker run --name ccips_ra -p 830:830 --cap-add SYS_ADMIN --cap-add NET_ADMIN --network="host" ccips_ra
 ```
 
 Launch tests:
