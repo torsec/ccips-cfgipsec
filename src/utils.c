@@ -53,7 +53,7 @@ int get_mask(char * ip_mask) {
 }
 
 int getAuthAlg(char* alg) {
-
+	INFO("getAuthAlg function called. Algorithm = %s\n", alg);
 	if (!strcmp(alg, "hmac-md5-128") || !strcmp(alg, "hmac-md5-96")){
 		return SADB_AALG_MD5HMAC;
 	}
@@ -73,6 +73,7 @@ int getAuthAlg(char* alg) {
 }
 
 int getEncryptAlg(char* alg) {
+	INFO("getEncryptAlg function called. Algorithm = %s\n", alg);
 
 	if (!strcmp(alg, "des"))
 		return SADB_EALG_DESCBC ;
@@ -99,7 +100,7 @@ int getEncryptAlg(char* alg) {
 }
 
 const char * get_encrypt_str(int alg) {
-
+	INFO("get_encrypt_str function called: algorithm = %d\n", alg);
     static char buf[100];
     switch (alg) {
     case SADB_EALG_DESCBC:      return "des";
@@ -120,9 +121,36 @@ const char * get_encrypt_str(int alg) {
     }
 }
 
+unsigned short get_encrypt_keylen(int alg) {
+    switch (alg) {
+    case SADB_EALG_DESCBC:      return ((EALG_DESCBC_KEY_BITS/8) + 7) / 8;
+    case SADB_EALG_3DESCBC:     return ((EALG_3DESCBC_KEY_BITS/8) + 7) / 8;
+	case SADB_X_EALG_AESCBC:    return ((EAL_AES_KEY_BITS/8) + 7) / 8;
+#ifdef SADB_X_EALG_CAST128CBC
+    case SADB_X_EALG_CAST128CBC:    return ((EAL_CASTCBC_KEY_BITS/8) + 7) / 8;
+#endif
+#ifdef SADB_X_EALG_BLOWFISHCBC
+    case SADB_X_EALG_BLOWFISHCBC:   return ((EAL_BLOWFISH_KEY_BITS/8) + 7) / 8;
+#endif
+// #ifdef SADB_X_EALG_AESCBC
+    
+// #endif
+    default:                  return 0;
+    }
+}
+
+// TODO: support for more algorithms
+unsigned short get_integrity_keylen(int alg) {
+    switch (alg) {
+    case SADB_AALG_MD5HMAC:      return ((AALG_MD5HMAC_KEY_BITS/8) + 7) / 8;
+    case SADB_AALG_SHA1HMAC:     return ((AALG_SHA1HMAC_KEY_BITS/8) + 7) / 8;
+    default:                  return 0;
+    }
+}
+
 const char *
 get_auth_str(int alg) {
-
+	INFO("get_auth_str function called: algorithm = %d\n", alg);
     static char buf[100];
     switch (alg) {
     case SADB_AALG_MD5HMAC:     return "hmac-md5-96";
@@ -156,6 +184,7 @@ get_auth_str(int alg) {
 const char *
 get_auth_alg(int alg) {
 
+	INFO("get_auth_alg function called. Algorithm = %d\n", alg);
 	static char buf[100];
 
 	switch (alg) {
@@ -187,7 +216,7 @@ get_auth_alg(int alg) {
 
 const char *
 get_encrypt_alg(int alg) {
-
+	INFO("get_encrypt_alg function called. Algorithm = %d\n", alg);
 	static char buf[100];
 
 	switch (alg) {
@@ -380,15 +409,22 @@ char* stringToBytes(char* str) {
     
     return bytes;
 }
-
+int verify_key(char *recvkey, char *storedkey, size_t key_len) {
+	int res = strncmp(recvkey, storedkey, key_len);
+	return res;
+}
+// i = received entry
+// j = stored entry
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
+
+	// retrieve the correct key dimension from the algorithm
 	// verify enc key
 	char *i_enc_key_b = stringToBytes(i->encryption_key);
 	char *j_enc_key_b = stringToBytes(j->encryption_key);
 	TRACE("I_ENC_KEY: %s \t J_ENC_KEY: %s", i_enc_key_b, j_enc_key_b);
 	free(i_enc_key_b);
 	free(j_enc_key_b);
-	if (strncmp(i->encryption_key,j->encryption_key,MAX_KEY) != 0) {
+	if (strncmp(i->encryption_key,j->encryption_key,j->encryption_key_length) != 0) {
 		ERR("Entries ENC KEYS differ");
 		return 1;
     }
@@ -398,7 +434,7 @@ int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 	TRACE("I_INT_KEY: %s \t J_INT_KEY: %s", i_int_key_b, j_int_key_b);
 	free(i_int_key_b);
 	free(j_int_key_b);
-	if (strncmp(i->integrity_key,j->integrity_key,MAX_KEY) != 0) {
+	if (strncmp(i->integrity_key,j->integrity_key,j->integrity_key_length) != 0) {
 		ERR("Entries AUTH KEYS differ");
 		return 1;
     }

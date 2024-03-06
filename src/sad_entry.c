@@ -29,6 +29,8 @@ sad_entry_node* create_sad_node(){
 	sad_node->encryption_key = (char *) malloc(sizeof(char) * MAX_KEY); 
 	sad_node->integrity_key = (char *) malloc(sizeof(char) * MAX_KEY); 
 	sad_node->encryption_iv = (char *) malloc(sizeof(char) * MAX_KEY); 
+	sad_node->encryption_key_length = 0;
+	sad_node->integrity_key_length = 0;
 	sad_node->bypass_dscp = false;
 	sad_node->ecn = false;
 	sad_node->tfc_pad = false;

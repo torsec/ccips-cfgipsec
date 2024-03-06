@@ -73,6 +73,8 @@ const char * get_encrypt_str(int alg);
 const char * get_auth_str(int alg);
 const char * get_auth_alg(int alg);
 const char * get_encrypt_alg(int alg);
+unsigned short get_encrypt_keylen(int alg);
+unsigned short get_integrity_keylen(int alg);
 int getAuthAlg(char* alg);
 int getEncryptAlg(char* alg);
 unsigned char* hexstr_to_char(char* hexstr);

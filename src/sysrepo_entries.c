@@ -569,6 +569,12 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
             else if (0 == strcmp("/encryption-algorithm", name)) {
             	sad_node->encryption_alg = value->data.int16_val;
                 DBG("encryption: %i",sad_node->encryption_alg);
+
+				// here insert function to retrieve required key length
+            }
+            else if (0 == strcmp("/integrity-algorithm", name)) {
+            	sad_node->integrity_alg = value->data.int16_val;
+                DBG("integrity: %i",sad_node->integrity_alg);
             }
             else if (0 == strcmp("/iv", name)) {
 
@@ -577,24 +583,24 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 DBG("encryption iv: %s",sad_node->encryption_iv);
             }
 			else if (0 == strncmp("/key-length", name,strlen("/key-length"))) {
-				sad_node->encryption_key_length = value->data.uint16_val;
+				// sad_node->encryption_key_length = value->data.uint16_val;
+				sad_node->encryption_key_length = get_encrypt_keylen(sad_node->encryption_alg);
+				sad_node->integrity_key_length = get_integrity_keylen(sad_node->integrity_alg);
 				DBG("encryption key length: %d",sad_node->encryption_key_length);
+				DBG("integrity key length: %d",sad_node->integrity_key_length);
+
 			}
 			else if (0 == strncmp("/key", name,strlen("/key"))) {
 
                     if (NULL != strstr(value->xpath,"/encryption")) {
 							remove_colon(sad_node->encryption_key,value->data.string_val);
-						DBG("encryption_keyt: %s",sad_node->encryption_key);
+						DBG("encryption_key: %s",sad_node->encryption_key);
 					}
 					if (NULL != strstr(value->xpath,"/integrity")) {
 						remove_colon(sad_node->integrity_key,value->data.string_val);
                         DBG("integrity_key: %s",sad_node->integrity_key);
                     }
 			}
-            else if (0 == strcmp("/integrity-algorithm", name)) {
-            	sad_node->integrity_alg = value->data.int16_val;
-                DBG("integrity: %i",sad_node->integrity_alg);
-            }
 			
 			else if (0 == strcmp("/local", name)) {
 				//sa_tunnel_local = value->data.string_val;
@@ -961,11 +967,6 @@ int send_delete_SAD_request(unsigned long int spi) {
 		// pthread_mutex_unlock(&sad_entries_locker);
         // goto cleanup;
     }
-	#ifdef Enarx
-		del_sad_node_enarx(sad_node->name);
-	#endif
-	del_sad_node(&init_sad_node,sad_node->name);
-	// pthread_mutex_unlock(&sad_entries_locker);
 
 cleanup:
 	pthread_mutex_unlock(&sad_entries_locker);

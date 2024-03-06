@@ -35,6 +35,7 @@ typedef struct sad_entry_node{
 	unsigned int integrity_alg;
 	unsigned int encryption_alg;
 	unsigned int encryption_key_length;
+	unsigned int integrity_key_length;
 	char *encryption_key;
 	char *integrity_key;
 	char *encryption_iv;
