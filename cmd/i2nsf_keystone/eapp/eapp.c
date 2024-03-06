@@ -28,13 +28,13 @@ extern char* __malloc_zone_stop;
 void *
 custom_malloc(size_t size) {
   void *p = malloc(size);
-  printf("MALLOC - %lu: %p\n", size, p);
+  // printf("MALLOC - %lu: %p\n", size, p);
   return p;
 }
 
 void
 custom_free(void *p) {
-  printf("FREE: %p\n", p);
+  // printf("FREE: %p\n", p);
   free(p);
   return;
 }

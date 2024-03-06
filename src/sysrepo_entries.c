@@ -234,7 +234,14 @@ int addSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 	}
 
 	add_spd_node(&init_spd_node, spd_node);
- 
+ 	#ifdef Enarx
+		// TODO change this to make a copy of the node_entry so we dont store in the Untrusted Part of the application
+		// they original keys. 
+		// add_spd_node_enarx(spd_node);
+
+		// TODO polito
+		// add_spd_node_keystone(spd_node);
+	#endif
     //    return SR_ERR_OK;
 	//} else {
     if (case_value == 2) {

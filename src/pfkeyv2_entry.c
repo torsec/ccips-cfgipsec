@@ -22,6 +22,8 @@
 #define TRUE 1
 #define FALSE 0
 
+// TODO: check argument passing in these functions
+
 //int pf_register_apply(const sr_val_t *input, const size_t input_cnt, int pid);
 char * pf_get_alg_enum_name(struct sadb_alg * alg, struct sadb_supported *sup);
 
@@ -608,7 +610,7 @@ int pf_addsad(sad_entry_node *sad_node) {
             keyext = (struct sadb_key *) p;
             keyext->sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
             keyext->sadb_key_reserved = 0;
-            // INFO("-----------KeyExt size %d",sizeof(*keyext)); 
+            INFO("-----------KeyExt size %d",sizeof(*keyext)); 
             if(sad_node->encryption_alg == SADB_EALG_DESCBC){
                 DBG("selected SADB_EALG_DESCBC");
                     keyext->sadb_key_len = (sizeof(*keyext) + (EALG_DESCBC_KEY_BITS/8) + 7) / 8;

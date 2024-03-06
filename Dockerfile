@@ -1,7 +1,7 @@
 FROM sysrepo/sysrepo-netopeer2
 
-ARG ENARX_RA=OFF
-ENV DEBUG_LVL_CCIPS=3
+ARG ENARX_RA=ON
+ENV DEBUG_LVL_CCIPS=5
 ENV DEBUG_LVL_NETOPEER=0
 RUN apt update && apt install -y libpthread-stubs0-dev
 

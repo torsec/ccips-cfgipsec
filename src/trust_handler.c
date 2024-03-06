@@ -163,9 +163,6 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     // This may be optimized
     sad_entry_node *entry = create_sad_node();
     copy_sad_node(entry, config->sad_entry);
-    INFO("entry->name = %s", entry->name);
-
-    INFO("entry->name = %s", entry->name);
     INFO("received SAD NODE:\nencryption key = %s\nlocal subnet = %s\n",entry->encryption_key, entry->local_subnet);
     // XOR the key parameters
     // TODO Add this part

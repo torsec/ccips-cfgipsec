@@ -70,8 +70,6 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
         json_free_serialized_string(serialized_msg);
         return result;
     }
-    INFO("After receiving the server output, the old_sad no longer has sensitive data such as enc key");
-    // INFO("OLD SAD ENC KEY = %s\nPOINTER = %p", old_sad->encryption_key, old_sad->encryption_key);
 
     
     default_msg *msg = malloc(sizeof(default_msg));
