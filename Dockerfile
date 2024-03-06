@@ -2,7 +2,7 @@ FROM sysrepo/sysrepo-netopeer2
 
 ARG ENARX_RA=ON
 ENV DEBUG_LVL_CCIPS=5
-ENV DEBUG_LVL_NETOPEER=0
+ENV DEBUG_LVL_NETOPEER=1
 RUN apt update && apt install -y libpthread-stubs0-dev
 
 # Setup netconf user
