@@ -354,3 +354,35 @@ The following scripts are available:
 - `start_build_enarx.sh`: build the `i2nsf_ra` application with the trusted part and the enarx container
 - `start_build_keystone.sh`: build the CCIPS agent to be run in Keystone
 - `clean.sh`: remove all the build directories
+
+# Debug Keystone
+
+fix: 
+```
+$ sudo apt install libncurses5
+```
+
+After having cloned the Keystone repositiry, run the following commands from the cloned directory:
+```
+$ ./fast-setup.sh
+$ source source.sh
+$ mkdir build && cd build
+$ cmake -DCMAKE_BUILD_TYPE=Debug ..
+$ make
+```
+
+Spawn two terminals, and run these commnads from the build directory:
+
+1 - 
+```
+$ ./scripts/run-qemu.sh -debug
+```
+
+2 -
+```
+$ riscv64-unknown-linux-gnu-gdb ./sm.build/platform/spirs/firmware/fw_payload.elf
+(gdb) target remote localhost:7778
+(gdb) set riscv use-compressed-breakpoints no
+(gdb) awatch *0xf0120fe0
+(gdb) x/400wx 0xf0120fe0
+```
