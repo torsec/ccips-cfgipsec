@@ -4,3 +4,7 @@
 [submodule "parson"] 
   path = parson
   url = https://github.com/kgabis/parson
+[submodule "cmd/spirs_tee_sdk"]
+	path = cmd/spirs_tee_sdk
+	url = https://gitlab.com/gBruno99/spirs_tee_sdk.git
+	branch = dev_ccips

@@ -385,11 +385,14 @@ void verify_sad_nodes() {
 			strcpy(out_node->name,node->name);
 			// Now lets against the trusted app
 			char verify_response[32];
-			int verification = verify_trusted_sad_entry(verify_response,out_node);
+			int verification = verify_trusted_sad_entry_keystone(verify_response,out_node);
 			switch (verification)
 			{
+			case 0:
+				INFO("Correct verification of %s: SPI %d\t REQID: %d",node->name,node->spi,node->req_id);
+				break;
 			case 1:
-				// Socket error 
+				ERR("SOCKET ERROR!"); 
 				break;
 			case 2:
 				ERR("ALERT with %s", verify_response);
@@ -399,7 +402,7 @@ void verify_sad_nodes() {
 				ERR("INVALID ANSWER!");
 				break;
 			default:
-				INFO("Correct verification of %s: SPI %d\t REQID: %d",node->name,node->spi,node->req_id);
+				ERR("Wrong verification of %s: SPI %d\t REQID: %d, ret %d",node->name,node->spi,node->req_id, verification);
 				break;
 			}
 		}
@@ -569,8 +572,6 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
             else if (0 == strcmp("/encryption-algorithm", name)) {
             	sad_node->encryption_alg = value->data.int16_val;
                 DBG("encryption: %i",sad_node->encryption_alg);
-
-				// here insert function to retrieve required key length
             }
             else if (0 == strcmp("/integrity-algorithm", name)) {
             	sad_node->integrity_alg = value->data.int16_val;
@@ -582,14 +583,18 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 				remove_colon(sad_node->encryption_iv,value->data.string_val);
                 DBG("encryption iv: %s",sad_node->encryption_iv);
             }
-			else if (0 == strncmp("/key-length", name,strlen("/key-length"))) {
-				// sad_node->encryption_key_length = value->data.uint16_val;
-				sad_node->encryption_key_length = get_encrypt_keylen(sad_node->encryption_alg);
-				sad_node->integrity_key_length = get_integrity_keylen(sad_node->integrity_alg);
-				DBG("encryption key length: %d",sad_node->encryption_key_length);
-				DBG("integrity key length: %d",sad_node->integrity_key_length);
-
-			}
+			// else if (0 == strncmp("/key-length", name,strlen("/key-length"))) {
+			// 	if (NULL != strstr(value->xpath,"/encryption")) {
+			// 		sad_node->encryption_key_length = value->data.uint16_val;
+			// 		// sad_node->encryption_key_length = get_encrypt_keylen(sad_node->encryption_alg);
+			// 		DBG("encryption key length: %d",sad_node->encryption_key_length);
+			// 	}
+			// 	if (NULL != strstr(value->xpath,"/integrity")) {
+			// 		sad_node->integrity_key_length = value->data.uint16_val;
+			// 		// sad_node->integrity_key_length = get_integrity_keylen(sad_node->integrity_alg);
+			// 		DBG("integrity key length: %d",sad_node->integrity_key_length);
+            //     }
+			// }
 			else if (0 == strncmp("/key", name,strlen("/key"))) {
 
                     if (NULL != strstr(value->xpath,"/encryption")) {
@@ -709,8 +714,8 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 	#ifdef Enarx
 		// TODO change this to make a copy of the node_entry so we dont store in the Untrusted Part of the application
 		// they original keys. 
-		add_sad_node_enarx(sad_node);
-
+		add_sad_node_keystone(sad_node);
+		
 		// TODO polito
 		// add_sad_node_keystone(sad_node);
 	#endif
@@ -752,7 +757,7 @@ int send_acquire_notification(sr_session_ctx_t *session, int policy_index){
 	/* create the notification */
     lyd_new_path(notif, ctx, path, NULL, 0, 0);
     if (!notif) {
-        ERR("Creating notification \"%s\" failed.\n", path);
+        ERR("Creating notification \"%s\" failed.", path);
         goto cleanup;
     }
 	
@@ -819,7 +824,7 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
 
 			#ifdef Enarx
 			// TODO Atm we skip this error check, but it should be handled or returned
-			del_sad_node_enarx(sad_name);
+			del_sad_node_keystone(sad_name);
 			#endif
         }
 
@@ -873,14 +878,14 @@ int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi
 	// lyd_new_path(notif, ctx, path, NULL, 0, 0);
 	pthread_mutex_lock(&sad_entries_locker);
     if (lyd_new_path(NULL, ctx, path, NULL, 0, &notif)) {
-        ERR("Creating notification \"%s\" failed.\n", path);
+        ERR("Creating notification \"%s\" failed.", path);
         goto cleanup;
     }
     if (!notif) {
-        ERR("Creating notification \"%s\" failed.\n", path);
+        ERR("Creating notification \"%s\" failed.", path);
         goto cleanup;
     }
-	INFO("Creating notification \"%s\"\n", path);
+	INFO("Creating notification \"%s\"", path);
 	sad_entry_node* sad_node = get_sad_node_by_spi(&init_sad_node,spi);
     if (sad_node != NULL) {
 		
@@ -977,4 +982,59 @@ cleanup:
         // sr_disconnect(conn);
     }
 	return rc ? EXIT_FAILURE : EXIT_SUCCESS;
+}
+
+
+/****************************************************************************/
+/**************************** Keystone functions ****************************/
+/****************************************************************************/
+
+void add_sad_node_keystone(sad_entry_node* node_entry) {
+	INFO("Adding SAD node (Keystone)...");
+	sad_entry_node* rec_entry = create_sad_node();
+
+	if (add_trusted_sad_entry_keystone(rec_entry, node_entry) != 0) {
+		ERR("Couldn't add sad_entry node (Keystone)");
+		free_sad_node(rec_entry);
+		return;
+	}
+
+	strcpy(node_entry->encryption_key, rec_entry->encryption_key);
+	strcpy(node_entry->integrity_key, rec_entry->integrity_key);
+	free_sad_node(rec_entry);
+
+	INFO("SAD node added (Keystone)");
+}
+
+int del_sad_node_keystone(char *sad_name) {
+	if (del_trusted_sad_entry_keystone(sad_name) != 0) {
+		ERR("Error while removing SAD entry %s (Keystone)",sad_name);
+		return -1;
+	}
+
+	return 0;
+}
+
+void add_spd_node_keystone(spd_entry_node* node_entry) {
+	INFO("Adding SPD node (Keystone)...");
+	spd_entry_node* rec_entry = create_spd_node();
+
+	if (add_trusted_spd_entry_keystone(rec_entry, node_entry) != 0) {
+		ERR("Couldn't add spd_entry node (Keystone)");
+		free_spd_node(rec_entry);
+		return;
+	}
+
+	free_spd_node(rec_entry);
+
+	INFO("SPD node added (Keystone)");
+}
+
+int del_spd_node_keystone(char *spd_name) {
+	if (del_trusted_spd_entry_keystone(spd_name) != 0) {
+		ERR("Error when removing sad entry %s", spd_name);
+		return 1;
+	}
+
+	return 0;
 }

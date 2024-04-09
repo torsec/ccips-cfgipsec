@@ -92,7 +92,7 @@ int send_delete_SAD_request(unsigned long int spi);
 int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi, bool soft);
 
 
-#ifdef Trusted
+#ifdef Enarx
 void verify_sad_nodes();
 void add_sad_node_enarx(sad_entry_node* node_entry);
 #endif 

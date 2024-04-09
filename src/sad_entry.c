@@ -9,6 +9,7 @@
 sad_entry_node* create_sad_node(){
     sad_entry_node *sad_node = (sad_entry_node*) malloc(sizeof(sad_entry_node));
 	sad_node->name = (char *) malloc(sizeof(char) * MAX_PATH);
+	memset(sad_node->name, 0, sizeof(char) * MAX_PATH);
 	sad_node->req_id = 0;
 	sad_node->spi = 0;
 	sad_node->ext_seq_num = false;
@@ -16,9 +17,13 @@ sad_entry_node* create_sad_node(){
 	sad_node->seq_number_counter = 0;
 	sad_node->anti_replay_window = 0;
 	sad_node->local_subnet = (char *) malloc(sizeof(char) * MAX_IP); 
-	sad_node->remote_subnet = (char *) malloc(sizeof(char) * MAX_IP); 
+	memset(sad_node->local_subnet, 0, sizeof(char) * MAX_IP);
+	sad_node->remote_subnet = (char *) malloc(sizeof(char) * MAX_IP);
+	memset(sad_node->remote_subnet, 0, sizeof(char) * MAX_IP); 
 	sad_node->tunnel_local = (char *) malloc(sizeof(char) * MAX_IP); 
+	memset(sad_node->tunnel_local, 0, sizeof(char) * MAX_IP); 
 	sad_node->tunnel_remote = (char *) malloc(sizeof(char) * MAX_IP); 
+	memset(sad_node->tunnel_remote, 0, sizeof(char) * MAX_IP); 
 	sad_node->inner_protocol = 0;
 	sad_node->srcport = 0; 
 	sad_node->dstport = 0;
@@ -27,8 +32,11 @@ sad_entry_node* create_sad_node(){
 	sad_node->integrity_alg = 0;
 	sad_node->encryption_alg = 0;
 	sad_node->encryption_key = (char *) malloc(sizeof(char) * MAX_KEY); 
+	memset(sad_node->encryption_key, 0, sizeof(char) * MAX_KEY); 
 	sad_node->integrity_key = (char *) malloc(sizeof(char) * MAX_KEY); 
+	memset(sad_node->integrity_key, 0, sizeof(char) * MAX_KEY); 
 	sad_node->encryption_iv = (char *) malloc(sizeof(char) * MAX_KEY); 
+	memset(sad_node->encryption_iv, 0, sizeof(char) * MAX_KEY); 
 	sad_node->encryption_key_length = 0;
 	sad_node->integrity_key_length = 0;
 	sad_node->bypass_dscp = false;
@@ -117,6 +125,50 @@ void copy_sad_node(sad_entry_node *dst, sad_entry_node *src) {
 
 	dst->next = src->next; // should be copied?
 
+	return;
+}
+
+void print_sad_node(sad_entry_node * n) {
+	printf("PRINTING SAD NODE\n");
+	printf("\t%-25s %s\n", "name:", n->name);
+	printf("\t%-25s %lld\n", "req_id:", n->req_id);
+	printf("\t%-25s %ld\n", "spi:", n->spi);
+	printf("\t%-25s %s\n", "ext_seq_num:", n->ext_seq_num?"true":"false");
+	printf("\t%-25s %s\n", "seq_overflow:", n->seq_overflow?"true":"false");
+	printf("\t%-25s %lld\n", "seq_number_counter:", n->seq_number_counter);
+	printf("\t%-25s %lld\n", "anti_replay_window:", n->anti_replay_window);
+	printf("\t%-25s %s\n", "local_subnet:", n->local_subnet);
+	printf("\t%-25s %s\n", "remote_subnet:", n->remote_subnet);
+	printf("\t%-25s %s\n", "tunnel_local:", n->tunnel_local);
+	printf("\t%-25s %s\n", "tunnel_remote:", n->tunnel_remote);
+	printf("\t%-25s %u\n", "inner_protocol:", n->inner_protocol);
+	printf("\t%-25s %u\n", "srcport:", n->srcport);
+	printf("\t%-25s %u\n", "dstport:", n->dstport);
+	printf("\t%-25s %hu\n", "ipsec_mode:", n->ipsec_mode);
+	printf("\t%-25s %hu\n", "protocol_parameters:", n->protocol_parameters);
+	printf("\t%-25s %u\n", "integrity_alg:", n->integrity_alg);
+	printf("\t%-25s %u\n", "encryption_alg:", n->encryption_alg);
+	printf("\t%-25s %u\n", "encryption_key_len:", n->encryption_key_length);
+	printf("\t%-25s %u\n", "integrity_key_len:", n->integrity_key_length);
+	printf("\t%-25s %s\n", "encryption_key:", n->encryption_key);
+	printf("\t%-25s %s\n", "integrity_key:", n->integrity_key);
+	printf("\t%-25s %s\n", "encryption_iv:", n->encryption_iv);
+	printf("\t%-25s %s\n", "bypass_dscp:", n->bypass_dscp?"true":"false");
+	printf("\t%-25s %s\n", "ecn:", n->ecn?"true":"false");
+	printf("\t%-25s %s\n", "tfc_pad:", n->tfc_pad?"true":"false");
+	printf("\t%-25s %hu\n", "df_bit:", n->df_bit);
+	printf("\t%-25s %ld\n", "lft_bytes_hard:", n->lft_bytes_hard);
+	printf("\t%-25s %ld\n", "lft_packets_hard:", n->lft_packets_hard);
+	printf("\t%-25s %ld\n", "lft_time_hard:", n->lft_time_hard);
+	printf("\t%-25s %ld\n", "lft_idle_hard:", n->lft_idle_hard);
+	printf("\t%-25s %ld\n", "lft_bytes_soft:", n->lft_bytes_soft);
+	printf("\t%-25s %ld\n", "lft_packets_soft:", n->lft_packets_soft);
+	printf("\t%-25s %ld\n", "lft_time_soft:", n->lft_time_soft);
+	printf("\t%-25s %ld\n", "lft_idle_soft:", n->lft_idle_soft);
+	printf("\t%-25s %ld\n", "lft_bytes_current:", n->lft_bytes_current);
+	printf("\t%-25s %ld\n", "lft_packets_current:", n->lft_packets_current);
+	printf("\t%-25s %ld\n", "lft_time_current:", n->lft_time_current);
+	printf("\t%-25s %ld\n", "lft_idle_current:", n->lft_idle_current);
 	return;
 }
 

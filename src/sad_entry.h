@@ -74,6 +74,8 @@ void free_sad_node(sad_entry_node * n);
 /// @return void
 void copy_sad_node(sad_entry_node *dst, sad_entry_node *src);
 
+void print_sad_node(sad_entry_node * n); 
+
 #ifdef Trusted
 /// @brief serialize a sad_node into a JSON_VALUE
 /// @param sad_node input sad_node to serailize

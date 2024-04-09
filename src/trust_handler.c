@@ -29,6 +29,7 @@ extern char *handle_message(char *data) {
     } 
     switch (msg->code) {
         case NEW_CONFIG_MSG: {
+            INFO("received NEW CONFIG MSG");
             sad_entry_msg *entry_msg = (sad_entry_msg*) malloc(sizeof(sad_entry_msg));    
 
             // TODO: modify handle 
@@ -45,6 +46,7 @@ extern char *handle_message(char *data) {
             break;
         }
         case NEW_SPD_CONFIG_MSG: {
+            INFO("received NEW SPD CONFIG MSG");
             spd_entry_msg *entry_msg = (spd_entry_msg*) malloc(sizeof(spd_entry_msg));    
             // TODO: modify handle 
             if ((result = handle_new_SPD_conf_message(msg->data,entry_msg)), result != 0) {
@@ -60,6 +62,7 @@ extern char *handle_message(char *data) {
             break;
         }
         case REQUEST_VERIFY_MSG: {
+            INFO("received REQUEST VERIFY MSG");
             alert_state_msg *alert_msg = (alert_state_msg*) malloc(sizeof(alert_state_msg));
             alert_msg->entry_id = (char *) malloc(sizeof(char) * MAX_PATH); 
 
@@ -104,6 +107,7 @@ extern char *handle_message(char *data) {
             break;
         }*/
         case DELETE_CONFIG_MSG: {
+            INFO("received DELETE CONFIG MSG");
             op_result_msg *op_msg = (op_result_msg*) malloc(sizeof(op_result_msg)); 
 
             // TODO: modify handle 
@@ -122,6 +126,7 @@ extern char *handle_message(char *data) {
             break;
         }
         case DELETE_SPD_CONFIG_MSG: {
+            INFO("received DELETE SPD CONFIG MSG");
             op_result_msg *op_msg = (op_result_msg*) malloc(sizeof(op_result_msg)); 
 
             // TODO: modify handle 
@@ -163,7 +168,7 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
     // This may be optimized
     sad_entry_node *entry = create_sad_node();
     copy_sad_node(entry, config->sad_entry);
-    INFO("received SAD NODE:\nencryption key = %s\nlocal subnet = %s\n",entry->encryption_key, entry->local_subnet);
+    INFO("received SAD NODE:\nencryption key = %s\nlocal subnet = %s",entry->encryption_key, entry->local_subnet);
     // XOR the key parameters
     // TODO Add this part
     // Store the values

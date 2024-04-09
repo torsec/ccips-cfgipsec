@@ -196,7 +196,8 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 	// TODO need to free this?
 	char *new_xpath = NULL; 
 
-	printf("sad_entry_change_cb function called.\n");
+	INFO("sad_entry_change_cb function called.");
+	INFO("event: %d, xpath: %s", event, xpath);
 	
 	// pthread_mutex_lock(&sad_entry_change_lock);
 	if (SR_EV_CHANGE == event) {
@@ -274,7 +275,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 	    DBG(" ========== END OF CHANGES =======================================");
 	}
 	if ((event == SR_EV_DONE) && (get_verbose_level()==CI_VERB_DEBUG)) {
-	        printf("\n\n ========== CONFIG HAS CHANGED, CURRENT RUNNING CONFIG: ==========\n\n");
+	        DBG("\n\n ========== CONFIG HAS CHANGED, CURRENT RUNNING CONFIG: ==========\n\n");
 	        print_current_config(session, module_name);
 	}
 	

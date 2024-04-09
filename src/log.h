@@ -35,30 +35,31 @@ typedef struct {
 typedef void (*log_LogFn)(log_Event *ev);
 typedef void (*log_LockFn)(bool lock, void *udata);
 
-enum {  LOG_FATAL,LOG_ERROR,LOG_WARN,LOG_INFO,  LOG_DEBUG, LOG_TRACE };
+// Renamed due to conflicts with spirs_tee_sdk
+enum {  CCIPS_LOG_FATAL,CCIPS_LOG_ERROR,CCIPS_LOG_WARN,CCIPS_LOG_INFO,  CCIPS_LOG_DEBUG, CCIPS_LOG_TRACE };
 
-#define CI_VERB_FATAL LOG_FATAL
-#define CI_VERB_ERROR LOG_ERROR 
-#define CI_VERB_WARN LOG_WARN
-#define CI_VERB_INFO LOG_INFO
-#define CI_VERB_DEBUG LOG_DEBUG
-#define CI_VERB_TRACE LOG_TRACE
+#define CI_VERB_FATAL CCIPS_LOG_FATAL
+#define CI_VERB_ERROR CCIPS_LOG_ERROR 
+#define CI_VERB_WARN CCIPS_LOG_WARN
+#define CI_VERB_INFO CCIPS_LOG_INFO
+#define CI_VERB_DEBUG CCIPS_LOG_DEBUG
+#define CI_VERB_TRACE CCIPS_LOG_TRACE
 
-#define log_trace(...) log_log(LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
-#define log_debug(...) log_log(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define log_info(...)  log_log(LOG_INFO,  __FILE__, __LINE__, __VA_ARGS__)
-#define log_warn(...)  log_log(LOG_WARN,  __FILE__, __LINE__, __VA_ARGS__)
-#define log_error(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
-#define log_fatal(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
+#define log_trace(...) log_log(CCIPS_LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
+#define log_debug(...) log_log(CCIPS_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define log_info(...)  log_log(CCIPS_LOG_INFO,  __FILE__, __LINE__, __VA_ARGS__)
+#define log_warn(...)  log_log(CCIPS_LOG_WARN,  __FILE__, __LINE__, __VA_ARGS__)
+#define log_error(...) log_log(CCIPS_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define log_fatal(...) log_log(CCIPS_LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
-#define TRACE(...) log_log(LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
-#define DEBUG(...) log_log(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define DBG(...) log_log(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define INFO(...)  log_log(LOG_INFO,  __FILE__, __LINE__, __VA_ARGS__)
-#define WARN(...)  log_log(LOG_WARN,  __FILE__, __LINE__, __VA_ARGS__)
-#define ERROR(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
-#define ERR(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
-#define FATAL(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)  
+#define TRACE(...) log_log(CCIPS_LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
+#define DEBUG(...) log_log(CCIPS_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define DBG(...) log_log(CCIPS_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define INFO(...)  log_log(CCIPS_LOG_INFO,  __FILE__, __LINE__, __VA_ARGS__)
+#define WARN(...)  log_log(CCIPS_LOG_WARN,  __FILE__, __LINE__, __VA_ARGS__)
+#define ERROR(...) log_log(CCIPS_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define ERR(...) log_log(CCIPS_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define FATAL(...) log_log(CCIPS_LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)  
 
 
 extern const char* log_level_string(int level);

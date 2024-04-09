@@ -53,6 +53,13 @@ include_directories("${PROJECT_SOURCE_DIR}/parson")
 
 if(KEYSTONE_LIB)
 
+set(SPIRS_TEE_SDK_DIR ${PROJECT_SOURCE_DIR}/cmd/spirs_tee_sdk)
+
+include_directories("${SPIRS_TEE_SDK_DIR}/enclave/tee_internal_api/include")
+include_directories("${SPIRS_TEE_SDK_DIR}/host/tee_client_api/public")
+include_directories("${SPIRS_TEE_SDK_DIR}/host/tee_client_api/libteec/include")
+include_directories("${SPIRS_TEE_SDK_DIR}/debug")
+
 add_library(i2nsf STATIC 
         "${LIB_SRC_DIR}/sad_entry.c"
         "${LIB_SRC_DIR}/sad_entry.h"

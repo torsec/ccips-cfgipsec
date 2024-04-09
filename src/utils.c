@@ -18,6 +18,7 @@
  */
 
 #include "utils.h"
+#include "keystone_utils.h"
 
 char * get_ip(char * ip_mask) { // leakage?
 
@@ -125,12 +126,12 @@ unsigned short get_encrypt_keylen(int alg) {
     switch (alg) {
     case SADB_EALG_DESCBC:      return ((EALG_DESCBC_KEY_BITS/8) + 7) / 8;
     case SADB_EALG_3DESCBC:     return ((EALG_3DESCBC_KEY_BITS/8) + 7) / 8;
-	case SADB_X_EALG_AESCBC:    return ((EAL_AES_KEY_BITS/8) + 7) / 8;
+	case SADB_X_EALG_AESCBC:    return ((EALG_AESCBC_KEY_BITS/8) + 7) / 8;
 #ifdef SADB_X_EALG_CAST128CBC
-    case SADB_X_EALG_CAST128CBC:    return ((EAL_CASTCBC_KEY_BITS/8) + 7) / 8;
+    case SADB_X_EALG_CAST128CBC:    return ((EALG_CASTCBC_KEY_BITS/8) + 7) / 8;
 #endif
 #ifdef SADB_X_EALG_BLOWFISHCBC
-    case SADB_X_EALG_BLOWFISHCBC:   return ((EAL_BLOWFISH_KEY_BITS/8) + 7) / 8;
+    case SADB_X_EALG_BLOWFISHCBC:   return ((EALG_BLOWFISHCBC_KEY_BITS/8) + 7) / 8;
 #endif
 // #ifdef SADB_X_EALG_AESCBC
     
@@ -184,7 +185,7 @@ get_auth_str(int alg) {
 const char *
 get_auth_alg(int alg) {
 
-	INFO("get_auth_alg function called. Algorithm = %d\n", alg);
+	INFO("get_auth_alg function called. Algorithm = %d", alg);
 	static char buf[100];
 
 	switch (alg) {
@@ -216,7 +217,7 @@ get_auth_alg(int alg) {
 
 const char *
 get_encrypt_alg(int alg) {
-	INFO("get_encrypt_alg function called. Algorithm = %d\n", alg);
+	INFO("get_encrypt_alg function called. Algorithm = %d", alg);
 	static char buf[100];
 
 	switch (alg) {
@@ -668,4 +669,3 @@ void show_spd_list(spd_entry_node* main_spd_entry) {
 		node=node->next;
 	}
 }
-
