@@ -44,6 +44,7 @@ static pthread_mutex_t pf_sadb_esp_register_run_lock = PTHREAD_MUTEX_INITIALIZER
 #define PFKEY_EXT_ADD(msg, ext) ((msg)->sadb_msg_len += ((struct sadb_ext *)ext)->sadb_ext_len)
 /** given a PF_KEY message header this returns a pointer to the next extension */
 #define PFKEY_EXT_ADD_NEXT(msg) ((struct sadb_ext *)(((char *)(msg)) + PFKEY_USER_LEN((msg)->sadb_msg_len)))
+
 static inline void memwipe(void *ptr, size_t n)
 {
     if (ptr)
@@ -119,7 +120,7 @@ static void *pf_sadb_esp_register_run(void *register_thread_info)
         {
             INFO("SADB_ACQUIRE received");
             print_sadb_msg(msgp, msglen);
-            TRACE("print_sadb_msg sadb_esp_register_run end ...");
+            TRACE("print_sadb_msg pf_sadb_esp_register_run end");
 
             msglen -= sizeof(struct sadb_msg);
             struct sadb_ext *ext;
@@ -153,16 +154,16 @@ static void *pf_sadb_esp_register_run(void *register_thread_info)
         {
             INFO("SADB_EXPIRE received");
             print_sadb_msg(msgp, msglen);
-            DBG("print_sadb_msg sadb_esp_register_run end");
+            DBG("print_sadb_msg pf_sadb_esp_register_run end");
             // send_sa_expire_notification(session,msgp,msglen);
 
             // if hard expire then delete SA entry in running config
             // get SPI and checks if it is hard or soft
-            int spi = 0;
-            bool hard = false;
             struct sadb_ext *ext;
             msglen -= sizeof(struct sadb_msg);
             ext = (struct sadb_ext *)(msgp + 1);
+            int spi = 0;
+            bool hard = false;
 
             // TODO understand better the composition of sadb_message. For the moment this is
             // the only way to extract the information about the
@@ -175,10 +176,12 @@ static void *pf_sadb_esp_register_run(void *register_thread_info)
                 switch (ext->sadb_ext_type)
                 {
                 case SADB_EXT_SA:
+                    DBG("SADB_EXT_SA FOUND!");
                     sa = (struct sadb_sa *)ext;
                     spi = ntohl(sa->sadb_sa_spi);
                     break;
                 case SADB_EXT_LIFETIME_HARD:
+                    DBG("SADB_EXT_LIFETIME_HARD FOUND!");
                     hard = true;
                     break;
                 }
@@ -190,29 +193,25 @@ static void *pf_sadb_esp_register_run(void *register_thread_info)
             {
                 DBG("hard");
                 // TODO Handle this without relying in Sysrepo
-
-                if (rc == SR_ERR_OK)
+                INFO("HARD life expire received for SPI: %d", spi);
+                rc = send_sa_expire_notification(session, spi, false);
+                if (rc != SR_ERR_OK)
                 {
-                    INFO("HARD life expire received for SPI: %d", spi);
-                    rc = send_sa_expire_notification(session, spi, false);
-                    if (SR_ERR_OK == send_delete_SAD_request(spi))
-                    {
-                        INFO("SADB_ entry delesend_delete_SAD_requestted in running: %i", spi);
-                    }
+                    INFO("sending hard expire notification failed: %i", rc);
                 }
-                else
+                else if (SR_ERR_OK == send_delete_SAD_request(spi))
                 {
-                    // DBG("not remove");
+                    INFO("send_delete_SAD_request for SPI: %i", spi);
                 }
             }
             else
             {
                 DBG("soft");
-                rc = send_sa_expire_notification(session, spi, true);
                 INFO("SOFT life expire received for SPI: %d", spi);
+                rc = send_sa_expire_notification(session, spi, true);
                 if (rc != SR_ERR_OK)
                 {
-                    INFO("sending soft expire notification: %i", rc);
+                    INFO("sending soft expire notification failed: %i", rc);
                 }
             }
         }
@@ -235,7 +234,7 @@ int pf_exec_register(sr_session_ctx_t *session, int satype)
     struct sadb_msg msg;
     int rc = SR_ERR_OK;
 
-    DBG("exec register form kernel IPsec messages");
+    DBG("pf_exec_register for kernel IPsec messages");
     if (satype == SADB_SATYPE_ESP)
     {
         // DBG("pf_exec_register satype: %i", satype);
@@ -280,13 +279,16 @@ int pf_exec_register(sr_session_ctx_t *session, int satype)
     {
         INFO("Register ok  ... ");
     }
-    if (satype == SADB_SATYPE_ESP)
+    else
     {
-        if ((r = pthread_create(&pf_sadb_esp_register_run_thread, NULL, pf_sadb_esp_register_run, (void *)info)) != 0)
-        {
-            ERR("Unable to start sadb_esp_register thread (%s)", strerror(r));
-            return SR_ERR_OPERATION_FAILED;
-        }
+        return SR_ERR_OPERATION_FAILED;
+    }
+
+    // if (satype == SADB_SATYPE_ESP)
+    if ((r = pthread_create(&pf_sadb_esp_register_run_thread, NULL, pf_sadb_esp_register_run, (void *)info)) != 0)
+    {
+        ERR("Unable to start pf_sadb_esp_register_run thread (%s)", strerror(r));
+        return SR_ERR_OPERATION_FAILED;
     }
     return EXIT_SUCCESS;
 }
@@ -304,7 +306,7 @@ int pf_setsadbaddr(void *p, int exttype, int protocol, int prefixlen, int port, 
     addrext->sadb_address_proto = protocol;
     addrext->sadb_address_prefixlen = prefixlen;
     // addrext->sadb_address_reserved = 0;
-    // INFO("PF_SETSADBADDR: %d, %d, %d, %d, %s",exttype,protocol,prefixlen,port,ip);
+    // INFO("PF_SETSADBADDR: %d, %d, %d, %d, %s", exttype, protocol, prefixlen, port, ip);
     memcpy(addrext + 1, addr, sizeof(struct sockaddr_in));
     free(addr);
     return (addrext->sadb_address_len * 8);
@@ -324,6 +326,7 @@ int pf_addpolicy(spd_entry_node *spd_node)
     bzero(&buf, sizeof(buf));
     p = buf;
     msg = (struct sadb_msg *)p;
+
     msg->sadb_msg_version = PF_KEY_V2;
     msg->sadb_msg_type = SADB_X_SPDADD;
     if (spd_node->protocol_parameters == IPPROTO_ESP)
@@ -331,17 +334,18 @@ int pf_addpolicy(spd_entry_node *spd_node)
     msg->sadb_msg_pid = getpid();
     len = sizeof(*msg);
     p += sizeof(*msg);
+
     policyext = (struct sadb_x_policy *)p;
     policyext->sadb_x_policy_len = sizeof(struct sadb_x_policy) / 8;
     policyext->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
     policyext->sadb_x_policy_type = spd_node->action;
     policyext->sadb_x_policy_dir = spd_node->policy_dir;
     // Identifier of the kernel
-    policyext->sadb_x_policy_id = spd_node->index; // doesn't work, policy_id is asigned by kernel
+    policyext->sadb_x_policy_id = spd_node->index; // doesn't work, policy_id is assigned by kernel
     policyext->sadb_x_policy_priority = 0;
-
     len += policyext->sadb_x_policy_len * 8;
     p += policyext->sadb_x_policy_len * 8;
+
     req = (struct sadb_x_ipsecrequest *)p;
     req->sadb_x_ipsecrequest_proto = spd_node->protocol_parameters;
     req->sadb_x_ipsecrequest_len = sizeof(struct sadb_x_ipsecrequest);
@@ -380,8 +384,8 @@ int pf_addpolicy(spd_entry_node *spd_node)
     policyext->sadb_x_policy_len += (req->sadb_x_ipsecrequest_len / 8);
 
     int src_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_SRC, spd_node->inner_protocol, get_mask(spd_node->local_subnet), spd_node->srcport, get_ip(spd_node->local_subnet));
-    p += src_len;
     len += src_len;
+    p += src_len;
 
     int dst_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_DST, spd_node->inner_protocol, get_mask(spd_node->remote_subnet), spd_node->dstport, get_ip(spd_node->remote_subnet));
     len += dst_len;
@@ -393,7 +397,7 @@ int pf_addpolicy(spd_entry_node *spd_node)
     Write(s, buf, len);
     close(s);
 
-    // read the policy index asigned by the kernel
+    // read the policy index assigned by the kernel
     char tmp_local_subnet[MAX_IP];
     char tmp_remote_subnet[MAX_IP];
     // char *tmp_tunnel_local = "";
@@ -412,12 +416,14 @@ int pf_addpolicy(spd_entry_node *spd_node)
     // int type = SADB_SATYPE_UNSPEC;
     struct sadb_msg tmp_msg;
     bzero(&tmp_msg, sizeof(tmp_msg));
+
     tmp_msg.sadb_msg_version = PF_KEY_V2;
     tmp_msg.sadb_msg_type = SADB_X_SPDDUMP;
     if (spd_node->protocol_parameters == IPPROTO_ESP)
         tmp_msg.sadb_msg_satype = SADB_SATYPE_ESP;
     tmp_msg.sadb_msg_len = sizeof(tmp_msg) / 8;
     tmp_msg.sadb_msg_pid = getpid();
+
     Write(s, &tmp_msg, sizeof(tmp_msg));
 
     int goteof = 0;
@@ -434,7 +440,6 @@ int pf_addpolicy(spd_entry_node *spd_node)
 
         while (msglen > 0)
         {
-
             struct sadb_x_policy *policy;
             struct sockaddr *sa;
             struct sadb_address *addr;
@@ -498,13 +503,14 @@ int pf_delpolicy(spd_entry_node *spd_node)
 
     s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
     bzero(&buf, sizeof(buf));
-
     p = buf;
     msg = (struct sadb_msg *)p;
+
     msg->sadb_msg_version = PF_KEY_V2;
     msg->sadb_msg_type = SADB_X_SPDDELETE;
     if (spd_node->protocol_parameters == IPPROTO_ESP)
         msg->sadb_msg_satype = SADB_SATYPE_ESP;
+    msg->sadb_msg_pid = getpid();
     // msg->sadb_msg_satype = spd_node->protocol_parameters;
     len = sizeof(*msg);
     p += sizeof(*msg);
@@ -518,8 +524,8 @@ int pf_delpolicy(spd_entry_node *spd_node)
     p += policyext->sadb_x_policy_len * 8;
 
     int src_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_SRC, spd_node->inner_protocol, get_mask(spd_node->local_subnet), spd_node->srcport, get_ip(spd_node->local_subnet));
-    p += src_len;
     len += src_len;
+    p += src_len;
 
     int dst_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_DST, spd_node->inner_protocol, get_mask(spd_node->remote_subnet), spd_node->dstport, get_ip(spd_node->remote_subnet));
     len += dst_len;
@@ -543,23 +549,29 @@ int pf_delpolicy(spd_entry_node *spd_node)
 int pf_addsad(sad_entry_node *sad_node)
 {
 
+    INFO("PFKEY ADD SAD");
+    // print_sad_node(sad_node);
+
     int s;
     char buf[4096], *p;
     struct sadb_msg *msg;
     struct sadb_sa *saext;
     struct sadb_x_sa2 *sa2;
+    struct sadb_lifetime *lifetime;
     struct sadb_key *keyext;
     // struct sadb_address *addrext;
     int len;
     // int mypid;
     // int rc = SR_ERR_OK;
-    s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
     // mypid = getpid();
+
+    s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
     // http://www.cs.fsu.edu/~baker/devices/lxr/source/2.6.31.13/linux/net/key/af_key.c
     // Build and write SADB_ADD request
     bzero(&buf, sizeof(buf));
     p = buf;
     msg = (struct sadb_msg *)p;
+
     msg->sadb_msg_version = PF_KEY_V2;
     msg->sadb_msg_type = SADB_ADD; // https://datatracker.ietf.org/doc/html/rfc2367#section-3.1.3
     if (sad_node->protocol_parameters == IPPROTO_ESP)
@@ -589,8 +601,6 @@ int pf_addsad(sad_entry_node *sad_node)
     len += sa2->sadb_x_sa2_len * 8;
     p += sa2->sadb_x_sa2_len * 8;
 
-    struct sadb_lifetime *lifetime;
-
     lifetime = (struct sadb_lifetime *)p;
     lifetime->sadb_lifetime_len = sizeof(struct sadb_lifetime) / sizeof(uint64_t);
     lifetime->sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
@@ -611,13 +621,12 @@ int pf_addsad(sad_entry_node *sad_node)
     len += lifetime->sadb_lifetime_len * 8;
     p += lifetime->sadb_lifetime_len * 8;
 
-    // Mode tunnel
     if (sad_node->ipsec_mode == IPSEC_MODE_TUNNEL)
     {
-
+        // Mode tunnel
         int src_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, 32, sad_node->srcport, sad_node->tunnel_local);
-        p += src_len;
         len += src_len;
+        p += src_len;
         int dst_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, 32, sad_node->dstport, sad_node->tunnel_remote);
         len += dst_len;
         p += dst_len;
@@ -626,8 +635,8 @@ int pf_addsad(sad_entry_node *sad_node)
     {
         // Mode transport
         int src_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, get_mask(sad_node->local_subnet), sad_node->srcport, get_ip(sad_node->local_subnet));
-        p += src_len;
         len += src_len;
+        p += src_len;
         int dst_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, get_mask(sad_node->remote_subnet), sad_node->dstport, get_ip(sad_node->remote_subnet));
         len += dst_len;
         p += dst_len;
@@ -639,18 +648,18 @@ int pf_addsad(sad_entry_node *sad_node)
         keyext = (struct sadb_key *)p;
         keyext->sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
         keyext->sadb_key_reserved = 0;
-        INFO("-----------KeyExt size %d", sizeof(*keyext));
+        INFO("-----------SADB_KEY size %d", sizeof(*keyext));
         if (sad_node->encryption_alg == SADB_EALG_DESCBC)
         {
             DBG("selected SADB_EALG_DESCBC");
             keyext->sadb_key_len = (sizeof(*keyext) + (EALG_DESCBC_KEY_BITS / 8) + 7) / 8;
             keyext->sadb_key_bits = EALG_DESCBC_KEY_BITS;
-        } // SADB_X_EALG_AESCBC
+        }
         else if (sad_node->encryption_alg == SADB_X_EALG_AESCBC)
         {
             DBG("selected SADB_X_EALG_AESCBC");
-            keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_KEY_BITS / 8) + 7) / 8;
-            keyext->sadb_key_bits = EAL_AES_KEY_BITS;
+            keyext->sadb_key_len = (sizeof(*keyext) + (EALG_AESCBC_KEY_BITS / 8) + 7) / 8;
+            keyext->sadb_key_bits = EALG_AESCBC_KEY_BITS;
         }
         else if (sad_node->encryption_alg == SADB_EALG_3DESCBC)
         {
@@ -661,54 +670,53 @@ int pf_addsad(sad_entry_node *sad_node)
         else if (sad_node->encryption_alg == SADB_X_EALG_CASTCBC)
         {
             DBG("selected SADB_X_EALG_CASTCBC");
-            keyext->sadb_key_len = (sizeof(*keyext) + (EAL_CASTCBC_KEY_BITS / 8) + 7) / 8;
-            keyext->sadb_key_bits = EAL_CASTCBC_KEY_BITS;
+            keyext->sadb_key_len = (sizeof(*keyext) + (EALG_CASTCBC_KEY_BITS / 8) + 7) / 8;
+            keyext->sadb_key_bits = EALG_CASTCBC_KEY_BITS;
         }
         else if (sad_node->encryption_alg == SADB_X_EALG_AESCTR)
         {
             DBG("selected SADB_X_EALG_AESCTR");
-            keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AESCTR_KEY_BITS / 8) + 7) / 8;
-            keyext->sadb_key_bits = EAL_AESCTR_KEY_BITS;
+            keyext->sadb_key_len = (sizeof(*keyext) + (EALG_AESCTR_KEY_BITS / 8) + 7) / 8;
+            keyext->sadb_key_bits = EALG_AESCTR_KEY_BITS;
         }
         else if (sad_node->encryption_alg == SADB_X_EALG_AES_CCM_ICV8)
         {
             DBG("selected SADB_X_EALG_AES_CCM_ICV8");
-            keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_CCM_ICV8_KEY_BITS / 8) + 7) / 8;
-            keyext->sadb_key_bits = EAL_AES_CCM_ICV8_KEY_BITS;
+            keyext->sadb_key_len = (sizeof(*keyext) + (EALG_AES_CCM_ICV8_KEY_BITS / 8) + 7) / 8;
+            keyext->sadb_key_bits = EALG_AES_CCM_ICV8_KEY_BITS;
         }
         else if (sad_node->encryption_alg == SADB_X_EALG_AES_CCM_ICV12)
         {
             DBG("selected SADB_X_EALG_AES_CCM_ICV12");
-            keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_CCM_ICV12_KEY_BITS / 8) + 7) / 8;
-            keyext->sadb_key_bits = EAL_AES_CCM_ICV12_KEY_BITS;
+            keyext->sadb_key_len = (sizeof(*keyext) + (EALG_AES_CCM_ICV12_KEY_BITS / 8) + 7) / 8;
+            keyext->sadb_key_bits = EALG_AES_CCM_ICV12_KEY_BITS;
         }
         else if (sad_node->encryption_alg == SADB_X_EALG_AES_CCM_ICV16)
         {
             DBG("selected SADB_X_EALG_AES_CCM_ICV16");
-            keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_CCM_ICV16_KEY_BITS / 8) + 7) / 8;
-            keyext->sadb_key_bits = EAL_AES_CCM_ICV16_KEY_BITS;
+            keyext->sadb_key_len = (sizeof(*keyext) + (EALG_AES_CCM_ICV16_KEY_BITS / 8) + 7) / 8;
+            keyext->sadb_key_bits = EALG_AES_CCM_ICV16_KEY_BITS;
         }
         else if (sad_node->encryption_alg == SADB_X_EALG_AES_GCM_ICV8)
         {
             DBG("selected SADB_X_EALG_AES_GCM_ICV8");
-            keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_GCM_ICV8_KEY_BITS / 8) + 7) / 8;
-            keyext->sadb_key_bits = EAL_AES_GCM_ICV8_KEY_BITS;
+            keyext->sadb_key_len = (sizeof(*keyext) + (EALG_AES_GCM_ICV8_KEY_BITS / 8) + 7) / 8;
+            keyext->sadb_key_bits = EALG_AES_GCM_ICV8_KEY_BITS;
         }
         else if (sad_node->encryption_alg == SADB_X_EALG_AES_GCM_ICV12)
         {
             DBG("selected SADB_X_EALG_AES_GCM_ICV12");
-            keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_GCM_ICV12_KEY_BITS / 8) + 7) / 8;
-            keyext->sadb_key_bits = EAL_AES_GCM_ICV12_KEY_BITS;
+            keyext->sadb_key_len = (sizeof(*keyext) + (EALG_AES_GCM_ICV12_KEY_BITS / 8) + 7) / 8;
+            keyext->sadb_key_bits = EALG_AES_GCM_ICV12_KEY_BITS;
         }
         else if (sad_node->encryption_alg == SADB_X_EALG_AES_GCM_ICV16)
         {
             DBG("selected SADB_X_EALG_AES_GCM_ICV16");
-            keyext->sadb_key_len = (sizeof(*keyext) + (EAL_AES_GCM_ICV16_KEY_BITS / 8) + 7) / 8;
-            keyext->sadb_key_bits = EAL_AES_GCM_ICV16_KEY_BITS;
+            keyext->sadb_key_len = (sizeof(*keyext) + (EALG_AES_GCM_ICV16_KEY_BITS / 8) + 7) / 8;
+            keyext->sadb_key_bits = EALG_AES_GCM_ICV16_KEY_BITS;
         }
-        INFO("-----------Key length %d", keyext->sadb_key_len);
+        INFO("-----------sadb_key_len %d", keyext->sadb_key_len);
         memcpy(keyext + 1, sad_node->encryption_key, strlen(sad_node->encryption_key));
-        INFO("-----------Key ext %d", keyext->sadb_key_len);
         len += keyext->sadb_key_len * 8;
         p += keyext->sadb_key_len * 8;
     }
@@ -719,13 +727,15 @@ int pf_addsad(sad_entry_node *sad_node)
         keyext = (struct sadb_key *)p;
         keyext->sadb_key_exttype = SADB_EXT_KEY_AUTH;
         keyext->sadb_key_reserved = 0;
-        if (sad_node->integrity_alg == AALG_MD5HMAC_KEY_BITS)
+        if (sad_node->integrity_alg == SADB_AALG_MD5HMAC)
         {
+            DBG("selected SADB_AALG_MD5HMAC");
             keyext->sadb_key_len = (sizeof(*keyext) + (AALG_MD5HMAC_KEY_BITS / 8) + 7) / 8;
             keyext->sadb_key_bits = AALG_MD5HMAC_KEY_BITS;
         }
-        else
+        else if (sad_node->integrity_alg == SADB_AALG_SHA1HMAC)
         {
+            DBG("selected SADB_AALG_SHA1HMAC");
             keyext->sadb_key_len = (sizeof(*keyext) + (AALG_SHA1HMAC_KEY_BITS / 8) + 7) / 8;
             keyext->sadb_key_bits = AALG_SHA1HMAC_KEY_BITS;
         }
@@ -736,12 +746,16 @@ int pf_addsad(sad_entry_node *sad_node)
     msg->sadb_msg_len = len / 8;
     print_sadb_msg(msg, len);
     Write(s, buf, len);
+    // TODO read response
     close(s);
     return SR_ERR_OK;
 }
 
 int pf_delsad(sad_entry_node *sad_node)
 {
+    INFO("PFKEY DEL SAD");
+    // print_sad_node(sad_node);
+
     struct sadb_msg *msg;
     // struct sadb_x_policy *policyext;
     int s, len /*, spi*/;
@@ -752,15 +766,15 @@ int pf_delsad(sad_entry_node *sad_node)
     // struct sadb_key *keyext;
     // struct sadb_address *addrext;
     // int mypid;
-
-    s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
     // mypid = getpid();
 
+    s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
     // Build and write SADB_ADD request
     bzero(&buf, sizeof(buf));
     // Construct PF_KEY management message
     p = buf;
     msg = (struct sadb_msg *)p;
+
     msg->sadb_msg_version = PF_KEY_V2;
     msg->sadb_msg_type = SADB_DELETE; // https://datatracker.ietf.org/doc/html/rfc2367#section-3.1.4
     msg->sadb_msg_satype = proto2satype(sad_node->protocol_parameters);
@@ -777,9 +791,10 @@ int pf_delsad(sad_entry_node *sad_node)
 
     if (sad_node->ipsec_mode == IPSEC_MODE_TUNNEL)
     {
+        // Mode tunnel
         int src_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, 32, sad_node->srcport, sad_node->tunnel_local);
-        p += src_len;
         len += src_len;
+        p += src_len;
         int dst_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, 32, sad_node->dstport, sad_node->tunnel_remote);
         len += dst_len;
         p += dst_len;
@@ -788,8 +803,8 @@ int pf_delsad(sad_entry_node *sad_node)
     {
         // Mode transport
         int src_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, get_mask(sad_node->local_subnet), sad_node->srcport, get_ip(sad_node->local_subnet));
-        p += src_len;
         len += src_len;
+        p += src_len;
         int dst_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, get_mask(sad_node->remote_subnet), sad_node->dstport, get_ip(sad_node->remote_subnet));
         len += dst_len;
         p += dst_len;
@@ -798,6 +813,7 @@ int pf_delsad(sad_entry_node *sad_node)
     msg->sadb_msg_len = len / 8;
     print_sadb_msg(msg, len);
     Write(s, buf, len);
+    // TODO read response
     close(s);
 
     return SR_ERR_OK;
@@ -805,6 +821,9 @@ int pf_delsad(sad_entry_node *sad_node)
 
 int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node)
 {
+    INFO("PFKEY GET SAD");
+    // print_sad_node(sad_node);
+
     struct sadb_msg *msg;
     // struct sadb_x_policy *policyext;
     int s, len /*, spi*/;
@@ -814,14 +833,14 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node)
     // struct sadb_key *keyext;
     // struct sadb_address *addrext;
     // int mypid;
-
-    s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
     // mypid = getpid();
 
+    s = Socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
     // Build and write SADB_ request
     bzero(&buf, sizeof(buf));
     p = buf;
     msg = (struct sadb_msg *)p;
+
     msg->sadb_msg_version = PF_KEY_V2;
     msg->sadb_msg_type = SADB_GET; // https://datatracker.ietf.org/doc/html/rfc2367#section-3.1.5
     if (sad_node->protocol_parameters == IPPROTO_ESP)
@@ -839,9 +858,10 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node)
 
     if (sad_node->ipsec_mode == IPSEC_MODE_TUNNEL)
     {
+        INFO("IPSEC MODE TUNNEL");
         int src_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, 32, sad_node->srcport, sad_node->tunnel_local);
-        p += src_len;
         len += src_len;
+        p += src_len;
         int dst_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, 32, sad_node->dstport, sad_node->tunnel_remote);
         len += dst_len;
         p += dst_len;
@@ -850,8 +870,8 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node)
     {
         INFO("IPSEC MODE TRANSPORT");
         int src_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_SRC, sad_node->inner_protocol, get_mask(sad_node->local_subnet), sad_node->srcport, get_ip(sad_node->local_subnet));
-        p += src_len;
         len += src_len;
+        p += src_len;
         int dst_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_DST, sad_node->inner_protocol, get_mask(sad_node->remote_subnet), sad_node->dstport, get_ip(sad_node->remote_subnet));
         len += dst_len;
         p += dst_len;
@@ -859,8 +879,8 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node)
 
     msg->sadb_msg_len = len / 8;
     print_sadb_msg(msg, len);
-
     Write(s, buf, len);
+
     // Read and print SADB_DUMP replies until done
     int msglen;
     struct sadb_ext *ext;
@@ -882,7 +902,8 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node)
     }
     if (msgp->sadb_msg_errno != 0)
     {
-        ERR("Unknown errno %s", strerror(msgp->sadb_msg_errno));
+        ERR("Unknown errno %d: %s", msgp->sadb_msg_errno, strerror(msgp->sadb_msg_errno));
+        return SR_ERR_OPERATION_FAILED;
     }
     if (msglen == sizeof(struct sadb_msg))
     {
@@ -926,6 +947,7 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node)
         }
         case SADB_X_EXT_SA2:
         {
+            TRACE("Parsing SA2");
             struct sadb_x_sa2 *sa2;
             sa2 = (struct sadb_x_sa2 *)ext;
             mode = sa2->sadb_x_sa2_mode;
@@ -934,24 +956,28 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node)
         }
         case SADB_EXT_ADDRESS_SRC:
         {
+            TRACE("Parsing SRC ADDR");
             struct sadb_address *addrext = (struct sadb_address *)ext;
             // int addr_len = (addrext->sadb_address_len * 8) - sizeof(struct sadb_address);
             struct sockaddr_in *addr = (struct sockaddr_in *)(addrext + 1);
             strcpy(ipSrc, inet_ntoa(addr->sin_addr));
+            prefixLenSrc = addrext->sadb_address_prefixlen;
+            // int addr_len = (addrext->sadb_address_len * 8) - sizeof(struct sadb_address);
             // int port = ntohs(addr->sin_port);
             // int protocol = addrext->sadb_address_proto;
-            prefixLenSrc = addrext->sadb_address_prefixlen;
             break;
         }
         case SADB_EXT_ADDRESS_DST:
         {
+            TRACE("Parsing DST ADDR");
             struct sadb_address *addrext = (struct sadb_address *)ext;
             // int addr_len = (addrext->sadb_address_len * 8) - sizeof(struct sadb_address);
             struct sockaddr_in *addr = (struct sockaddr_in *)(addrext + 1);
             strcpy(ipDst, inet_ntoa(addr->sin_addr));
+            prefixLenDst = addrext->sadb_address_prefixlen;
+            // int addr_len = (addrext->sadb_address_len * 8) - sizeof(struct sadb_address);
             // int port = ntohs(addr->sin_port);
             // int protocol = addrext->sadb_address_proto;
-            prefixLenDst = addrext->sadb_address_prefixlen;
             break;
         }
         }
@@ -1062,7 +1088,12 @@ int pf_dump_sads(sad_entry_node *sad_node)
             return SR_ERR_OPERATION_FAILED;
         }
         if (msgp->sadb_msg_errno != 0)
+        {
             ERR("Unknown errno %s", strerror(msgp->sadb_msg_errno));
+            close(s);
+            return SR_ERR_OPERATION_FAILED;
+        }
+
         if (msglen == sizeof(struct sadb_msg))
         {
             close(s);
@@ -1073,10 +1104,8 @@ int pf_dump_sads(sad_entry_node *sad_node)
 
         while (msglen > 0)
         {
-
             struct sadb_sa *sa;
             struct sadb_lifetime *life;
-            ;
 
             switch (ext->sadb_ext_type)
             {
@@ -1088,7 +1117,6 @@ int pf_dump_sads(sad_entry_node *sad_node)
                     // i = 1;
                 }
                 break;
-
             case SADB_EXT_LIFETIME_CURRENT:
                 life = (struct sadb_lifetime *)ext;
                 sad_node->lft_packets_current = life->sadb_lifetime_allocations;
@@ -1168,7 +1196,12 @@ int pf_dump_policies()
             return SR_ERR_OPERATION_FAILED;
         }
         if (msgp->sadb_msg_errno != 0)
+        {
             ERR("Unknown errno %s", strerror(msgp->sadb_msg_errno));
+            close(s);
+            return SR_ERR_OPERATION_FAILED;
+        }
+
         if (msglen == sizeof(struct sadb_msg))
         {
             close(s);
@@ -1179,7 +1212,6 @@ int pf_dump_policies()
 
         while (msglen > 0)
         {
-
             // struct sadb_sa *sa;
             // struct sadb_lifetime *life;
             msglen -= ext->sadb_ext_len << 3;
@@ -1243,7 +1275,11 @@ int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node)
             return SR_ERR_OPERATION_FAILED;
         }
         if (msgp->sadb_msg_errno != 0)
+        {
             ERR("Unknown errno %s", strerror(msgp->sadb_msg_errno));
+            close(s);
+            return SR_ERR_OPERATION_FAILED;
+        }
         if (msglen == sizeof(struct sadb_msg))
         {
             close(s);
@@ -1254,10 +1290,8 @@ int pf_get_sad_lifetime_current_by_spi(sad_entry_node *node)
 
         while (msglen > 0)
         {
-
             struct sadb_sa *sa;
             struct sadb_lifetime *life;
-            ;
 
             switch (ext->sadb_ext_type)
             {
@@ -1334,12 +1368,12 @@ int pf_getpolicy(spd_entry_node *spd_node, spd_entry_node *out_node)
     x_policy->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
     len += x_policy->sadb_x_policy_len * 8;
     p += x_policy->sadb_x_policy_len * 8;
+
     if (spd_node->ipsec_mode == IPSEC_MODE_TUNNEL)
     {
-
         int src_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_SRC, spd_node->inner_protocol, 32, spd_node->srcport, spd_node->tunnel_local);
-        p += src_len;
         len += src_len;
+        p += src_len;
         int dst_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_DST, spd_node->inner_protocol, 32, spd_node->dstport, spd_node->tunnel_remote);
         len += dst_len;
         p += dst_len;
@@ -1347,8 +1381,8 @@ int pf_getpolicy(spd_entry_node *spd_node, spd_entry_node *out_node)
     else
     {
         int src_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_SRC, spd_node->inner_protocol, get_mask(spd_node->local_subnet), spd_node->srcport, get_ip(spd_node->local_subnet));
-        p += src_len;
         len += src_len;
+        p += src_len;
         int dst_len = pf_setsadbaddr(p, SADB_EXT_ADDRESS_DST, spd_node->inner_protocol, get_mask(spd_node->remote_subnet), spd_node->dstport, get_ip(spd_node->remote_subnet));
         len += dst_len;
         p += dst_len;
@@ -1380,11 +1414,13 @@ int pf_getpolicy(spd_entry_node *spd_node, spd_entry_node *out_node)
     if (msgp->sadb_msg_errno != 0)
     {
         ERR("Unknown errno %s", strerror(msgp->sadb_msg_errno));
+        return SR_ERR_OPERATION_FAILED;
     }
     if (msglen == sizeof(struct sadb_msg))
     {
         return SR_ERR_OPERATION_FAILED; // no extensions
     }
+    
     msglen -= sizeof(struct sadb_msg);
     ext = (struct sadb_ext *)(msgp + 1);
     int prefixLenDst = 16, prefixLenSrc = 16; // TODO: these values are only placeholders
