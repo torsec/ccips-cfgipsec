@@ -916,9 +916,9 @@ int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi
 	return rc;	
 	
 cleanup:
-	pthread_mutex_unlock(&sad_entries_locker);
 	// sr_release_context(ctx);
     lyd_free_all(notif);
+	pthread_mutex_unlock(&sad_entries_locker);
     //sr_disconnect(connection);
 	if (ctx) {
         sr_release_context(connection);
@@ -962,19 +962,20 @@ int send_delete_SAD_request(unsigned long int spi) {
     rc = sr_delete_item(session, xpath, SR_EDIT_DEFAULT);
     if (SR_ERR_OK != rc) {
         ERR("sr_delete_item: %s", sr_strerror(rc));
-		// pthread_mutex_unlock(&sad_entries_locker);
+		pthread_mutex_unlock(&sad_entries_locker);
         goto cleanup;
     }
+
+	pthread_mutex_unlock(&sad_entries_locker);
+
     rc =  sr_apply_changes(session,0);
     if (SR_ERR_OK != rc) {
 		// Sometimes there is a condition race in here where the entry has already been removed from the sysrepo datastore.
         ERR("sr_commit: %s", sr_strerror(rc));
-		// pthread_mutex_unlock(&sad_entries_locker);
         // goto cleanup;
     }
 
 cleanup:
-	pthread_mutex_unlock(&sad_entries_locker);
 	if (NULL != session) {
         sr_session_stop(session);
     }

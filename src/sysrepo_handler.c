@@ -19,7 +19,7 @@
 #include "sysrepo_handler.h"
 
 
-pthread_mutex_t locker =PTHREAD_MUTEX_INITIALIZER;
+// pthread_mutex_t locker =PTHREAD_MUTEX_INITIALIZER;
 
 // TODO make this as default option...
 int feature_case_value = 2;
@@ -226,9 +226,9 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 						new_xpath = get_new_xpath(new_value->xpath);	
 
 	                	// In case 2, the SPD configuration values are applied into the kernel by means of pfkey_v2 or xfrm
-						pthread_mutex_lock(&locker);
+						// pthread_mutex_lock(&locker);
 		                rc = addSAD_entry(session,it,new_xpath,sad_name);
-						pthread_mutex_unlock(&locker);
+						// pthread_mutex_unlock(&locker);
 						free(new_xpath);
 						if (SR_ERR_OK == rc) {
 	                    	// DBG("sad-entry ");
