@@ -52,7 +52,7 @@ int readSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,spd_e
 	            }
 				
 				//<anti-replay-window>32</anti-replay-window>
-	            else if (0 == strcmp("/anti-replay-window", name)) {
+	            else if (0 == strcmp("/anti-replay-window-size", name)) {
 						spd_node->anti_replay_window = value->data.uint64_val;
 	                    DBG("anti_replay_window: %llu",spd_node->anti_replay_window);
 	            }
@@ -73,7 +73,7 @@ int readSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,spd_e
 				//<inner-protocol>any</inner-protocol>
 				else if (0 == strcmp("/inner-protocol", name)) {
 					spd_node->inner_protocol = value->data.uint16_val;
-					if (spd_node->inner_protocol < 0 || spd_node->inner_protocol > 256) {
+					if (spd_node->inner_protocol < 0 || spd_node->inner_protocol >= 256) {
 						if (!strcmp(value->data.string_val, "any"))
 							spd_node->inner_protocol = 256;
 				    	else {
@@ -85,6 +85,7 @@ int readSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,spd_e
 					DBG("inner-protocol: %i",spd_node->inner_protocol);
 				}
 				
+				// TODO fix this
 				else if (0 == strncmp("/start", name,strlen("/start"))) {
 	                    if (NULL != strstr(value->xpath,"/local-ports")) {
 	                        spd_node->srcport = value->data.uint16_val;
@@ -158,10 +159,11 @@ int readSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,spd_e
 					spd_node->bypass_dscp = value->data.bool_val;
 					DBG("bypass: %i",spd_node->bypass_dscp);
 				}
-				else if (0 == strcmp("/ecn", name)) {
-					spd_node->ecn = value->data.bool_val;
-					DBG("ecn: %i",spd_node->ecn);
-				}
+				// else if (0 == strcmp("/ecn", name)) {
+				// 	spd_node->ecn = value->data.bool_val;
+				// 	DBG("ecn: %i",spd_node->ecn);
+				// }
+				// TODO dscp-mapping missing
 	            else if (0 == strcmp("/df-bit", name)) {
 	                if (!strcmp(value->data.string_val, "clear")){
 	                    spd_node->df_bit = IPSEC_DF_BIT_CLEAR;
@@ -183,7 +185,7 @@ int readSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,spd_e
 	                DBG("protocol-parameters: %hu",spd_node->protocol_parameters);
 	            }
 				
-				// integrity and encryption are defined as list, list are not supported yet. TBD
+				//  TODO integrity and encryption are defined as list, list are not supported yet. TBD
 	           	else if (NULL != strstr(name,"/integrity")) {
 	            		spd_node->integrity_alg = value->data.int16_val;
 	                	DBG("integrity: %i",spd_node->integrity_alg);
@@ -465,7 +467,7 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 			}
 			
 			//<anti-replay-window>32</anti-replay-window>
-            else if (0 == strcmp("/anti-replay-window", name)) {
+            else if (0 == strcmp("/anti-replay-window-size", name)) {
 					sad_node->anti_replay_window = value->data.uint64_val;
                     DBG("anti_replay_window: %llu",sad_node->anti_replay_window);
             }
@@ -487,7 +489,7 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 			//<inner-protocol>any</inner-protocol>
 			else if (0 == strcmp("/inner-protocol", name)) {
 				sad_node->inner_protocol = value->data.uint16_val;
-				if (sad_node->inner_protocol < 0 || sad_node->inner_protocol > 256) {
+				if (sad_node->inner_protocol < 0 || sad_node->inner_protocol >= 256) {
 					if (!strcmp(value->data.string_val, "any"))
 						sad_node->inner_protocol = 256;
 			    	else {
@@ -499,6 +501,7 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 				DBG("inner-protocol: %i",sad_node->inner_protocol);
 			}
 			
+			// TODO fix this, and miss end
 			else if (0 == strncmp("/start", name,strlen("/start"))) {
                     if (NULL != strstr(value->xpath,"/local-ports")) {
                         sad_node->srcport = value->data.uint16_val;
@@ -522,44 +525,43 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 DBG("mode: %hu", sad_node->ipsec_mode);
             }
 			
-			//<tunnel>
-			//	<local>192.168.123.200</local>
-			//	<remote>192.168.123.100</remote>
-			//	<df-bit>clear</df-bit>
-			//	<bypass-dscp>true</bypass-dscp>
-			//	<ecn>false</ecn>
-			//</tunnel>
-			else if (0 == strcmp("/local", name)) {
-				//sa_tunnel_local = malloc(strlen(value->data.string_val) + 1);
-				strcpy(sad_node->tunnel_local,value->data.string_val);
-                DBG("tunnel_local: %s",sad_node->tunnel_local);
-			}
-			else if (0 == strcmp("/remote", name)) {
-				//sa_tunnel_remote = malloc(strlen(value->data.string_val) + 1);
-				strcpy(sad_node->tunnel_remote,value->data.string_val);
-                DBG("tunnel_remote: %s",sad_node->tunnel_remote);
-			}
-			else if (0 == strcmp("/bypass-dscp", name)) {
-				sad_node->bypass_dscp = value->data.bool_val;
-				DBG("bypass: %i",sad_node->bypass_dscp);
-			}
-			else if (0 == strcmp("/ecn", name)) {
-				sad_node->ecn = value->data.bool_val;
-				DBG("ecn: %i",sad_node->ecn);
-			}
-            else if (0 == strcmp("/df-bit", name)) {
-                if (!strcmp(value->data.string_val, "clear")){
-                    sad_node->df_bit = IPSEC_DF_BIT_CLEAR;
-                }
-                else if (!strcmp(value->data.string_val, "set")) {
-                    sad_node->df_bit = IPSEC_DF_BIT_SET;
-                }
-                else if (!strcmp(value->data.string_val, "copy")) {
-                    sad_node->df_bit = IPSEC_DF_BIT_COPY;
-                }
-                DBG("df-bit: %hu", sad_node->df_bit);
-            }
-			
+			// //<tunnel>
+			// //	<local>192.168.123.200</local>
+			// //	<remote>192.168.123.100</remote>
+			// //	<df-bit>clear</df-bit>
+			// //	<bypass-dscp>true</bypass-dscp>
+			// //	<ecn>false</ecn>
+			// //</tunnel>
+			// else if (0 == strcmp("/local", name)) {
+			// 	//sa_tunnel_local = malloc(strlen(value->data.string_val) + 1);
+			// 	strcpy(sad_node->tunnel_local,value->data.string_val);
+            //     DBG("tunnel_local: %s",sad_node->tunnel_local);
+			// }
+			// else if (0 == strcmp("/remote", name)) {
+			// 	//sa_tunnel_remote = malloc(strlen(value->data.string_val) + 1);
+			// 	strcpy(sad_node->tunnel_remote,value->data.string_val);
+            //     DBG("tunnel_remote: %s",sad_node->tunnel_remote);
+			// }
+			// else if (0 == strcmp("/bypass-dscp", name)) {
+			// 	sad_node->bypass_dscp = value->data.bool_val;
+			// 	DBG("bypass: %i",sad_node->bypass_dscp);
+			// }
+			// else if (0 == strcmp("/ecn", name)) {
+			// 	sad_node->ecn = value->data.bool_val;
+			// 	DBG("ecn: %i",sad_node->ecn);
+			// }
+            // else if (0 == strcmp("/df-bit", name)) {
+            //     if (!strcmp(value->data.string_val, "clear")){
+            //         sad_node->df_bit = IPSEC_DF_BIT_CLEAR;
+            //     }
+            //     else if (!strcmp(value->data.string_val, "set")) {
+            //         sad_node->df_bit = IPSEC_DF_BIT_SET;
+            //     }
+            //     else if (!strcmp(value->data.string_val, "copy")) {
+            //         sad_node->df_bit = IPSEC_DF_BIT_COPY;
+            //     }
+            //     DBG("df-bit: %hu", sad_node->df_bit);
+            // }
 					
 			//<protocol-parameters>esp</protocol-parameters>
             else if (0 == strcmp("/protocol-parameters", name)) {
@@ -578,8 +580,6 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 DBG("integrity: %i",sad_node->integrity_alg);
             }
             else if (0 == strcmp("/iv", name)) {
-
-
 				remove_colon(sad_node->encryption_iv,value->data.string_val);
                 DBG("encryption iv: %s",sad_node->encryption_iv);
             }
@@ -596,9 +596,8 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
             //     }
 			// }
 			else if (0 == strncmp("/key", name,strlen("/key"))) {
-
                     if (NULL != strstr(value->xpath,"/encryption")) {
-							remove_colon(sad_node->encryption_key,value->data.string_val);
+						remove_colon(sad_node->encryption_key,value->data.string_val);
 						DBG("encryption_key: %s",sad_node->encryption_key);
 					}
 					if (NULL != strstr(value->xpath,"/integrity")) {
@@ -607,6 +606,13 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                     }
 			}
 			
+			//<tunnel>
+			//	<local>192.168.123.200</local>
+			//	<remote>192.168.123.100</remote>
+			//	<df-bit>clear</df-bit>
+			//	<bypass-dscp>true</bypass-dscp>
+			//	<ecn>false</ecn> // doesn't exists
+			//</tunnel>
 			else if (0 == strcmp("/local", name)) {
 				//sa_tunnel_local = value->data.string_val;
 				strcpy(sad_node->tunnel_local,value->data.string_val);
@@ -616,15 +622,18 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 				//sa_tunnel_remote = value->data.string_val;
 				strcpy(sad_node->tunnel_remote,value->data.string_val);
                 DBG("tunnel_remote: %s",sad_node->tunnel_remote);
+			}else if (0 == strcmp("/bypass-dscp", name)) {
+				sad_node->bypass_dscp = value->data.bool_val;
+				DBG("bypass: %i",sad_node->bypass_dscp);
 			}
 			else if (0 == strcmp("/bypass-dscp", name)) {
 				sad_node->bypass_dscp = value->data.bool_val;
 				DBG("bypass: %i",sad_node->bypass_dscp);
 			}
-			else if (0 == strcmp("/ecn", name)) {
-				sad_node->ecn = value->data.bool_val;
-				DBG("ecn: %i",sad_node->ecn);
-			}
+			// else if (0 == strcmp("/ecn", name)) {
+			// 	sad_node->ecn = value->data.bool_val;
+			// 	DBG("ecn: %i",sad_node->ecn);
+			// }
             else if (0 == strcmp("/df-bit", name)) {
                 if (!strcmp(value->data.string_val, "clear")){
                     sad_node->df_bit = IPSEC_DF_BIT_CLEAR;
@@ -637,6 +646,8 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 }
                 DBG("df-bit: %hu", sad_node->df_bit);
             }
+
+			// missing dscp-mappings and dscp-values
 			
 			// SOFT and HARD lifetime related stuff
             else if (0 == strcmp("/time", name)) {
@@ -646,6 +657,9 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 } else if (NULL != strstr(value->xpath,"/sa-lifetime-hard")) { 
                     sad_node->lft_time_hard= value->data.int32_val;
                     DBG("lifetime time-hard: %lu",sad_node->lft_time_hard);
+                // } else if (NULL != strstr(value->xpath,"/sa-lifetime-current")) { 
+                //     sad_node->lft_time_current= value->data.int32_val;
+                //     DBG("lifetime time-current: %lu",sad_node->lft_time_current);
                 }
             }  
             else if (0 == strcmp("/bytes", name)) {
@@ -654,7 +668,10 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                     DBG("lifetime bytes-soft: %lu",sad_node->lft_bytes_soft);
                 } else if (NULL != strstr(value->xpath,"/sa-lifetime-hard")) { 
                     sad_node->lft_bytes_hard = value->data.int32_val;
-                    DBG("lifetime bytes-hard: %i",sad_node->lft_bytes_hard);
+                    DBG("lifetime bytes-hard: %lu",sad_node->lft_bytes_hard);
+                // } else if (NULL != strstr(value->xpath,"/sa-lifetime-current")) { 
+                //     sad_node->lft_bytes_current = value->data.int64_val;
+                //     DBG("lifetime bytes-current: %llu",sad_node->lft_bytes_current);
                 }
             }  
             else if (0 == strcmp("/packets", name)) {
@@ -663,16 +680,22 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                     DBG("lifetime packets-soft: %lu",sad_node->lft_packets_soft);
                 } else if (NULL != strstr(value->xpath,"/sa-lifetime-hard")) {  
                     sad_node->lft_packets_hard = value->data.int32_val;
-                    DBG("lifetime packets-hard: %i",sad_node->lft_packets_hard);
+                    DBG("lifetime packets-hard: %lu",sad_node->lft_packets_hard);
+                // } else if (NULL != strstr(value->xpath,"/sa-lifetime-current")) {  
+                //     sad_node->lft_packets_current = value->data.int32_val;
+                //     DBG("lifetime packets-hard: %lu",sad_node->lft_packets_current);
                 }  
             }  
             else if (0 == strcmp("/idle", name)) {
                 if (NULL != strstr(value->xpath,"/sa-lifetime-soft")) { 
                     sad_node->lft_idle_soft = value->data.int32_val;
-                    DBG("lifetime time-idle-soft: %i",sad_node->lft_idle_soft);
+                    DBG("lifetime time-idle-soft: %lu",sad_node->lft_idle_soft);
                 } else if (NULL != strstr(value->xpath,"/sa-lifetime-hard")) {  
-                    sad_node->lft_idle_hard= value->data.int32_val;
-                    DBG("lifetime time-idle-hard: %i",sad_node->lft_idle_hard);
+                    sad_node->lft_idle_hard = value->data.int32_val;
+                    DBG("lifetime time-idle-hard: %lu",sad_node->lft_idle_hard);
+                // } else if (NULL != strstr(value->xpath,"/sa-lifetime-current")) {  
+                //     sad_node->lft_idle_current = value->data.int32_val;
+                //     DBG("lifetime time-idle-current: %lu",sad_node->lft_idle_current);
                 }  
             } 
 
@@ -689,11 +712,10 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 	    return SR_ERR_OK;
 }
 
-// When the method addSAD_entry is called, it first request to 
+// When the method addSAD_entry is called, it first requests to 
 // SYSREPO using the entire XPATH all the information by calling the method
-//  readSAD_entry. The lattest whill request the information of the specific
-//  XPATH and will parse the information to fill the information of
-//  a sad_entry_node.
+// readSAD_entry. The latter will request the information of the specific
+// XPATH and will parse the information to fill a sad_entry_node.
 int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *sad_name) {
     int rc = SR_ERR_OK;
     //spi = atoi(spi_number);
@@ -704,7 +726,7 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 	// Extract the SAD entry that has been added in sysrepo
     rc = readSAD_entry(sess,it,xpath,sad_node);
     if (rc != SR_ERR_OK) {
-        ERR("ADD SAD in getSAD_entry: %s",sr_strerror(rc));
+        ERR("addSAD_entry: error in readSAD_entry: %s",sr_strerror(rc));
 		free_sad_node(sad_node);
 		pthread_mutex_unlock(&sad_entries_locker);
         return rc;

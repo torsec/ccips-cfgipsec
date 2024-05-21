@@ -65,11 +65,6 @@ new_entry(sr_change_oper_t op, sr_val_t *old_val, sr_val_t *new_val)
 	return true;
 }
 
-
-
-
-
-
 // callback for spd-entry changes
 //int spd_entry_change_cb(sr_session_ctx_t *session, const char *spd_entry_xpath, sr_notif_event_t event, void *private_ctx) {
 
@@ -87,7 +82,11 @@ int spd_entry_change_cb(sr_session_ctx_t *session, uint32_t sub_id, const char *
 	(void)private_data;
 	
 	char *spd_name = NULL;
+	// TODO need to free this?
 	char *new_xpath = NULL;  
+
+	TRACE("spd_entry_change_cb function called.");
+	TRACE("event: %d, xpath: %s", event, xpath);
 
 	if (SR_EV_CHANGE == event) {
 
@@ -98,8 +97,6 @@ int spd_entry_change_cb(sr_session_ctx_t *session, uint32_t sub_id, const char *
     	} else {
         	sprintf(path, "/%s:*//.", module_name);
     	}
-
-
 
 	    rc = sr_get_changes_iter(session, path , &it);
 	    if (SR_ERR_OK != rc) {
@@ -115,7 +112,7 @@ int spd_entry_change_cb(sr_session_ctx_t *session, uint32_t sub_id, const char *
 					if (new_entry(oper,old_value, new_value)) {
 						spd_name = new_value->data.string_val;   
 						INFO("Add spd-entry found %s ", spd_name); 
-						INFO("Add spd-entry found xpath %s ", new_value->xpath); 
+						DBG("Add spd-entry found xpath %s ", new_value->xpath); 
 						
 						new_xpath = get_new_xpath(new_value->xpath);	
 
@@ -123,7 +120,7 @@ int spd_entry_change_cb(sr_session_ctx_t *session, uint32_t sub_id, const char *
 	                	rc = addSPD_entry(session,it,new_xpath,spd_name,feature_case_value);
 	           		 	free(new_xpath);
 						if (SR_ERR_OK == rc) {
-	                    	// INFO("spd-entry added ");
+							INFO("spd-entry added");
 	               	 	}
 	                	else {
 							ERR("Adding spd-entry: %s",sr_strerror(rc));
@@ -138,7 +135,7 @@ int spd_entry_change_cb(sr_session_ctx_t *session, uint32_t sub_id, const char *
 					if (new_entry(oper,old_value, new_value)) {
 						spd_name = old_value->data.string_val;   
 						INFO("Delete spd-entry found %s ", spd_name); 
-						INFO("Delete spd-entry found xpath %s ", old_value->xpath); 
+						DBG("Delete spd-entry found xpath %s ", old_value->xpath); 
 						
 						new_xpath = get_new_xpath(old_value->xpath);
 						
@@ -158,17 +155,17 @@ int spd_entry_change_cb(sr_session_ctx_t *session, uint32_t sub_id, const char *
 					}
 	        	  	break;
 				case SR_OP_MODIFIED:     
-		        	DBG("OPERATION MODIFIED not supported: %i",oper);
+		        	ERR("OPERATION MODIFIED not supported: %i",oper);
 				case SR_OP_MOVED:     
-			    	DBG("OPERATION MOVED not supported: %i",oper);
-	    	} //swith               
+			    	ERR("OPERATION MOVED not supported: %i",oper);
+	    	} //switch               
 	        sr_free_val(old_value);
 	        sr_free_val(new_value);   
 		}
 	    DBG(" ========== END OF CHANGES =======================================");
 	}
 	if ((event == SR_EV_DONE) && (get_verbose_level()==CI_VERB_DEBUG)) {
-	        DBG("\n\n ========== CONFIG HAS CHANGED, CURRENT RUNNING CONFIG: ==========\n\n");
+	        DBG("\n\n ========== CONFIG HAS CHANGED, CURRENT RUNNING CONFIG: ==========");
 	        print_current_config(session, module_name);
 	}
 	
@@ -196,8 +193,8 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 	// TODO need to free this?
 	char *new_xpath = NULL; 
 
-	INFO("sad_entry_change_cb function called.");
-	INFO("event: %d, xpath: %s", event, xpath);
+	TRACE("sad_entry_change_cb function called.");
+	TRACE("event: %d, xpath: %s", event, xpath);
 	
 	// pthread_mutex_lock(&sad_entry_change_lock);
 	if (SR_EV_CHANGE == event) {
@@ -220,18 +217,19 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 				case SR_OP_CREATED:
 					if (new_entry(oper,old_value, new_value)) {
 						sad_name = new_value->data.string_val;   
-						// INFO("Add sad-entry found %s ", sad_name); 
-						INFO("Add sad-entry found xpath %s ", new_value->xpath); 
+						INFO("Add sad-entry found %s ", sad_name); 
+						DBG("Add sad-entry found xpath %s ", new_value->xpath); 
 					
 						new_xpath = get_new_xpath(new_value->xpath);	
 
-	                	// In case 2, the SPD configuration values are applied into the kernel by means of pfkey_v2 or xfrm
+	                	// In case 2, the SAD configuration values are applied into the kernel by means of pfkey_v2 or xfrm
 						// pthread_mutex_lock(&locker);
 		                rc = addSAD_entry(session,it,new_xpath,sad_name);
 						// pthread_mutex_unlock(&locker);
 						free(new_xpath);
 						if (SR_ERR_OK == rc) {
 	                    	// DBG("sad-entry ");
+							INFO("sad-entry added");
 	               	 	}
 	                	else {
 							ERR("Adding sad-entry: %s",sr_strerror(rc));
@@ -249,7 +247,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 						// INFO("Delete sad-entry found %s ", sad_name); 
 						INFO("Delete sad-entry found xpath %s ", old_value->xpath); 
 						new_xpath = get_new_xpath(old_value->xpath);
-	                	// In case 2, the SPD configuration values are applied into the kernel by means of pfkey_v2 or xfrm
+	                	// In case 2, the SAD configuration values are applied into the kernel by means of pfkey_v2 or xfrm
 						rc = removeSAD_entry(session,it,new_xpath,sad_name);
 						free(new_xpath);
 						if (SR_ERR_OK == rc) {
@@ -265,17 +263,17 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 					}
 	        	  	break;
 				case SR_OP_MODIFIED:     
-		        	DBG("OPERATION MODIFIED not supported: %i",oper);
+		        	ERR("OPERATION MODIFIED not supported: %i",oper);
 				case SR_OP_MOVED:     
-			    	DBG("OPERATION MOVED not supported: %i",oper);
-	    	} //swith                
+			    	ERR("OPERATION MOVED not supported: %i",oper);
+	    	} //switch                
 	        sr_free_val(old_value);
 	        sr_free_val(new_value);   
 		}
 	    DBG(" ========== END OF CHANGES =======================================");
 	}
 	if ((event == SR_EV_DONE) && (get_verbose_level()==CI_VERB_DEBUG)) {
-	        DBG("\n\n ========== CONFIG HAS CHANGED, CURRENT RUNNING CONFIG: ==========\n\n");
+	        DBG("\n\n ========== CONFIG HAS CHANGED, CURRENT RUNNING CONFIG: ==========");
 	        print_current_config(session, module_name);
 	}
 	

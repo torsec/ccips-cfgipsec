@@ -69,6 +69,7 @@ void print_val(const sr_val_t *value)
         break;
     }
 
+    /*
     switch (value->type) {
     case SR_UNKNOWN_T:
     case SR_CONTAINER_T:
@@ -81,6 +82,7 @@ void print_val(const sr_val_t *value)
         // DBG("%s\n", value->dflt ? " [default]" : "");
         break;
     }
+    */
 }
 
 void print_current_config(sr_session_ctx_t *session, const char *module_name)
