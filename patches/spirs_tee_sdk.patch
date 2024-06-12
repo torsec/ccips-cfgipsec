@@ -1,0 +1,616 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ea4b56b..b6b34a2 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -57,6 +57,11 @@ else()
+   set(BITS 64)
+ endif()
+ 
++# Set CCIPS variables
++set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../../build-scripts/CMakeModules/")
++add_compile_definitions(Trusted)
++add_compile_definitions(Enarx)
++
+ use_riscv_toolchain(${BITS})
+ 
+ # It seems safer to put these statements after defining the RISC-V toolchain
+diff --git a/enclave/CMakeLists.txt b/enclave/CMakeLists.txt
+index a37777b..11397ca 100644
+--- a/enclave/CMakeLists.txt
++++ b/enclave/CMakeLists.txt
+@@ -13,6 +13,12 @@ use_riscv_musl_toolchain(64)
+ set(TA_UUID ${TA_UUID} PARENT_SCOPE)
+ set(TA_BINARY ${TA_UUID}.ta)
+ 
++# Set CCIPS variables
++set(CCIPS_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../libs)
++set(CCIPS_PARSON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../parson)
++set(CCIPS_LIB_PARSON ${CCIPS_LIB_DIR}/libparson.a)
++set(CCIPS_LIB_I2NSF ${CCIPS_LIB_DIR}/libi2nsf.a)
++
+ # Enclave source files
+ set(TA_SRC tee_internal_api/src/main.c tee_internal_api/src/tee_random.c ta_callbacks.c)
+ 
+@@ -25,6 +31,8 @@ include_directories(include
+   ${KEYSTONE_SDK_DIR}/include/app
+   ${KEYSTONE_SDK_DIR}/include/edge
+   ${KEYSTONE_SDK_DIR}/include/host
++  ${CCIPS_LIB_DIR}
++  ${CCIPS_PARSON_DIR}
+   )
+ 
+ target_compile_definitions(${TA_BINARY} PRIVATE -DTA_HEAP_SIZE=${TA_HEAP_SIZE})
+@@ -32,7 +40,9 @@ target_compile_definitions(${TA_BINARY} PRIVATE -DTA_HEAP_SIZE=${TA_HEAP_SIZE})
+ # Keystone SDK libraries
+ target_link_libraries(${TA_BINARY}
+   ${KEYSTONE_LIB_EDGE}
+-  ${KEYSTONE_LIB_EAPP})
++  ${KEYSTONE_LIB_EAPP}
++  ${CCIPS_LIB_I2NSF}
++  ${CCIPS_LIB_PARSON})
+ 
+ set_target_properties(${TA_BINARY}
+    PROPERTIES LINK_FLAGS "-static -T ${CMAKE_CURRENT_BINARY_DIR}/app.lds")
+@@ -49,8 +59,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tee_internal_api/app.lds ${CMAKE_CURR
+ # Configure the debugging messages (debug.h)
+ target_compile_definitions(${TA_BINARY}
+     # PRIVATE _NO_STDIO
+-    # PRIVATE _FORCE_DEBUG
+-    PRIVATE _FORCE_NO_DEBUG
++    PRIVATE _FORCE_DEBUG
++    # PRIVATE _FORCE_NO_DEBUG
+     PRIVATE _DEBUG_COLORS
+     PRIVATE _DEBUG_BRIEF=0
+     PRIVATE _DEBUG_LEVEL=LOG_EXTRM
+diff --git a/enclave/ta_callbacks.c b/enclave/ta_callbacks.c
+index e8df31f..84cabe5 100644
+--- a/enclave/ta_callbacks.c
++++ b/enclave/ta_callbacks.c
+@@ -3,6 +3,8 @@
+ // Only required header for using SPIRS GlobalPlatform TEE Internal API
+ #include <tee_ta_api.h>
+ 
++#include "trust_handler.h"
++
+ #include "../../debug/debug.h"
+ 
+ TEE_Result TA_CreateEntryPoint(void)
+@@ -36,6 +38,7 @@ void TA_CloseSessionEntryPoint(void *session)
+         free(session);
+ }
+ 
++/*
+ static TEE_Result tests_param_value(void *state, uint32_t pt,
+                                     TEE_Param params[TEE_NUM_PARAMS])
+ {
+@@ -128,6 +131,40 @@ static TEE_Result tests_param_memref(void *state, uint32_t pt,
+     res = TEE_SUCCESS;
+     return res;
+ }
++*/
++
++static TEE_Result handle_message_wrapper(void *state, uint32_t pt,
++                                    TEE_Param params[TEE_NUM_PARAMS])
++{
++    debug("%s\n", __FUNCTION__);
++    TEE_Result res = TEE_ERROR_GENERIC;
++    char *out_msg;
++    size_t out_msg_len;
++
++    const uint32_t exp_pt = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
++                                            TEE_PARAM_TYPE_MEMREF_OUTPUT,
++                                            TEE_PARAM_TYPE_MEMREF_INOUT,
++                                            TEE_PARAM_TYPE_MEMREF_INOUT);
++
++    if (pt != exp_pt)
++        return TEE_ERROR_BAD_PARAMETERS;
++    
++    // check params sizes
++
++    out_msg = handle_message(params[0].memref.buffer);
++    out_msg_len = strlen(out_msg);
++
++    if(out_msg_len >= params[1].memref.size) {
++        free(out_msg);
++        return TEE_ERROR_SHORT_BUFFER;
++    }
++
++    memcpy(params[1].memref.buffer, out_msg, out_msg_len);
++    params[1].memref.size = out_msg_len;
++
++    res = TEE_SUCCESS;
++    return res;
++}
+ 
+ TEE_Result TA_InvokeCommandEntryPoint(void *session, uint32_t cmd,
+                                       uint32_t param_types,
+@@ -136,16 +173,8 @@ TEE_Result TA_InvokeCommandEntryPoint(void *session, uint32_t cmd,
+     debug("%s\n", __FUNCTION__);
+ 
+     switch (cmd) {
+-    case TA_TESTS_PARAM_VALUE_AND_NONE:
+-        return tests_param_value(session, param_types, params);
+-
+-    // Note how in this example all kinds of CA memories are handled
+-    // using the same function.
+-    // All CA memory related param types reduce to the ones used in tests_param_memref()
+-    case TA_TESTS_PARAM_MEM_TMPREF:
+-    case TA_TESTS_PARAM_MEM_PARTIAL:
+-    case TA_TESTS_PARAM_MEM_WHOLE:
+-        return tests_param_memref(session, param_types, params);
++    case 0:
++        return handle_message_wrapper(session, param_types, params);
+     default:
+         errorf("Command ID %d is not supported\n", cmd);
+         return TEE_ERROR_NOT_SUPPORTED;
+diff --git a/host/CMakeLists.txt b/host/CMakeLists.txt
+index 4155691..ef2f709 100644
+--- a/host/CMakeLists.txt
++++ b/host/CMakeLists.txt
+@@ -6,11 +6,53 @@ use_riscv_toolchain(${BITS})
+ 
+ set(HOST_BINARY ${APP_NAME})
+ 
++# Set CCIPS variables
++set(CCIPS_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../src)
++set(CCIPS_PARSON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../parson)
++set(CCIPS_HOST_FILES
++        ${CCIPS_SRC_DIR}/constants.h
++        ${CCIPS_SRC_DIR}/host.h
++        ${CCIPS_SRC_DIR}/pfkeyv2_entry.c
++        ${CCIPS_SRC_DIR}/pfkeyv2_entry.h
++        ${CCIPS_SRC_DIR}/pfkeyv2_utils.c
++        ${CCIPS_SRC_DIR}/pfkeyv2_utils.h
++        ${CCIPS_SRC_DIR}/sysrepo_entries.c
++        ${CCIPS_SRC_DIR}/sysrepo_entries.h
++        ${CCIPS_SRC_DIR}/sysrepo_handler.c
++        ${CCIPS_SRC_DIR}/sysrepo_handler.h
++        ${CCIPS_SRC_DIR}/sysrepo_print.c
++        ${CCIPS_SRC_DIR}/sysrepo_print.h
++        ${CCIPS_SRC_DIR}/trust_client.c
++        ${CCIPS_SRC_DIR}/trust_client.h
++        ${CCIPS_SRC_DIR}/sad_entry.c
++        ${CCIPS_SRC_DIR}/sad_entry.h
++        ${CCIPS_SRC_DIR}/spd_entry.c
++        ${CCIPS_SRC_DIR}/spd_entry.h
++        ${CCIPS_SRC_DIR}/utils.c 
++        ${CCIPS_SRC_DIR}/utils.h 
++        ${CCIPS_SRC_DIR}/messages.c
++        ${CCIPS_SRC_DIR}/messages.h
++        ${CCIPS_SRC_DIR}/trust_handler.c
++        ${CCIPS_SRC_DIR}/trust_handler.h
++        ${CCIPS_SRC_DIR}/log.c
++        ${CCIPS_SRC_DIR}/log.h
++        ${CCIPS_PARSON_DIR}/parson.c
++        ${CCIPS_PARSON_DIR}/parson.h
++    )
++
+ # Host/CA source files
+ set(HOST_SRC host.c)
+-add_executable(${HOST_BINARY} ${HOST_SRC})
++add_executable(${HOST_BINARY} ${HOST_SRC} ${CCIPS_HOST_FILES})
++
++# Find libraries needed by CCIPS
++set(BUILDROOT_HOST_DIRS ${KEYSTONE_SDK_DIR}/../../build/buildroot.build/host)
++set(BUILDROOT_RISCV_DIRS ${BUILDROOT_HOST_DIRS}/riscv64-buildroot-linux-gnu/sysroot)
++set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread --sysroot=${BUILDROOT_RISCV_DIRS}")
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread --sysroot=${BUILDROOT_RISCV_DIRS}")
++set(CMAKE_FIND_ROOT_PATH "${BUILDROOT_RISCV_DIRS};${BUILDROOT_RISCV_DIRS}/usr/include;${BUILDROOT_RISCV_DIRS}/usr/lib;${BUILDROOT_RISCV_DIRS}/lib")
++include("${CMAKE_CURRENT_SOURCE_DIR}/../../../build-scripts/ImportSysrepo_keystone.cmake")
+ 
+-target_link_libraries(${HOST_BINARY}
++target_link_libraries(${HOST_BINARY} PUBLIC
+     teec # GlobalPlatform TEE Client API
+     ${KEYSTONE_LIB_HOST}
+     ${KEYSTONE_LIB_EDGE}
+@@ -27,6 +69,8 @@ include_directories(
+     ${KEYSTONE_SDK_DIR}/include/host
+     ${KEYSTONE_SDK_DIR}/include/edge
+     ${KEYSTONE_SDK_DIR}/include/verifier
++    ${CCIPS_SRC_DIR}
++    ${CCIPS_PARSON_DIR}
+     )
+ 
+ # GlobalPlatform TEE CLIENT API build
+diff --git a/host/host.c b/host/host.c
+index 6e49af1..88286f6 100644
+--- a/host/host.c
++++ b/host/host.c
+@@ -1,14 +1,39 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <stdlib.h>
++#include <unistd.h>
++#include <signal.h>
++// #include <Python.h>
+ 
+ #include <tee_client_api.h>
+ 
+ #include <ta_shared.h>
+ 
++#include "messages.h"
++#include "utils.h"
++#include "log.h"
++#include "sysrepo_print.h"
++#include "sysrepo_handler.h"
++#include "sysrepo_entries.h"
++#include "pfkeyv2_entry.h"
++#include "pfkeyv2_utils.h"
++#include "trust_client.h"
++
+ int orig_num_rep = 0;
+ int num_rep = 0;
+ 
++#define BUF_SIZE 512
++
++int exit_application = 0;
++
++static void sigint_handler(int signum)
++{
++    (void)signum;
++
++    exit_application = 1;
++}
++
++/*
+ static void test_VALUE() {
+     TEEC_Result res;
+     uint32_t eo;
+@@ -549,32 +574,320 @@ static void test_MEMREF_WHOLE_with_AllocateSharedMemory()
+ 
+     info("[host] TEST PASSED: TA_TESTS_PARAM_MEM_WHOLE:AllocateSharedMemory\n");
+ }
++*/
++
++/*
++static void test_handle_message()
++{
++    int result = 1;
++    TEEC_Result res;
++    uint32_t eo;
++    TEEC_Context ctx;
++    TEEC_Session sess;
++    TEEC_Operation op;
++    const TEEC_UUID uuid = TA_UUID;
++
++    char input_buffer[BUF_SIZE] = {0};
++    char output_buffer[BUF_SIZE] = {0};
++    char inout_buffer[BUF_SIZE] = {0};
++    char output_buffer2[BUF_SIZE] = {0};
++
++    // char pad1[PAD_SIZE1] = {0};
++    // char pad2[PAD_SIZE2] = {0};
++
++    TEEC_SharedMemory shm[TEEC_CONFIG_PAYLOAD_REF_COUNT];
++
++    res = TEEC_InitializeContext("default", &ctx);
++    if (res != TEEC_SUCCESS)
++    {
++        errorf("FAILED: TEEC_InitializeContext: %d, %x\n", eo, res);
++        exit(-1);
++    }
++
++    res = TEEC_OpenSession(&ctx, &sess, &uuid, TEEC_LOGIN_PUBLIC, NULL, NULL, &eo);
++    if (res != TEEC_SUCCESS)
++    {
++        errorf("FAILED: TEEC_OpenSession: %d, %x\n", eo, res);
++        exit(-1);
++    }
++
++    // write request message (UNTRUSTED)
++    delete_config_msg *message = (delete_config_msg *)malloc(sizeof(delete_config_msg));
++    message->entry_id = (char *)malloc(sizeof(char) * MAX_PATH);
++    strcpy(message->entry_id, "test1234");
++    JSON_Value *delete_msg = encode_delete_config_msg(message);
++    char *serialized_msg = encode_default_msg(10, DELETE_CONFIG_MSG, delete_msg);
++
++    num_rep = orig_num_rep;
++    while (num_rep--)
++    {
++        // Init SharedMemories
++        memset(shm, 0, sizeof(TEEC_SharedMemory) * TEEC_CONFIG_PAYLOAD_REF_COUNT);
++
++        // There are two ways to handle SharedMemory:
++        //   1. buffer externally allocated (malloc)
++        //   2. buffer allocated using TEEC_AllocateSharedMemory
++        shm[0].buffer = input_buffer;
++        shm[0].size = BUF_SIZE;
++        // What is the relation of these flags with paramTypes?
++        // these flags define the possible MEMREF paramTypes
++        // that this SharedMemory can be used for
++        // teec_pre_process_partial() checks for these flags and return TEEC_ERROR_BAD_PARAMETER
++        shm[0].flags = TEEC_MEM_INPUT;
++
++        shm[1].buffer = output_buffer;
++        shm[1].size = BUF_SIZE;
++        shm[1].flags = TEEC_MEM_OUTPUT;
++
++        shm[2].buffer = inout_buffer;
++        shm[2].size = BUF_SIZE;
++        shm[2].flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
++
++        shm[3].buffer = output_buffer2;
++        shm[3].size = BUF_SIZE;
++        shm[3].flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
++
++        for (int i = 0; i < TEEC_CONFIG_PAYLOAD_REF_COUNT; i++)
++        {
++            res = TEEC_RegisterSharedMemory(&ctx, &shm[i]);
++            if (res != TEEC_SUCCESS)
++            {
++                errorf("ERROR: TEEC_RegisterSharedMemory\n");
++                exit(-1);
++            }
++        }
++
++        // inverted wrt to spec example
++        memset(&op, 0, sizeof(op));
++        op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_WHOLE,
++                                         TEEC_MEMREF_WHOLE,
++                                         TEEC_MEMREF_WHOLE,
++                                         TEEC_MEMREF_WHOLE);
++
++// We're going to initialize a linear buffer with the layout of the TMPREF test
++// this way we can reuse the TMPREF TA test
++#define PARAM_OFFSET_WHOLE_0 0
++#define PARAM_OFFSET_WHOLE_1 0
++#define PARAM_OFFSET_WHOLE_2 0
++#define PARAM_OFFSET_WHOLE_3 0
++
++        // memset(inout_buffer, '?', SIZE_TEE_INOUT);
++        // memcpy(inout_buffer, MEMREF_INOUT_DATA, strlen(MEMREF_INOUT_DATA));
++        memcpy(input_buffer, serialized_msg, strlen(serialized_msg));
++
++        op.params[0].memref.parent = &shm[0];
++        // op.params[0].memref.offset = PARAM_OFFSET_WHOLE_0;
++        // This size MUST be shm.size
++        op.params[0].memref.size = strlen(serialized_msg); // This should be: offset + size < parent.size
++
++        op.params[1].memref.parent = &shm[1];
++        // op.params[1].memref.offset = PARAM_OFFSET_WHOLE_1;
++        op.params[1].memref.size = BUF_SIZE;
++
++        op.params[2].memref.parent = &shm[2];
++        // op.params[2].memref.offset = PARAM_OFFSET_WHOLE_2;
++        op.params[2].memref.size = BUF_SIZE;
++
++        op.params[3].memref.parent = &shm[3];
++        // op.params[3].memref.offset = PARAM_OFFSET_WHOLE_3;
++        op.params[3].memref.size = BUF_SIZE;
++
++        res = TEEC_InvokeCommand(&sess, 0, &op, &eo);
++        if (res != TEEC_SUCCESS)
++            errorf("TEEC_InvokeCommand(TA_TESTS_PARAM_MEM_WHOLE) failed at: %d, with %x\n", eo, res);
++
++#define MEMREF_BUFFER(memref) (((char *)memref.parent->buffer + memref.offset))
++
++        default_msg *msg = malloc(sizeof(default_msg));
++        op_result_msg *op_result = (op_result_msg *)malloc(sizeof(op_result_msg));
++        JSON_Object *schema = json_object(json_parse_string(MEMREF_BUFFER(op.params[1].memref)));
++
++        if (schema == NULL)
++        {
++            result = 1;
++            goto cleanup;
++        }
++        if (decode_default_msg(schema, msg) != 0)
++        {
++            // TODO handle error of decode_default
++            goto cleanup;
++        }
++        // Check if the message is type of operation
++        if (msg->code != OP_RESULT_MSG)
++        {
++            errorf("Message type not found");
++            goto cleanup;
++        }
++        // Check that we can decode the message
++        if ((result = decode_op_result_msg(msg->data, op_result)), result != 0)
++        {
++            goto cleanup;
++        }
++
++        if (op_result->success != 0)
++        {
++            errorf("Error when deleting the sad entry %s : %s\n", message->entry_id, op_result->message);
++            goto cleanup;
++        }
++
++        fflush(stdout);
++        result = 0;
++
++cleanup:
++        json_object_clear(schema);
++        free(schema);
++        free(op_result);
++        free(msg);
++        // free(res);
++        free(serialized_msg);
++        // json_value_free(delete_msg);
++        free(message->entry_id);
++        free(message);
++        // Check results
++        // assert(op.params[0].tmpref.size == SIZE_TEE_INPUT);
++        // assert(!memcmp(MEMREF_BUFFER(op.params[0].memref), MEMREF_INPUT_DATA, strlen(MEMREF_INPUT_DATA)));
++
++        // INOUT will return less bytes with a different message
++        // See TA tests_param_memref() function for the description
++        // assert(!memcmp(MEMREF_BUFFER(op.params[2].memref), MEMREF_INOUT_DATA_NEW, strlen(MEMREF_INOUT_DATA_NEW)));
++        // assert(op.params[2].memref.size == SIZE_TEE_INOUT_NEW);
++
++        // memset(pad1, '*', PAD_SIZE1);
++        // assert(!memcmp((char *)MEMREF_BUFFER(op.params[2].memref) + strlen(MEMREF_INOUT_DATA_NEW), pad1, PAD_SIZE1));
++
++        // Check that only op.params[2].memref.size bytes where updated
++        // memset(pad2, '?', PAD_SIZE2);
++        // assert(!memcmp((char *)MEMREF_BUFFER(op.params[2].memref) + strlen(MEMREF_INOUT_DATA_NEW) + PAD_SIZE1, pad2, PAD_SIZE2));
++
++        // Test second OUTPUT param
++        // assert(op.params[3].memref.size == strlen(MEMREF_OUTPUT_EXPECTED_2));
++        // assert(!memcmp(MEMREF_BUFFER(op.params[3].memref), MEMREF_OUTPUT_EXPECTED_2, op.params[3].memref.size));
++    }
++
++    TEEC_CloseSession(&sess);
++
++    TEEC_FinalizeContext(&ctx);
++
++    info("[host] TEST PASSED: TA_TESTS_PARAM_MEM_WHOLE\n");
++}
++*/
+ 
+-int main(int argc, char** argv) {
++int main(int argc, char **argv)
++{
+ 
+     setvbuf(stdout, 0, _IONBF, 0);
+ 
+-    if (argc > 1)
+-        orig_num_rep = atoi(argv[1]);
+-    else
+-        orig_num_rep = 1;
++    if ( geteuid() != 0 ) {
++        fprintf ( stderr, "Must be root in order to execute cfgipsec2. You are UID=%u, EUID=%u\n", getuid(), geteuid() );
++        return 1;
++    }
+ 
+-    // Testing TEEC_VALUE_* and TEEC_NONE
+-    test_VALUE();
++    // Get options
++    int l = 5;
++    log_set_level(l);
++    // log_level_string(4);
+ 
+-    // Testing TEEC_MEMREF_TEMP_*
+-    test_MEMREF_TMP();
++    INFO("LOG level set to: %d", l);
+ 
+-    // Testing RegisterSharedMemory test: PARTIAL
+-    test_MEMREF_PARTIAL();
++#ifdef Enarx
++    INFO("Enarx CCIPs version");
++    // Enable connectivity with enarx client
++    if (connect_ta_keystone() != 0)
++    {
++        ERR("Couldnt connect to TA");
++        exit(1);
++    }
++#endif
++
++    // Py_Initialize();
++
++    //// connect to sysrepo
++    sr_conn_ctx_t *connection = NULL;
++    sr_session_ctx_t *session = NULL;
++    sr_subscription_ctx_t *subscription_spd = NULL;
++    sr_subscription_ctx_t *subscription_sad = NULL;
++    const char *mod_name, *xpath = NULL;
+ 
+-    // Testing RegisterSharedMemory test: WHOLE
+-    test_MEMREF_WHOLE();
++    int rc = SR_ERR_OK;
++    // char *module_name = NULL;
++    mod_name = "ietf-i2nsf-ikeless";
+ 
+-    // Testing RegisterSharedMemory test: WHOLE (same as before, but with AllocatedSharedMemory)
+-    test_MEMREF_WHOLE_with_AllocateSharedMemory();
++    DBG("Connect to sysrepo %i", rc);
++    rc = sr_connect(0, &connection);
++    if (SR_ERR_OK != rc)
++    {
++        ERR("Error by sr_connect: %s", sr_strerror(rc));
++        goto cleanup;
++    }
+ 
+-    info("[PASS] all tests pass\n");
++    /* start session */
++    rc = sr_session_start(connection, SR_DS_RUNNING, &session);
++    if (SR_ERR_OK != rc)
++    {
++        ERR("Error by sr_session_start: %s", sr_strerror(rc));
++        goto cleanup;
++    }
++
++    /* read current config */
++    DBG("========== READING RUNNING CONFIG: ==========");
++    print_current_config(session, mod_name);
++    DBG("========== END RUNNING CONFIG: ==========");
++
++    DBG("Subscribing to entries");
++    /*subscribe for changes in running config */
++    xpath = "/ietf-i2nsf-ikeless:ipsec-ikeless/spd/spd-entry";
++    rc = sr_module_change_subscribe(session, mod_name, xpath, spd_entry_change_cb, NULL, 1, SR_SUBSCR_DEFAULT, &subscription_spd);
++    if (SR_ERR_OK != rc)
++    {
++        ERR("sr_module_change_subscribe spd: %s", sr_strerror(rc));
++        ERR("Try to reinstall the ietf-ipsec module running make uninstall then make install.");
++        goto cleanup;
++    }
++
++    xpath = "/ietf-i2nsf-ikeless:ipsec-ikeless/sad/sad-entry";
++    rc = sr_module_change_subscribe(session, mod_name, xpath, sad_entry_change_cb, NULL, 2, SR_SUBSCR_DEFAULT, &subscription_sad);
++    if (SR_ERR_OK != rc)
++    {
++        ERR("sr_module_change_subscribe sad: %s", sr_strerror(rc));
++        goto cleanup;
++    }
++
++    // TODO Recheck the purpose of this...
++    rc = sadb_register(session);
++    if (SR_ERR_OK != rc)
++    {
++        ERR("sadb_register: %s", sr_strerror(rc));
++        goto cleanup;
++    }
++    signal(SIGINT, sigint_handler);
++    signal(SIGPIPE, SIG_IGN);
++
++// When using enarx we need to stablish the socket with the enarx exposed socket.
++#ifdef Enarx
++    // TODO: For the moment this runs only using a tcp socket (not-encrypted)
++    pthread_t verificationThread;
++    // We create the verification thread, which will periodically check if what it is stored in the TA database,
++    // is the same as what it is installed in the kernel
++    pthread_create(&verificationThread, NULL, sad_verification_process, NULL);
++#endif
++
++    while (!exit_application)
++    {
++        sleep(1000); /* or do some more useful work... */
++    }
++    INFO("Application exit requested, exiting.");
++
++cleanup:
++#ifdef Enarx
++    close_verification_process();
++    disconnect_ta_keystone();
++#endif
++
++    if (connection != NULL)
++    {
++        sr_disconnect(connection);
++        return rc ? EXIT_FAILURE : EXIT_SUCCESS;
++    }
+ 
+     return 0;
+ }
+diff --git a/host/tee_client_api/libteec/CMakeLists.txt b/host/tee_client_api/libteec/CMakeLists.txt
+index a93ea23..26c8383 100644
+--- a/host/tee_client_api/libteec/CMakeLists.txt
++++ b/host/tee_client_api/libteec/CMakeLists.txt
+@@ -56,12 +56,12 @@ target_compile_options(teec BEFORE
+ )
+ 
+ target_compile_definitions(teec
+-    #PRIVATE _NO_STDIO
+-    # PRIVATE _FORCE_DEBUG
+-	PRIVATE _FORCE_NO_DEBUG
++    # PRIVATE _NO_STDIO
++    PRIVATE _FORCE_DEBUG
++	# PRIVATE _FORCE_NO_DEBUG
+     PRIVATE _DEBUG_COLORS
+     PRIVATE _DEBUG_BRIEF=0
+-    PRIVATE _DEBUG_LEVEL=LOG_INFO
++    PRIVATE _DEBUG_LEVEL=LOG_EXTRM
+     PRIVATE _DEBUG_FMT_PREFIX="[host/teec] "
+ )
+ 
