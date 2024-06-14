@@ -26,21 +26,21 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include "spd_entry.h"
 #include <stdlib.h>
 #include <stdbool.h>
-#include "constants.h"
+#include <string.h>
 
 #ifdef Trusted
 	#include "parson.h"
 #endif
 #include <crypt.h>
 
-// typedef struct host_t host_t;
 typedef struct spd_entry_node {
 	char *name;
-	int index;
+	unsigned short index;
 	unsigned short policy_dir;
-	unsigned int req_id;
+	unsigned long long int req_id;
 	char *local_subnet;
 	char *remote_subnet;
 	char *tunnel_local;
@@ -54,8 +54,12 @@ typedef struct spd_entry_node {
 	unsigned short protocol_parameters;
 	unsigned int integrity_alg;
 	unsigned int encryption_alg;
+	unsigned int encryption_key_length;
+	char *encryption_key;
+	char *integrity_key;
+	char *encryption_iv;
 	unsigned long long int anti_replay_window;
-	bool pfp_flag;
+	bool pfp_flag; //take off?
 	bool stateful_frag_check;
 	bool bypass_dscp;
 	bool ecn;
@@ -66,8 +70,8 @@ typedef struct spd_entry_node {
 
 } spd_entry_node;
 
-/// @brief creates an empty spd_entry_node with all the inputs intitilized
-/// @return an empty sad_entry_node
+/// @brief creates an empty spd_node with all the parameters initialized
+/// @return 
 spd_entry_node* create_spd_node();
 
 /// @brief free an spd_entry_node and all the internal data
@@ -81,8 +85,6 @@ void free_spd_node(spd_entry_node * n);
 /// @return void
 void copy_spd_node(spd_entry_node *dst, spd_entry_node *src);
 
-// void print_spd_node(spd_entry_node *spd);
-
 #ifdef Trusted
 /// @brief serialize a spd_node into a JSON_VALUE
 /// @param spd_node input spd_node to serailize
@@ -91,7 +93,7 @@ JSON_Value *serialize_spd_node(spd_entry_node *spd_node);
 
 /// @brief deserialized a JSON_OBJECT into a spd_node
 /// @param schema json schema that contains a serialized _spd_node
-/// @return spd_entry_node // TODO maybe change this so we pass the sad_entry_node to change
+/// @return spd_entry_node // TODO maybe change this so we pass the spd_entry_node to change
 spd_entry_node *deserialize_spd_node(JSON_Object *schema);
 #endif
 

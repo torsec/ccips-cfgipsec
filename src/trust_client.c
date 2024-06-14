@@ -26,7 +26,6 @@ int connect_ta() {
         ERR("Connection failed, make sure the Enarx up is running");
         return 1;
     }
-    // printf("Succeed to connect to Enarx TA\n");
 
     // Read the hello message of the server
     char buffer[2048] = {0};
@@ -34,7 +33,6 @@ int connect_ta() {
         ERR("first recv failed");
         return 1;
     }
-    // printf("Read hello message from Enarx: %s\n", buffer);
     return 0;
 }
 
@@ -43,7 +41,6 @@ int disconnect_ta() {
         ERR("Error when disconnecting from the server");
         return 1;
     }
-    printf("Disconnected from Enarx.\n");
     return 0;
 }
 
@@ -51,20 +48,15 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     message->sad_entry =  old_sad;
     JSON_Value *new_conf_msg = encode_sad_entry_msg(message);
-    // INFO("OLD SAD ENC KEY = %s\nPOINTER = %p", old_sad->encryption_key, old_sad->encryption_key);
     char *serialized_msg = encode_default_msg(10,NEW_CONFIG_MSG,new_conf_msg);
-
-    // printf("Serialized message after encode_default (add_sad):\n%s\n", serialized_msg);
-
     int result = 1;
+
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
         ERR("Couldnt send any information to the server");
         free(message);
         json_free_serialized_string(serialized_msg);
         return result;
     }
-    // INFO("NEW SAD ENC KEY = %s\nPOINTER = %p", new_sad->encryption_key, new_sad->encryption_key);
-
 
     char buffer2[2048] = {0};
     if (recv(ENARX_SOCKET, buffer2, 2048, 0) < 0) {
@@ -88,6 +80,7 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
         goto cleanup;
     }
 
+    // sad_entry_msg *entry_msg = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     switch (msg->code) {
         case INSERT_ENTRY_MSG: {
             sad_entry_msg *entry_msg = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
@@ -129,12 +122,10 @@ int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad) {
 }
 
 int verify_trusted_sad_entry(char *alert, sad_entry_node *sad_node) {
-    // INFO("VERIFY TRUSTED SAD ENTRY");
     sad_entry_msg *message = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
     message->sad_entry =  sad_node;
     JSON_Value *verify_entry = encode_sad_entry_msg(message);
     char *serialized_msg = encode_default_msg(10,REQUEST_VERIFY_MSG,verify_entry);
-    // printf("Serialized message:\n%s\n\n", serialized_msg);
     int result = 1;
 
     if (send(ENARX_SOCKET, serialized_msg, strlen(serialized_msg), 0) < 0) {
@@ -487,7 +478,6 @@ int del_trusted_spd_entry(char *spd_name) {
         json_value_free(parsed_resp);
         return result;
 }
-
 
 /****************************************************************************/
 /**************************** Keystone functions ****************************/

@@ -26,8 +26,8 @@ int handle_new_conf_message (JSON_Object *data, sad_entry_msg *out);
 int handle_new_SPD_conf_message(JSON_Object *data, spd_entry_msg *out);
 
 /// @brief function that handles the verification request
-/// @param data input SAD data
-/// @param out output SAD data
+/// @param data 
+/// @param out 
 /// @return 
 int handle_request_verify_message(JSON_Object *data, alert_state_msg *out);
 

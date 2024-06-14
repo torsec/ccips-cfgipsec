@@ -1,16 +1,16 @@
-
 #include "spd_entry.h"
 #include <string.h>
 
 #define MAX_PATH  200
 #define MAX_IP 40
 #define MAX_KEY 1024
+#define MAX_ID_LENGTH  MAX_PATH  +  MAX_IP * 4
+
 
 spd_entry_node* create_spd_node(){
-	spd_entry_node *spd_node = (spd_entry_node *) malloc(sizeof(struct spd_entry_node));
+	spd_entry_node *spd_node = (spd_entry_node*) malloc(sizeof(spd_entry_node));
 	spd_node->name = (char *) malloc(sizeof(char) * MAX_PATH);
 	spd_node->index = 0;
-    // Direction of the tunnel
 	spd_node->policy_dir = 0;
 	spd_node->req_id = 0;
 	spd_node->local_subnet = (char *) malloc(sizeof(char) * MAX_IP); 
@@ -27,14 +27,19 @@ spd_entry_node* create_spd_node(){
     spd_node->protocol_parameters = 0;
     spd_node->integrity_alg = 0;
     spd_node->encryption_alg = 0;
+    spd_node->encryption_key_length = 0;
+    spd_node->encryption_key = (char *) malloc(sizeof(char) * MAX_KEY); 
+    spd_node->integrity_key = (char *) malloc(sizeof(char) * MAX_KEY); 
+    spd_node->encryption_iv = (char *) malloc(sizeof(char) * MAX_KEY); 
     spd_node->anti_replay_window = 0;
-    spd_node->pfp_flag = false;
+    spd_node->pfp_flag = false; //take off?
     spd_node->stateful_frag_check = false;
     spd_node->bypass_dscp = false;
     spd_node->ecn = false;
     spd_node->tfc_pad = false;
     spd_node->df_bit = 0;
     spd_node->next=NULL;
+    
     return spd_node;
 }
 
@@ -51,6 +56,12 @@ void free_spd_node(spd_entry_node * n) {
             free(n->tunnel_local);
         if(n->tunnel_remote != NULL)
             free(n->tunnel_remote);  
+        if(n->encryption_key != NULL)
+            free(n->encryption_key);  
+        if(n->integrity_key != NULL)
+            free(n->integrity_key);  
+        if(n->encryption_iv != NULL)
+            free(n->encryption_iv);  
         free (n);
     } 
 }
@@ -74,6 +85,10 @@ void copy_spd_node(spd_entry_node *dst, spd_entry_node *src) {
     dst->protocol_parameters = src->protocol_parameters;
     dst->integrity_alg = src->integrity_alg;
     dst->encryption_alg = src->encryption_alg;
+    dst->encryption_key_length = src->encryption_key_length;
+    strcpy(dst->encryption_key, src->encryption_key);
+    strcpy(dst->integrity_key, src->integrity_key);
+    strcpy(dst->encryption_iv, src->encryption_iv);
     dst->anti_replay_window = src->anti_replay_window;
     dst->pfp_flag = src->pfp_flag;
     dst->stateful_frag_check = src->stateful_frag_check;
@@ -114,13 +129,14 @@ JSON_Value *serialize_spd_node(spd_entry_node *spd_node) {
 	json_object_set_number(root_object, "protocol_parameters", spd_node->protocol_parameters);
 	json_object_set_number(root_object, "integrity_alg", spd_node->integrity_alg);
 	json_object_set_number(root_object, "encryption_alg", spd_node->encryption_alg);
-	json_object_set_number(root_object, "anti_replay_window", spd_node->anti_replay_window);
+	json_object_set_number(root_object, "anti_replay_window_size", spd_node->anti_replay_window);
     json_object_set_boolean(root_object, "pfp_flag", spd_node->pfp_flag);
     json_object_set_boolean(root_object, "stateful_frag_check", spd_node->stateful_frag_check);
     json_object_set_boolean(root_object, "bypass_dscp", spd_node->bypass_dscp);
 	json_object_set_boolean(root_object, "ecn", spd_node->ecn);
 	json_object_set_boolean(root_object, "tfc_pad", spd_node->tfc_pad);
 	json_object_set_number(root_object, "df_bit", spd_node->df_bit);
+
     // json_value_free(root_value);
     return root_value;
 }
@@ -143,7 +159,7 @@ struct spd_entry_node *deserialize_spd_node(JSON_Object *schema) {
 	spd_node->protocol_parameters = json_object_get_number(schema, "protocol_parameters");
 	spd_node->integrity_alg = json_object_get_number(schema, "integrity_alg");
 	spd_node->encryption_alg = json_object_get_number(schema, "encryption_alg");
-	spd_node->anti_replay_window = json_object_get_number(schema, "anti_replay_window");
+	spd_node->anti_replay_window = json_object_get_number(schema, "anti_replay_window_size");
 	spd_node->pfp_flag = json_object_get_number(schema, "pfp_flag");
 	spd_node->stateful_frag_check = json_object_get_number(schema, "stateful_frag_check");
 	spd_node->bypass_dscp = json_object_get_boolean(schema, "bypass_dscp");

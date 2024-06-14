@@ -24,6 +24,9 @@ extern "C" {
 #endif
 
 
+// TODO move this to another module so it can be used without importing the sysrepo_entries.h
+//spd_entry_node *get_spd_node(char *name);
+//spd_entry_node *get_spd_node_by_index(int policy_index); moved into spd_entry.c
 
 void print_current_config(sr_session_ctx_t *session, const char *module_name);
 
@@ -91,10 +94,8 @@ int send_delete_SAD_request(unsigned long int spi);
 
 int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi, bool soft);
 
-
-#ifdef Enarx
+#ifdef Trusted
 void verify_sad_nodes();
-void add_sad_node_enarx(sad_entry_node* node_entry);
 #endif 
 
 #ifdef __cplusplus

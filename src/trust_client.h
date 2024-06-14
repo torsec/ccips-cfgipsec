@@ -39,21 +39,10 @@ int disconnect_ta();
 /// @return 
 int add_trusted_sad_entry(sad_entry_node *new_sad, sad_entry_node *old_sad);
 
-/// @brief function that adds a new SAD entry to the Keystone TA
-/// @param new_sad 
-/// @param old_sad
-/// @return 
-int add_trusted_sad_entry_keystone(sad_entry_node *new_sad, sad_entry_node *old_sad);
-
 /// @brief function that deletes a sad entry 
 /// @param sad_node 
 /// @return 
 int del_trusted_sad_entry(char *sad_name);
-
-/// @brief function that deletes a sad entry in the Keystone TA
-/// @param sad_node 
-/// @return 
-int del_trusted_sad_entry_keystone(char *sad_name);
 
 /// @brief function that verifies a SAD entry
 /// @param alert_msg 
@@ -61,8 +50,22 @@ int del_trusted_sad_entry_keystone(char *sad_name);
 /// @return 
 int verify_trusted_sad_entry(char *alert_msg, sad_entry_node *sad_node);
 
-
 int add_trusted_spd_entry(spd_entry_node *new_spd, spd_entry_node *old_spd);
+
+int verify_trusted_spd_entry(char *alert, spd_entry_node *spd_node);
+
+int del_trusted_spd_entry(char *spd_name);
+
+/// @brief function that adds a new SAD entry to the Keystone TA
+/// @param new_sad 
+/// @param old_sad
+/// @return 
+int add_trusted_sad_entry_keystone(sad_entry_node *new_sad, sad_entry_node *old_sad);
+
+/// @brief function that deletes a sad entry in the Keystone TA
+/// @param sad_node 
+/// @return 
+int del_trusted_sad_entry_keystone(char *sad_name);
 
 /// @brief function that adds a new SAD entry to the Keystone TA
 /// @param new_spd 
@@ -75,9 +78,6 @@ int add_trusted_spd_entry_keystone(spd_entry_node *new_spd, spd_entry_node *old_
 /// @return 
 int del_trusted_spd_entry_keystone(char *spd_name);
 
-
-int verify_trusted_spd_entry(char *alert, spd_entry_node *spd_node);
-int del_trusted_spd_entry(char *spd_name);
 
 #ifdef __cplusplus
 }

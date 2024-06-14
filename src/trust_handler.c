@@ -1,16 +1,13 @@
 #include "trust_handler.h"
 
-/************** Trusted Local Databases **************/
-
 sad_entry_node *trusted_init_sad_node = NULL;
 spd_entry_node *trusted_init_spd_node = NULL;
 
-/*****************************************************/
-
 extern char *handle_message(char *data) {
-    // INFO("Input data for handle_message:\n%s", data); // json
+
     default_msg *msg = malloc(sizeof(default_msg));
-    int result = 0, code = 0;
+    int result = 0;
+    int code = 0;
     char *out_data;
     JSON_Value *data_value;
     JSON_Value *parsed_data = json_parse_string(data);
@@ -27,12 +24,11 @@ extern char *handle_message(char *data) {
         // TODO handle error of decode_default
         goto cleanup;
     } 
+
     switch (msg->code) {
         case NEW_CONFIG_MSG: {
             INFO("received NEW CONFIG MSG");
             sad_entry_msg *entry_msg = (sad_entry_msg*) malloc(sizeof(sad_entry_msg));    
-
-            // TODO: modify handle 
             if ((result = handle_new_conf_message(msg->data,entry_msg)), result != 0) {
                 data_value = generate_op_message("newconf err",result);
                 code = OP_RESULT_MSG;
@@ -45,6 +41,7 @@ extern char *handle_message(char *data) {
 
             break;
         }
+
         case NEW_SPD_CONFIG_MSG: {
             INFO("received NEW SPD CONFIG MSG");
             spd_entry_msg *entry_msg = (spd_entry_msg*) malloc(sizeof(spd_entry_msg));    
@@ -61,11 +58,11 @@ extern char *handle_message(char *data) {
 
             break;
         }
+
         case REQUEST_VERIFY_MSG: {
             INFO("received REQUEST VERIFY MSG");
             alert_state_msg *alert_msg = (alert_state_msg*) malloc(sizeof(alert_state_msg));
             alert_msg->entry_id = (char *) malloc(sizeof(char) * MAX_PATH); 
-
             if (result = handle_request_verify_message(msg->data,alert_msg), result == 0) {
                 // The confirmation has been succesfull
                 data_value = generate_op_message("SAD_ENTRY is valid",0);
@@ -85,32 +82,9 @@ extern char *handle_message(char *data) {
             free(alert_msg);
             break;
         }
-        /*case REQUEST_SPD_VERIFY_MSG: {
-            alert_state_msg *alert_msg = (alert_state_msg*) malloc(sizeof(alert_state_msg));
-            alert_msg->entry_id = (char *) malloc(sizeof(char) * MAX_PATH); 
-
-            if (result = handle_request_verify_SPD_message(msg->data,alert_msg), result == 0) {
-                // The confirmation has been succesfull
-                data_value = generate_op_message("SPD_ENTRY is valid",0);
-                code = OP_SPD_RESULT_MSG;
-                // INFO("VERIFY MANAGED SUCCESFUL");
-            } else if (result  == 2){
-                data_value = encode_alert_state_msg(alert_msg);
-                code = ALERT_SPD_STATE_MSG;
-                // Show the hash, reqid, and spi                
-            } else {
-                data_value = generate_op_message("Verify SPD error",result);
-                code = OP_SPD_RESULT_MSG;
-            }
-
-            free(alert_msg);
-            break;
-        }*/
         case DELETE_CONFIG_MSG: {
             INFO("received DELETE CONFIG MSG");
             op_result_msg *op_msg = (op_result_msg*) malloc(sizeof(op_result_msg)); 
-
-            // TODO: modify handle 
             if (result = handle_request_remove(msg->data,op_msg), result != 0) {
                 ERR("Error deleting entry");
             } else {
@@ -119,12 +93,13 @@ extern char *handle_message(char *data) {
 
             data_value = encode_op_result_msg(op_msg);
             code = OP_RESULT_MSG;
-            // [updated, to check] TODO revise this free, since sometimes we get some errors with wasm and the application crashes
+            // TODO revise this free, since sometimes we get some errors with wasm and the application crashes
             // only when forcing the delete from the controller. When removing through the rekey phase it works without any issue
             free(op_msg);
             // INFO("FEE_OP_MSG");
             break;
         }
+
         case DELETE_SPD_CONFIG_MSG: {
             INFO("received DELETE SPD CONFIG MSG");
             op_result_msg *op_msg = (op_result_msg*) malloc(sizeof(op_result_msg)); 
@@ -155,7 +130,6 @@ cleanup:
 
 // TODO change order of input parameters
 int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
-    
     int status = 0;
     // Decode the data of the message
     sad_entry_msg *config = (sad_entry_msg*) malloc(sizeof(sad_entry_msg)); 
@@ -165,10 +139,10 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
         goto cleanup;
     }
 
-    // This may be optimized
+    // TODO: This may be optimized
     sad_entry_node *entry = create_sad_node();
     copy_sad_node(entry, config->sad_entry);
-    INFO("received SAD NODE:\nencryption key = %s\nlocal subnet = %s",entry->encryption_key, entry->local_subnet);
+    // INFO("received SAD NODE:\nencryption key = %s\nlocal subnet = %s",entry->encryption_key, entry->local_subnet);
     // XOR the key parameters
     // TODO Add this part
     // Store the values
@@ -241,7 +215,6 @@ cleanup:
     return status;
 }
 
-
 int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
     int status = 0;
     // Decode the data of the message
@@ -266,8 +239,7 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
         status = 1;
         goto cleanup;
     }
-    INFO("STORED key = %s", stored_entry->encryption_key);
-    INFO("RECEIVED key = %s", received_entry->encryption_key);
+    
     // Is the same entry?
     if (compare_sad_entries(received_entry, stored_entry) != 0) {
         // Generate out message
@@ -362,7 +334,6 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out) {
     // Delete the sad entry
     INFO("Deleted SAD entry: Name: %s \t SPI: %d \t REQID: %d", config->entry_id, stored_entry->spi, stored_entry->req_id);
     del_sad_node(&trusted_init_sad_node,config->entry_id);
-
 cleanup:
     free(config->entry_id);
 	free(config);

@@ -19,8 +19,6 @@
 #include "sysrepo_handler.h"
 
 
-// pthread_mutex_t locker =PTHREAD_MUTEX_INITIALIZER;
-
 // TODO make this as default option...
 int feature_case_value = 2;
 
@@ -55,10 +53,10 @@ new_entry(sr_change_oper_t op, sr_val_t *old_val, sr_val_t *new_val)
 		} else return false;
         break;
 	case SR_OP_MODIFIED:
-		// not implemented
+		ERR("SR_OP_MODIFIED not supported");
 		break;
 	case SR_OP_MOVED:
-		// not implemented
+		ERR("SR_OP_MOVED not supported");
 		break;
     }
 	
@@ -84,9 +82,6 @@ int spd_entry_change_cb(sr_session_ctx_t *session, uint32_t sub_id, const char *
 	char *spd_name = NULL;
 	// TODO need to free this?
 	char *new_xpath = NULL;  
-
-	TRACE("spd_entry_change_cb function called.");
-	TRACE("event: %d, xpath: %s", event, xpath);
 
 	if (SR_EV_CHANGE == event) {
 
@@ -192,10 +187,6 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
     char *sad_name = NULL;
 	// TODO need to free this?
 	char *new_xpath = NULL; 
-
-	TRACE("sad_entry_change_cb function called.");
-	TRACE("event: %d, xpath: %s", event, xpath);
-	
 	// pthread_mutex_lock(&sad_entry_change_lock);
 	if (SR_EV_CHANGE == event) {
 
@@ -223,9 +214,7 @@ int sad_entry_change_cb(sr_session_ctx_t *session,  uint32_t sub_id, const char 
 						new_xpath = get_new_xpath(new_value->xpath);	
 
 	                	// In case 2, the SAD configuration values are applied into the kernel by means of pfkey_v2 or xfrm
-						// pthread_mutex_lock(&locker);
 		                rc = addSAD_entry(session,it,new_xpath,sad_name);
-						// pthread_mutex_unlock(&locker);
 						free(new_xpath);
 						if (SR_ERR_OK == rc) {
 	                    	// DBG("sad-entry ");

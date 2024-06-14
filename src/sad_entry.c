@@ -1,5 +1,6 @@
 #include "sad_entry.h"
 #include <string.h>
+
 #define MAX_PATH  200
 #define MAX_IP 40
 #define MAX_KEY 1024
@@ -37,8 +38,6 @@ sad_entry_node* create_sad_node(){
 	memset(sad_node->integrity_key, 0, sizeof(char) * MAX_KEY); 
 	sad_node->encryption_iv = (char *) malloc(sizeof(char) * MAX_KEY); 
 	memset(sad_node->encryption_iv, 0, sizeof(char) * MAX_KEY); 
-	sad_node->encryption_key_length = 0;
-	sad_node->integrity_key_length = 0;
 	sad_node->bypass_dscp = false;
 	sad_node->ecn = false;
 	sad_node->tfc_pad = false;
@@ -149,7 +148,7 @@ void print_sad_node(sad_entry_node * n) {
 	printf("\t%-25s %u\n", "integrity_alg:", n->integrity_alg);
 	printf("\t%-25s %u\n", "encryption_alg:", n->encryption_alg);
 	printf("\t%-25s %u\n", "encryption_key_len:", n->encryption_key_length);
-	printf("\t%-25s %u\n", "integrity_key_len:", n->integrity_key_length);
+	// printf("\t%-25s %u\n", "integrity_key_len:", n->integrity_key_length);
 	printf("\t%-25s %s\n", "encryption_key:", n->encryption_key);
 	printf("\t%-25s %s\n", "integrity_key:", n->integrity_key);
 	printf("\t%-25s %s\n", "encryption_iv:", n->encryption_iv);

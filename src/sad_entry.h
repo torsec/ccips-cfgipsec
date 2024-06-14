@@ -35,7 +35,6 @@ typedef struct sad_entry_node{
 	unsigned int integrity_alg;
 	unsigned int encryption_alg;
 	unsigned int encryption_key_length;
-	unsigned int integrity_key_length;
 	char *encryption_key;
 	char *integrity_key;
 	char *encryption_iv;
@@ -63,17 +62,20 @@ typedef struct sad_entry_node{
 /// @return 
 sad_entry_node* create_sad_node();
 
+// added
 /// @brief free a sad_entry_node and all the internal data
 /// @param n input sad_node to free
 /// @return void
 void free_sad_node(sad_entry_node * n); 
 
+ // added
 /// @brief copy a sad_entry_node
 /// @param dst input sad_node where values are copied into
 /// @param src input sad_node to be copied
 /// @return void
 void copy_sad_node(sad_entry_node *dst, sad_entry_node *src);
 
+// added
 void print_sad_node(sad_entry_node * n); 
 
 #ifdef Trusted

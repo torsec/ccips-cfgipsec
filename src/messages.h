@@ -73,7 +73,7 @@ typedef struct op_result_msg {
 } op_result_msg;
 
 
-// Should we add the spd version of this?
+// TODO Should we add the spd version of this?
 typedef struct insert_entry_msg 
 {
     sad_entry_node *sad_entry;
@@ -145,7 +145,6 @@ JSON_Value *encode_spd_entry_msg(spd_entry_msg *msg);
 /// @param msg delete_config_msg to be encoded
 /// @return JSON_VALUE to be sent
 JSON_Value *encode_delete_config_msg(delete_config_msg *msg);
-
 
 /// @brief encodes a alert_state_msg into a JSON value
 /// @param msg alert_state_msg to be encoded

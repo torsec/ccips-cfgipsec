@@ -185,7 +185,7 @@ int readSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,spd_e
 	                DBG("protocol-parameters: %hu",spd_node->protocol_parameters);
 	            }
 				
-				//  TODO integrity and encryption are defined as list, list are not supported yet. TBD
+				// TODO integrity and encryption are defined as list, list are not supported yet. TBD
 	           	else if (NULL != strstr(name,"/integrity")) {
 	            		spd_node->integrity_alg = value->data.int16_val;
 	                	DBG("integrity: %i",spd_node->integrity_alg);
@@ -236,14 +236,7 @@ int addSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 	}
 
 	add_spd_node(&init_spd_node, spd_node);
- 	#ifdef Enarx
-		// TODO change this to make a copy of the node_entry so we dont store in the Untrusted Part of the application
-		// they original keys. 
-		// add_spd_node_enarx(spd_node);
 
-		// TODO polito
-		// add_spd_node_keystone(spd_node);
-	#endif
     //    return SR_ERR_OK;
 	//} else {
     if (case_value == 2) {
@@ -338,10 +331,8 @@ int removeSPD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
 
 #ifdef Enarx
 // From sad_entry.c
-
 void add_sad_node_enarx(sad_entry_node* node_entry){
 
-	INFO("add_sad_node_enarx function called");
 	// We need to add the node_entry into the enarx client
 	// It will return a new sad_entry_node whith the decrypted contents and an entryid
 	sad_entry_node* rec_entry = create_sad_node();
@@ -354,7 +345,6 @@ void add_sad_node_enarx(sad_entry_node* node_entry){
 	strcpy(node_entry->encryption_key,rec_entry->encryption_key);
 	strcpy(node_entry->integrity_key,rec_entry->integrity_key);
 	free_sad_node(rec_entry);
-	printf("HERE\n");
 }
 
 int del_sad_node_enarx(char *sad_name) {
@@ -525,13 +515,13 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 DBG("mode: %hu", sad_node->ipsec_mode);
             }
 			
-			// //<tunnel>
-			// //	<local>192.168.123.200</local>
-			// //	<remote>192.168.123.100</remote>
-			// //	<df-bit>clear</df-bit>
-			// //	<bypass-dscp>true</bypass-dscp>
-			// //	<ecn>false</ecn>
-			// //</tunnel>
+			//<tunnel>
+			//	<local>192.168.123.200</local>
+			//	<remote>192.168.123.100</remote>
+			//	<df-bit>clear</df-bit>
+			//	<bypass-dscp>true</bypass-dscp>
+			//	<ecn>false</ecn>
+			//</tunnel>
 			// else if (0 == strcmp("/local", name)) {
 			// 	//sa_tunnel_local = malloc(strlen(value->data.string_val) + 1);
 			// 	strcpy(sad_node->tunnel_local,value->data.string_val);
@@ -584,16 +574,8 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 DBG("encryption iv: %s",sad_node->encryption_iv);
             }
 			// else if (0 == strncmp("/key-length", name,strlen("/key-length"))) {
-			// 	if (NULL != strstr(value->xpath,"/encryption")) {
-			// 		sad_node->encryption_key_length = value->data.uint16_val;
-			// 		// sad_node->encryption_key_length = get_encrypt_keylen(sad_node->encryption_alg);
-			// 		DBG("encryption key length: %d",sad_node->encryption_key_length);
-			// 	}
-			// 	if (NULL != strstr(value->xpath,"/integrity")) {
-			// 		sad_node->integrity_key_length = value->data.uint16_val;
-			// 		// sad_node->integrity_key_length = get_integrity_keylen(sad_node->integrity_alg);
-			// 		DBG("integrity key length: %d",sad_node->integrity_key_length);
-            //     }
+			// 	sad_node->encryption_key_length = value->data.uint16_val;
+			// 	DBG("encryption key length: %d",sad_node->encryption_key_length);
 			// }
 			else if (0 == strncmp("/key", name,strlen("/key"))) {
                     if (NULL != strstr(value->xpath,"/encryption")) {
@@ -606,13 +588,6 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                     }
 			}
 			
-			//<tunnel>
-			//	<local>192.168.123.200</local>
-			//	<remote>192.168.123.100</remote>
-			//	<df-bit>clear</df-bit>
-			//	<bypass-dscp>true</bypass-dscp>
-			//	<ecn>false</ecn> // doesn't exists
-			//</tunnel>
 			else if (0 == strcmp("/local", name)) {
 				//sa_tunnel_local = value->data.string_val;
 				strcpy(sad_node->tunnel_local,value->data.string_val);
@@ -622,7 +597,8 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 				//sa_tunnel_remote = value->data.string_val;
 				strcpy(sad_node->tunnel_remote,value->data.string_val);
                 DBG("tunnel_remote: %s",sad_node->tunnel_remote);
-			}else if (0 == strcmp("/bypass-dscp", name)) {
+			}
+			else if (0 == strcmp("/bypass-dscp", name)) {
 				sad_node->bypass_dscp = value->data.bool_val;
 				DBG("bypass: %i",sad_node->bypass_dscp);
 			}
@@ -657,9 +633,6 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 } else if (NULL != strstr(value->xpath,"/sa-lifetime-hard")) { 
                     sad_node->lft_time_hard= value->data.int32_val;
                     DBG("lifetime time-hard: %lu",sad_node->lft_time_hard);
-                // } else if (NULL != strstr(value->xpath,"/sa-lifetime-current")) { 
-                //     sad_node->lft_time_current= value->data.int32_val;
-                //     DBG("lifetime time-current: %lu",sad_node->lft_time_current);
                 }
             }  
             else if (0 == strcmp("/bytes", name)) {
@@ -669,9 +642,6 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 } else if (NULL != strstr(value->xpath,"/sa-lifetime-hard")) { 
                     sad_node->lft_bytes_hard = value->data.int32_val;
                     DBG("lifetime bytes-hard: %lu",sad_node->lft_bytes_hard);
-                // } else if (NULL != strstr(value->xpath,"/sa-lifetime-current")) { 
-                //     sad_node->lft_bytes_current = value->data.int64_val;
-                //     DBG("lifetime bytes-current: %llu",sad_node->lft_bytes_current);
                 }
             }  
             else if (0 == strcmp("/packets", name)) {
@@ -681,9 +651,6 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 } else if (NULL != strstr(value->xpath,"/sa-lifetime-hard")) {  
                     sad_node->lft_packets_hard = value->data.int32_val;
                     DBG("lifetime packets-hard: %lu",sad_node->lft_packets_hard);
-                // } else if (NULL != strstr(value->xpath,"/sa-lifetime-current")) {  
-                //     sad_node->lft_packets_current = value->data.int32_val;
-                //     DBG("lifetime packets-hard: %lu",sad_node->lft_packets_current);
                 }  
             }  
             else if (0 == strcmp("/idle", name)) {
@@ -693,9 +660,6 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
                 } else if (NULL != strstr(value->xpath,"/sa-lifetime-hard")) {  
                     sad_node->lft_idle_hard = value->data.int32_val;
                     DBG("lifetime time-idle-hard: %lu",sad_node->lft_idle_hard);
-                // } else if (NULL != strstr(value->xpath,"/sa-lifetime-current")) {  
-                //     sad_node->lft_idle_current = value->data.int32_val;
-                //     DBG("lifetime time-idle-current: %lu",sad_node->lft_idle_current);
                 }  
             } 
 
@@ -712,10 +676,6 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 	    return SR_ERR_OK;
 }
 
-// When the method addSAD_entry is called, it first requests to 
-// SYSREPO using the entire XPATH all the information by calling the method
-// readSAD_entry. The latter will request the information of the specific
-// XPATH and will parse the information to fill a sad_entry_node.
 int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *sad_name) {
     int rc = SR_ERR_OK;
     //spi = atoi(spi_number);
@@ -723,7 +683,6 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 	sad_entry_node *sad_node = create_sad_node();
 	strcpy(sad_node->name,sad_name);
 	pthread_mutex_lock(&sad_entries_locker);
-	// Extract the SAD entry that has been added in sysrepo
     rc = readSAD_entry(sess,it,xpath,sad_node);
     if (rc != SR_ERR_OK) {
         ERR("addSAD_entry: error in readSAD_entry: %s",sr_strerror(rc));
@@ -737,9 +696,6 @@ int addSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,char *
 		// TODO change this to make a copy of the node_entry so we dont store in the Untrusted Part of the application
 		// they original keys. 
 		add_sad_node_keystone(sad_node);
-		
-		// TODO polito
-		// add_sad_node_keystone(sad_node);
 	#endif
     rc = pf_addsad(sad_node);
     if (SR_ERR_OK != rc) {
@@ -784,7 +740,7 @@ int send_acquire_notification(sr_session_ctx_t *session, int policy_index){
     }
 	
 	
-	spd_entry_node* spd_node = get_spd_node_by_index(&init_spd_node, policy_index);
+	spd_entry_node* spd_node = get_spd_node_by_index(init_spd_node, policy_index);
     if (spd_node != NULL) {
 		
 	    if (!lyd_new_path(notif, NULL, "/ietf-i2nsf-ikeless:sadb-acquire/ipsec-policy-name", spd_node->name, 0, 0)) {
@@ -830,14 +786,12 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
     pthread_mutex_lock(&sad_entries_locker);
     DBG("SAD entry REMOVE: %s",sad_name);
 	sad_entry_node *node = get_sad_node(&init_sad_node, sad_name);
-	INFO("removeSAD_entry: get_sad_node done");
     if (node != NULL) {
         rc = pf_delsad(node);
         if (SR_ERR_OK != rc){
             ERR("Remove SAD in pfkeyv2_delsad: %s",sr_strerror(rc));
             rc = SR_ERR_OPERATION_FAILED;
         } else {
-			INFO("pf_delsad done");
             rc = del_sad_node(&init_sad_node, sad_name);
             if (rc != SR_ERR_OK) {
                 ERR("Remove SAD entry in del_sad_node: %s",sr_strerror(rc));
@@ -845,8 +799,8 @@ int removeSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,cha
             } else rc = SR_ERR_OK;
 
 			#ifdef Enarx
-			// TODO Atm we skip this error check, but it should be handled or returned
 			del_sad_node_keystone(sad_name);
+			// TODO Atm we skip this error, but it should be returned
 			#endif
         }
 
@@ -938,9 +892,9 @@ int send_sa_expire_notification(sr_session_ctx_t *session, unsigned long int spi
 	return rc;	
 	
 cleanup:
+	pthread_mutex_unlock(&sad_entries_locker);
 	// sr_release_context(ctx);
     lyd_free_all(notif);
-	pthread_mutex_unlock(&sad_entries_locker);
     //sr_disconnect(connection);
 	if (ctx) {
         sr_release_context(connection);
@@ -996,6 +950,9 @@ int send_delete_SAD_request(unsigned long int spi) {
         ERR("sr_commit: %s", sr_strerror(rc));
         // goto cleanup;
     }
+	// del_sad_node(&init_sad_node,sad_node->name);
+	// INFO("Ha salido del error, linea 994 de sysrepo_entries");
+	// pthread_mutex_unlock(&sad_entries_locker);
 
 cleanup:
 	if (NULL != session) {
@@ -1006,7 +963,6 @@ cleanup:
     }
 	return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }
-
 
 /****************************************************************************/
 /**************************** Keystone functions ****************************/

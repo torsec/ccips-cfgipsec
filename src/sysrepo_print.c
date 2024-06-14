@@ -1,4 +1,5 @@
 #include "sysrepo_print.h"
+
 void print_val(const sr_val_t *value)
 {
     if (NULL == value) {

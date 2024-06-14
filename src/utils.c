@@ -20,7 +20,7 @@
 #include "utils.h"
 #include "keystone_utils.h"
 
-char * get_ip(char * ip_mask) { // leakage?
+char * get_ip(char * ip_mask) { // TODO: leakage?
 
 	const char d[2] = "/";
 	char * ip;
@@ -54,7 +54,7 @@ int get_mask(char * ip_mask) {
 }
 
 int getAuthAlg(char* alg) {
-	INFO("getAuthAlg function called. Algorithm = %s\n", alg);
+
 	if (!strcmp(alg, "hmac-md5-128") || !strcmp(alg, "hmac-md5-96")){
 		return SADB_AALG_MD5HMAC;
 	}
@@ -63,9 +63,9 @@ int getAuthAlg(char* alg) {
 	else if (!strcmp(alg, "hmac-sha1-96") || !strcmp(alg, "hmac-sha1-96") ||
 		     !strcmp(alg, "hmac-sha1-160"))
 		return SADB_AALG_SHA1HMAC;
-	/*else if (!strcmp(alg, "hmac-sha2-256-128"))
-		return SADB_X_AALG_SHA2_256;
-	else if (!strcmp(alg, "hmac-sha2-384-192"))
+	else if (!strcmp(alg, "hmac-sha2-256"))
+		return SADB_X_AALG_SHA2_256HMAC;
+	/*else if (!strcmp(alg, "hmac-sha2-384-192"))
 		return SADB_X_AALG_SHA2_384;
 	else if (!strcmp(alg, "hmac-sha2-512-256"))
 		return SADB_X_AALG_SHA2_512;*/
@@ -74,7 +74,6 @@ int getAuthAlg(char* alg) {
 }
 
 int getEncryptAlg(char* alg) {
-	INFO("getEncryptAlg function called. Algorithm = %s\n", alg);
 
 	if (!strcmp(alg, "des"))
 		return SADB_EALG_DESCBC ;
@@ -101,7 +100,7 @@ int getEncryptAlg(char* alg) {
 }
 
 const char * get_encrypt_str(int alg) {
-	INFO("get_encrypt_str function called: algorithm = %d\n", alg);
+
     static char buf[100];
     switch (alg) {
     case SADB_EALG_DESCBC:      return "des";
@@ -122,40 +121,14 @@ const char * get_encrypt_str(int alg) {
     }
 }
 
-unsigned short get_encrypt_keylen(int alg) {
-    switch (alg) {
-    case SADB_EALG_DESCBC:      return ((EALG_DESCBC_KEY_BITS/8) + 7) / 8;
-    case SADB_EALG_3DESCBC:     return ((EALG_3DESCBC_KEY_BITS/8) + 7) / 8;
-	case SADB_X_EALG_AESCBC:    return ((EALG_AESCBC_KEY_BITS/8) + 7) / 8;
-#ifdef SADB_X_EALG_CAST128CBC
-    case SADB_X_EALG_CAST128CBC:    return ((EALG_CASTCBC_KEY_BITS/8) + 7) / 8;
-#endif
-#ifdef SADB_X_EALG_BLOWFISHCBC
-    case SADB_X_EALG_BLOWFISHCBC:   return ((EALG_BLOWFISHCBC_KEY_BITS/8) + 7) / 8;
-#endif
-// #ifdef SADB_X_EALG_AESCBC
-    
-// #endif
-    default:                  return 0;
-    }
-}
-
-// TODO: support for more algorithms
-unsigned short get_integrity_keylen(int alg) {
-    switch (alg) {
-    case SADB_AALG_MD5HMAC:      return ((AALG_MD5HMAC_KEY_BITS/8) + 7) / 8;
-    case SADB_AALG_SHA1HMAC:     return ((AALG_SHA1HMAC_KEY_BITS/8) + 7) / 8;
-    default:                  return 0;
-    }
-}
-
 const char *
 get_auth_str(int alg) {
-	INFO("get_auth_str function called: algorithm = %d\n", alg);
+
     static char buf[100];
     switch (alg) {
     case SADB_AALG_MD5HMAC:     return "hmac-md5-96";
     case SADB_AALG_SHA1HMAC:    return "hmac-sha1-96";
+	case SADB_X_AALG_SHA2_256HMAC:  	return "hmac-sha2-256";
 /*#ifdef SADB_X_AALG_MD5
     case SADB_X_AALG_MD5:       return "Keyed MD5";
 #endif
@@ -185,13 +158,13 @@ get_auth_str(int alg) {
 const char *
 get_auth_alg(int alg) {
 
-	INFO("get_auth_alg function called. Algorithm = %d", alg);
 	static char buf[100];
 
 	switch (alg) {
 	case SADB_AALG_NONE:		return "None";
 	case SADB_AALG_MD5HMAC:		return "HMAC-MD5";
 	case SADB_AALG_SHA1HMAC:	return "HMAC-SHA-1";
+	case SADB_X_AALG_SHA2_256HMAC:  return "HMAC-SHA2-256";
 #ifdef SADB_X_AALG_MD5
 	case SADB_X_AALG_MD5:		return "Keyed MD5";
 #endif
@@ -217,7 +190,7 @@ get_auth_alg(int alg) {
 
 const char *
 get_encrypt_alg(int alg) {
-	INFO("get_encrypt_alg function called. Algorithm = %d", alg);
+
 	static char buf[100];
 
 	switch (alg) {
@@ -269,7 +242,7 @@ get_sadb_msg_type(int type) {
 	case SADB_UPDATE:	return "Update";
 	case SADB_ADD:		return "Add";
 	case SADB_X_SPDADD: return "SADB_X_SPADD";
-	case SADB_X_SPDGET:	return "SADB_X_SPDGET";
+	case SADB_X_SPDGET:	return "SADB_X_SPDGET"; //added
 	case SADB_DELETE:	return "Delete";
 	case SADB_GET:		return "Get";
 	case SADB_ACQUIRE:	return "Acquire";
@@ -304,11 +277,8 @@ int Socket(int family, int type, int protocol) {
 
     int n;
 
-    if ( (n = socket(family, type, protocol)) < 0) {
-		int errnum = errno;
-		log_error("socket error: %d (%s)", errnum, strerror(errnum)); // remove for release
-	}
-        
+    if ( (n = socket(family, type, protocol)) < 0)
+        log_error("socket error");
     return(n);
 }
 /* end Socket */
@@ -316,13 +286,8 @@ int Socket(int family, int type, int protocol) {
 void
 Write(int fd, void *ptr, size_t nbytes) {
 
-	ssize_t n;
-
-    if ((n = write(fd, ptr, nbytes)) != nbytes) {
-		int errnum = errno;
-		log_error("write error: %d (%s)", errnum, strerror(errnum)); // remove for release
-	}
-       
+    if (write(fd, ptr, nbytes) != nbytes)
+       log_error("write error");
 }
 
 ssize_t
@@ -330,11 +295,8 @@ Read(int fd, void *ptr, size_t nbytes) {
 
         ssize_t n;
 
-        if ( (n = read(fd, ptr, nbytes)) == -1) {
-			int errnum = errno;
-			log_error("read error: %d (%s)", errnum, strerror(errnum)); // remove for release
-		}
-                
+        if ( (n = read(fd, ptr, nbytes)) == -1)
+                log_error("read error");
         return(n);
 }
 
@@ -410,22 +372,16 @@ char* stringToBytes(char* str) {
     
     return bytes;
 }
-int verify_key(char *recvkey, char *storedkey, size_t key_len) {
-	int res = strncmp(recvkey, storedkey, key_len);
-	return res;
-}
-// i = received entry
-// j = stored entry
-int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 
-	// retrieve the correct key dimension from the algorithm
+int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 	// verify enc key
 	char *i_enc_key_b = stringToBytes(i->encryption_key);
 	char *j_enc_key_b = stringToBytes(j->encryption_key);
 	TRACE("I_ENC_KEY: %s \t J_ENC_KEY: %s", i_enc_key_b, j_enc_key_b);
 	free(i_enc_key_b);
 	free(j_enc_key_b);
-	if (strncmp(i->encryption_key,j->encryption_key,j->encryption_key_length) != 0) {
+	// was MAX_KEY
+	if (strncmp(i->encryption_key,j->encryption_key,strlen(i->encryption_key)) != 0) {
 		ERR("Entries ENC KEYS differ");
 		return 1;
     }
@@ -435,7 +391,8 @@ int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 	TRACE("I_INT_KEY: %s \t J_INT_KEY: %s", i_int_key_b, j_int_key_b);
 	free(i_int_key_b);
 	free(j_int_key_b);
-	if (strncmp(i->integrity_key,j->integrity_key,j->integrity_key_length) != 0) {
+	// was MAX_KEY
+	if (strncmp(i->integrity_key,j->integrity_key,strlen(i->integrity_key)) != 0) {
 		ERR("Entries AUTH KEYS differ");
 		return 1;
     }
@@ -458,37 +415,6 @@ int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 	return 0;
 }
 
-/*int compare_spd_entries(spd_entry_node *i, spd_entry_node *j) {
-	// verify enc key
-	TRACE("I_ENC_KEY: %s \t J_ENC_KEY: %s",stringToBytes(i->encryption_key),stringToBytes(j->encryption_key)); // fix string deallocation
-    if (strncmp(i->encryption_key,j->encryption_key,MAX_KEY) != 0) {
-		ERR("Entries ENC KEYS differ");
-		return 1;
-    }
-	// verify int key
-	TRACE("I_INT_KEY: %s \t J_INT_KEY: %s",stringToBytes(i->integrity_key),stringToBytes(j->integrity_key)); // fix string deallocation
-    if (strncmp(i->integrity_key,j->integrity_key,MAX_KEY) != 0) {
-		ERR("Entries AUTH KEYS differ");
-		return 1;
-    }
-	// Check that they have the same SPI
-	if (i->spi != j->spi) {
-		ERR("Entries SPI differ");
-		return 1;
-	}
-	// Check that they have they are using the same mode
-	if (i->ipsec_mode != j->ipsec_mode) {
-		ERR("Entries MODE differ");
-		return 1;
-	}
-	// TODO add more verification steps
-
-	// verify iv key for the moment ommit this
-    // if (strncmp(i->encryption_iv,j->encryption_iv,MAX_KEY) != 0) {
-    //         return 1;
-    // }
-	return 0;
-}*/
 
 
 // Mngmt of local sad-entries
@@ -556,7 +482,6 @@ int del_sad_node(sad_entry_node** main_sad_entry, char *sad_name) {
 	return 0;
 }
 
-// store the sad_entry_node in a local db which is pointed as the init_sad_node
 int add_sad_node(sad_entry_node** main_sad_entry, sad_entry_node* new_sad) {
     if (*main_sad_entry == NULL) {
 		// Do a copy
@@ -593,8 +518,8 @@ spd_entry_node *get_spd_node(spd_entry_node** main_spd_entry, char *spd_name) {
 	return NULL;
 }
 
-spd_entry_node* get_spd_node_by_index(spd_entry_node** main_spd_entry, int policy_index) {
-    spd_entry_node *node = *main_spd_entry;
+spd_entry_node  *get_spd_node_by_index(spd_entry_node* main_spd_entry, int policy_index) {
+    spd_entry_node *node = main_spd_entry;
 	while (node != NULL) {
 		if (node->index == policy_index) {
 			return node;
@@ -621,7 +546,7 @@ int del_spd_node(spd_entry_node** main_spd_entry, char *spd_name) {
 		} else {
 			*main_spd_entry = (*main_spd_entry)->next;
 		}
-		free_spd_node(nh);
+		free_spd_node(nh); // free(nh);
 	} else {
 		spd_entry_node *nc = *main_spd_entry;
 		spd_entry_node *np;
@@ -640,10 +565,13 @@ int del_spd_node(spd_entry_node** main_spd_entry, char *spd_name) {
 		} else {
 			np->next = nc->next;
 		}
-		free_spd_node(nc);
+		free_spd_node(nc); // free(nc);
 	}
 	return 0;
 }
+// POLITO: replaced free with free_spd_node
+//POLITO version?? need to check with the one on sysrepo_entries
+//TODO decide which one to keep, at the moment we coment this for compiling
 
 int add_spd_node(spd_entry_node** main_spd_entry, spd_entry_node* new_spd) {
 	if (*main_spd_entry == NULL) {
@@ -659,9 +587,8 @@ int add_spd_node(spd_entry_node** main_spd_entry, spd_entry_node* new_spd) {
 	return 0;
 }
 
-// for case 1
-void show_spd_list(spd_entry_node* main_spd_entry) {
-	spd_entry_node *node = main_spd_entry;
+void show_spd_list(spd_entry_node* init_spd_node) {
+	spd_entry_node *node = init_spd_node;
 	INFO("NAME --- INDEX --- REQ_ID --- SRC --- DST --- DIRECTION --- PROTOCOL --- MODE");
 	while (node != NULL){
 		INFO("%s --- %d --- %d --- %s --- %s --- %d --- %d ", node->name, node->index, node->req_id, node->local_subnet, node->remote_subnet, node->policy_dir,
