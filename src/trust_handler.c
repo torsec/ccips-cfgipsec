@@ -166,7 +166,7 @@ int handle_new_conf_message(JSON_Object *data, sad_entry_msg *out) {
 
     // strcpy(out->entry_id,hash);
     out->sad_entry = entry; // it's the same value stored in the trusted list
-    INFO("Added SAD entry: HASH: %s \t SPI: %d \t REQID: %d",
+    INFO("Added SAD entry: HASH: %s \t SPI: %ld \t REQID: %lld",
     entry->name,entry->spi,entry->req_id);
 cleanup:
     // Free data
@@ -207,7 +207,7 @@ int handle_new_SPD_conf_message(JSON_Object *data, spd_entry_msg *out) {
 
     // strcpy(out->entry_id,hash);
     out->spd_entry = entry;
-    INFO("Added SPD entry: HASH: %s \t REQID: %d", entry->name,entry->req_id);
+    INFO("Added SPD entry: HASH: %s \t REQID: %lld", entry->name,entry->req_id);
 cleanup:
     // Free data
     free_spd_node(config->spd_entry);
@@ -250,7 +250,7 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
         char *recv_int_key_b = stringToBytes(received_entry->integrity_key);
         char *stor_enc_key_b = stringToBytes(stored_entry->encryption_key);
         char *recv_enc_key_b = stringToBytes(received_entry->encryption_key);
-        ERR("Entry could not be validated: Name: %s\tSPI: %d\tREQID: %d", stored_entry->name, stored_entry->spi, stored_entry->req_id);
+        ERR("Entry could not be validated: Name: %s\tSPI: %ld\tREQID: %lld", stored_entry->name, stored_entry->spi, stored_entry->req_id);
         ERR("\n\tStored AUTH_KEY: %s \t Current AUTH_KEY: %s \n\tStored ENC_KEY: %s \t Current ENC_KEY: %s", stor_int_key_b, recv_int_key_b, stor_enc_key_b, recv_enc_key_b);
         free(stor_int_key_b);
         free(recv_int_key_b);
@@ -258,7 +258,7 @@ int handle_request_verify_message(JSON_Object *data, alert_state_msg *out) {
         free(recv_enc_key_b);
         goto cleanup;
     } else {
-        INFO("Entry validated: Name: %s\tSPI: %d\tREQID: %d",stored_entry->name, stored_entry->spi,stored_entry->req_id);
+        INFO("Entry validated: Name: %s\tSPI: %ld\tREQID: %lld",stored_entry->name, stored_entry->spi,stored_entry->req_id);
     }
 cleanup:
     free_sad_node(config->sad_entry);
@@ -332,7 +332,7 @@ int handle_request_remove(JSON_Object *data, op_result_msg *out) {
     
     strcpy(message,"deleted\0");
     // Delete the sad entry
-    INFO("Deleted SAD entry: Name: %s \t SPI: %d \t REQID: %d", config->entry_id, stored_entry->spi, stored_entry->req_id);
+    INFO("Deleted SAD entry: Name: %s \t SPI: %ld \t REQID: %lld", config->entry_id, stored_entry->spi, stored_entry->req_id);
     del_sad_node(&trusted_init_sad_node,config->entry_id);
 cleanup:
     free(config->entry_id);
@@ -368,7 +368,7 @@ int handle_request_remove_SPD(JSON_Object *data, op_result_msg *out) {
     
     strcpy(message,"deleted\0");
     del_spd_node(&trusted_init_spd_node, config->entry_id);
-    INFO("Deleted SPD entry: Index: %s \t POLICY DIR: %d \t REQID: %d", config->entry_id, stored_entry->policy_dir, stored_entry->req_id);
+    INFO("Deleted SPD entry: Index: %s \t POLICY DIR: %d \t REQID: %lld", config->entry_id, stored_entry->policy_dir, stored_entry->req_id);
 
 cleanup:
     free(config->entry_id);
