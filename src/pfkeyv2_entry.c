@@ -714,7 +714,10 @@ int pf_addsad(sad_entry_node *sad_node)
             keyext->sadb_key_bits = EALG_AES_GCM_ICV16_KEY_BITS;
         }
         // INFO("-----------Key length %d",keyext->sadb_key_len);
-        memcpy(keyext + 1, sad_node->encryption_key, strlen(sad_node->encryption_key));
+        DBG("PFKEY ADD SAD - enc key: %s\n", sad_node->encryption_key);
+        unsigned char *tmp_string = hexToByte(sad_node->encryption_key);
+        memcpy(keyext + 1, tmp_string, keyext->sadb_key_bits/8);
+        free(tmp_string);
         len += keyext->sadb_key_len * 8;
         p += keyext->sadb_key_len * 8;
     }
@@ -735,7 +738,10 @@ int pf_addsad(sad_entry_node *sad_node)
             keyext->sadb_key_len = (sizeof(*keyext) + (AALG_SHA1HMAC_KEY_BITS / 8) + 7) / 8;
             keyext->sadb_key_bits = AALG_SHA1HMAC_KEY_BITS;
         }
-        memcpy(keyext + 1, sad_node->integrity_key, strlen(sad_node->integrity_key));
+        DBG("PFKEY ADD SAD - int key: %s\n", sad_node->integrity_key);
+        unsigned char *tmp_string = hexToByte(sad_node->integrity_key);
+        memcpy(keyext + 1, tmp_string, (keyext->sadb_key_bits)/8);
+        free(tmp_string);
         len += keyext->sadb_key_len * 8;
         p += keyext->sadb_key_len * 8;
     }
@@ -918,7 +924,9 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node)
             TRACE("Parsing ENC KEY");
             struct sadb_key *keyext = (struct sadb_key *)ext;
             // out_node->encryption_key = malloc(keyext->sadb_key_bits / 8);
-            memcpy(out_node->encryption_key, (char *)(keyext + 1), keyext->sadb_key_bits / 8);
+            char *tmp_str = stringToBytes((char *)(keyext + 1), keyext->sadb_key_bits / 8);
+            memcpy(out_node->encryption_key, tmp_str, keyext->sadb_key_bits / 4);
+            DBG("PFKEY GET SAD - enc key: %s\n", out_node->encryption_key);
             break;
         }
         case SADB_EXT_KEY_AUTH:
@@ -926,7 +934,9 @@ int pf_getsad(sad_entry_node *sad_node, sad_entry_node *out_node)
             TRACE("Parsing INT KEY");
             struct sadb_key *keyext = (struct sadb_key *)ext;
             // out_node->integrity_key = malloc(keyext->sadb_key_bits / 8);
-            memcpy(out_node->integrity_key, (char *)(keyext + 1), keyext->sadb_key_bits / 8);
+            char *tmp_str = stringToBytes((char *)(keyext + 1), keyext->sadb_key_bits / 8);
+            memcpy(out_node->integrity_key, tmp_str, keyext->sadb_key_bits / 4);
+            DBG("PFKEY GET SAD - int key: %s\n", out_node->integrity_key);
             break;
         }
         case SADB_EXT_SA:

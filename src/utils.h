@@ -79,7 +79,9 @@ unsigned char* hexstr_to_char(char* hexstr);
 int checkIKE_connection();
 void remove_colon(char* out, char* str) ;
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j);
-char* stringToBytes(char* str);
+char* stringToBytes(char* str, size_t len);
+unsigned char* hexToByte(char* str);
+void hexToUpperCase(char* str);
 
 // Mngmt of local sad-entries
 

@@ -358,10 +358,7 @@ void remove_colon(char* out, char* str) {
     out[j] = '\0'; // add the null terminator at the end of the output string
 }
 
-char* stringToBytes(char* str) {
-    // Calculate the length of the input string
-    size_t len = strlen(str);
-    
+char* stringToBytes(char* str, size_t len) {
     // Allocate memory for the byte string
     char* bytes = (char*)malloc(len * 2 + 1);  // Each byte is represented by 2 characters in hexadecimal, +1 for null terminator
     
@@ -373,26 +370,57 @@ char* stringToBytes(char* str) {
     return bytes;
 }
 
+static unsigned char charToHex(char c) {
+	if(c >= '0' && c <= '9'){
+		return c - '0';
+	} else if(c >= 'a' && c <= 'f') {
+		return (c - 'a') + 10;
+	} else if(c >= 'A' && c <= 'F') {
+		return (c - 'A') + 10;
+	}
+	return 0;
+}
+
+unsigned char* hexToByte(char* str) {
+    // Calculate the length of the input string
+    size_t len = strlen(str);
+    
+    // Allocate memory for the byte string
+    unsigned char* bytes = (unsigned char*)malloc((len/2)+1);  // Each byte is represented by 2 characters in hexadecimal, +1 for null terminator
+    
+    // Convert each character to byte string
+    for (size_t i = 0; i < len; i+=2) {
+        unsigned char b1 = charToHex(str[i]);
+		unsigned char b2 = charToHex(str[i+1]);
+		bytes[i/2] = (b1 << 4) + b2;
+    }
+    
+    return bytes;
+}
+
+void hexToUpperCase(char* str) {
+	for(size_t i = 0; i < strlen(str); i++) {
+		if(str[i] >= 'a' && str[i] <= 'f') {
+			str[i] += 'A' - 'a';
+		}
+	}
+	return;
+}
+
 int compare_sad_entries(sad_entry_node *i, sad_entry_node *j) {
 	// verify enc key
-	char *i_enc_key_b = stringToBytes(i->encryption_key);
-	char *j_enc_key_b = stringToBytes(j->encryption_key);
-	TRACE("I_ENC_KEY: %s \t J_ENC_KEY: %s", i_enc_key_b, j_enc_key_b);
-	free(i_enc_key_b);
-	free(j_enc_key_b);
+	TRACE("I_ENC_KEY: %s \t J_ENC_KEY: %s", i->encryption_key, j->encryption_key);
+
 	// was MAX_KEY
-	if (strncmp(i->encryption_key,j->encryption_key,strlen(i->encryption_key)) != 0) {
+	if (memcmp(i->encryption_key,j->encryption_key, MAX_KEY) != 0) {
 		ERR("Entries ENC KEYS differ");
 		return 1;
     }
 	// verify int key
-	char *i_int_key_b = stringToBytes(i->integrity_key);
-	char *j_int_key_b = stringToBytes(j->integrity_key);
-	TRACE("I_INT_KEY: %s \t J_INT_KEY: %s", i_int_key_b, j_int_key_b);
-	free(i_int_key_b);
-	free(j_int_key_b);
+	TRACE("I_INT_KEY: %s \t J_INT_KEY: %s", i->integrity_key, j->integrity_key);
+
 	// was MAX_KEY
-	if (strncmp(i->integrity_key,j->integrity_key,strlen(i->integrity_key)) != 0) {
+	if (memcmp(i->integrity_key,j->integrity_key, MAX_KEY) != 0) {
 		ERR("Entries AUTH KEYS differ");
 		return 1;
     }

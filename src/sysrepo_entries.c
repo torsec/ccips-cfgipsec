@@ -571,6 +571,7 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
             }
             else if (0 == strcmp("/iv", name)) {
 				remove_colon(sad_node->encryption_iv,value->data.string_val);
+				hexToUpperCase(sad_node->encryption_iv);
                 DBG("encryption iv: %s",sad_node->encryption_iv);
             }
 			// else if (0 == strncmp("/key-length", name,strlen("/key-length"))) {
@@ -580,10 +581,12 @@ int readSAD_entry(sr_session_ctx_t *sess, sr_change_iter_t *it,char *xpath,sad_e
 			else if (0 == strncmp("/key", name,strlen("/key"))) {
                     if (NULL != strstr(value->xpath,"/encryption")) {
 						remove_colon(sad_node->encryption_key,value->data.string_val);
+						hexToUpperCase(sad_node->encryption_key);
 						DBG("encryption_key: %s",sad_node->encryption_key);
 					}
 					if (NULL != strstr(value->xpath,"/integrity")) {
 						remove_colon(sad_node->integrity_key,value->data.string_val);
+						hexToUpperCase(sad_node->integrity_key);
                         DBG("integrity_key: %s",sad_node->integrity_key);
                     }
 			}

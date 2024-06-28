@@ -91,10 +91,10 @@ void copy_sad_node(sad_entry_node *dst, sad_entry_node *src) {
 	dst->seq_overflow = src->seq_overflow;
 	dst->seq_number_counter = src->seq_number_counter;
 	dst->anti_replay_window = src->anti_replay_window;
-	strcpy(dst->local_subnet, src->local_subnet);
-	strcpy(dst->remote_subnet, src->remote_subnet);
-	strcpy(dst->tunnel_local, src->tunnel_local);
-	strcpy(dst->tunnel_remote, src->tunnel_remote);
+	memcpy(dst->local_subnet, src->local_subnet, MAX_IP);
+	memcpy(dst->remote_subnet, src->remote_subnet, MAX_IP);
+	memcpy(dst->tunnel_local, src->tunnel_local, MAX_IP);
+	memcpy(dst->tunnel_remote, src->tunnel_remote, MAX_IP);
 	dst->inner_protocol = src->inner_protocol;
 	dst->srcport = src->srcport;
 	dst->dstport = src->dstport;
@@ -102,9 +102,9 @@ void copy_sad_node(sad_entry_node *dst, sad_entry_node *src) {
 	dst->protocol_parameters = src->protocol_parameters;
 	dst->integrity_alg = src->integrity_alg;
 	dst->encryption_alg = src->encryption_alg;
-	strcpy(dst->encryption_key, src->encryption_key);
-	strcpy(dst->integrity_key, src->integrity_key);
-	strcpy(dst->encryption_iv, src->encryption_iv);
+	memcpy(dst->encryption_key, src->encryption_key, MAX_KEY);
+	memcpy(dst->integrity_key, src->integrity_key, MAX_KEY);
+	memcpy(dst->encryption_iv, src->encryption_iv, MAX_KEY);
 	dst->bypass_dscp = src->bypass_dscp;
 	dst->ecn = src->ecn;
 	dst->tfc_pad = src->tfc_pad;
